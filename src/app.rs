@@ -1,0 +1,157 @@
+use std::sync::{Arc, Mutex};
+
+use ratatui::widgets::ListState;
+
+use crate::m3u::fetch_channels::fetch_channels;
+
+#[allow(dead_code)]
+pub enum Mode {
+    Normal,
+    Search,
+    UrlEdit,
+    Playing,
+}
+#[derive(Clone)]
+pub struct Channel {
+    pub name: String,
+    pub id: String,
+    pub logo: String,
+    pub favorite: bool,
+    pub group: String,
+    pub url: String,
+}
+
+pub struct ChannelList {
+    pub state: ListState,
+    pub items: Vec<Channel>,
+}
+
+#[allow(dead_code)]
+impl ChannelList {
+    pub fn next(&mut self) {
+        let i = match self.state.selected() {
+            Some(i) => {
+                if i >= self.items.len() - 1 {
+                    0
+                } else {
+                    i + 1
+                }
+            }
+            None => 0,
+        };
+        self.state.select(Some(i));
+    }
+    pub fn previous(&mut self) {
+        let i = match self.state.selected() {
+            Some(i) => {
+                if i == 0 {
+                    self.items.len() - 1
+                } else {
+                    i - 1
+                }
+            }
+            None => 0,
+        };
+        self.state.select(Some(i));
+    }
+    pub fn select_first(&mut self) {
+        self.state.select(Some(0));
+    }
+    fn unselect(&mut self) {
+        self.state.select(None);
+    }
+}
+
+pub struct Settings {
+    pub player: String,
+    pub arguments: Vec<String>,
+}
+
+pub struct MpvPlayer {
+    pub pid: Option<u32>,
+    pub running: bool,
+    pub channel: Option<String>,
+    pub started: bool,
+}
+
+pub struct App {
+    pub mode: Mode,
+    pub running: bool,
+    pub mpv_started: bool,
+    pub all_channels: Vec<Channel>,
+    pub filter: String,
+    pub channel_state: ChannelList,
+    pub m3u_url: String,
+    pub favorites: Vec<String>,
+    pub settings: Settings,
+    pub notification: Option<String>,
+    pub mpv_player: Arc<Mutex<MpvPlayer>>,
+}
+
+impl Default for App {
+    fn default() -> Self {
+        Self::new("".to_string())
+    }
+}
+
+#[allow(dead_code)]
+impl App {
+    pub fn new(m3u_url: String) -> App {
+        App {
+            mode: Mode::Search,
+            running: true,
+            mpv_started: false,
+            all_channels: Vec::new(),
+            filter: String::new(),
+            channel_state: ChannelList {
+                state: ListState::default(),
+                items: vec![],
+            },
+            m3u_url,
+            favorites: Vec::new(),
+            settings: Settings {
+                player: "mpv".into(),
+                arguments: Vec::new(),
+            },
+            notification: None,
+            mpv_player: Arc::new(Mutex::new(MpvPlayer {
+                pid: None,
+                running: false,
+                channel: None,
+                started: false,
+            })),
+        }
+    }
+    pub fn tick(&self) {}
+    pub fn quit(&mut self) {
+        self.running = false;
+    }
+    pub fn get_channels(&mut self) {
+        if let Ok(fetched_channels) = fetch_channels(&self.m3u_url) {
+            self.all_channels = fetched_channels
+        };
+        self.channel_state.items = self.all_channels.clone();
+        if self.all_channels.first().is_some() {
+            self.channel_state.select_first()
+        }
+    }
+    pub fn add_notification(&mut self, notification: String) {
+        if let Some(old) = &self.notification {
+            self.notification = Some(format!(
+                "{}
+
+{}",
+                old, notification
+            ))
+        } else {
+            self.notification = Some(notification)
+        }
+    }
+    pub fn clear_state(&mut self) {
+        self.notification = None;
+        self.mpv_started = false;
+    }
+    pub fn clear_filter(&mut self) {
+        self.filter = String::new();
+    }
+}

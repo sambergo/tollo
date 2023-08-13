@@ -1,0 +1,14 @@
+[package]
+name = "tollo"
+version = "0.1.0"
+authors = ["Bergo <bergo@tutanota.com>"]
+license = "MIT"
+edition = "2021"
+
+[dependencies]
+crossterm = "0.27.0"
+ratatui = "0.22.0"
+regex = "1.9.3"
+fuzzy-matcher = "*"
+strsim = "0.10.0"
+reqwest = { version = "*", features = ["blocking"] }
