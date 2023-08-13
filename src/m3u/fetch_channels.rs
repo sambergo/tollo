@@ -1,3 +1,4 @@
+use crate::appdata::local::get_local_path;
 use crate::m3u::parse::parse_channels;
 use std::error::Error;
 use std::result::Result;
@@ -10,8 +11,14 @@ use reqwest::blocking::get;
 
 use crate::app::Channel;
 
+fn get_file_path() -> String {
+    let mut local_path = get_local_path();
+    local_path.push("playlist.m3u");
+    local_path.to_str().unwrap().to_string()
+}
+
 fn save_to_file(file_content: &str) -> std::io::Result<()> {
-    let file_path = "/tmp/tollo_playlist.m3u";
+    let file_path = get_file_path();
     let mut file = File::create(file_path)?;
     file.write_all(file_content.as_bytes())?;
     Ok(())
@@ -26,7 +33,7 @@ fn read_from_file(file_path: &str) -> std::io::Result<String> {
 
 /// Checks if the file at "/tmp/tollo_playlist.m3u" exists and has been modified within the last 48 hours.
 pub fn check_local_playlist_status() -> bool {
-    let file_path = "/tmp/tollo_playlist.m3u";
+    let file_path = get_file_path();
     if let Ok(metadata) = fs::metadata(file_path) {
         // Get the last modified time of the file
         if let Ok(modified_time) = metadata.modified() {
@@ -51,8 +58,8 @@ pub fn check_local_playlist_status() -> bool {
 pub fn fetch_channels(m3u_url: &str, always_update: bool) -> Result<Vec<Channel>, Box<dyn Error>> {
     // make a GET request
     if check_local_playlist_status() && !always_update {
-        let file_path = "/tmp/tollo_playlist.m3u";
-        let m3u_content = read_from_file(file_path)?;
+        let file_path = get_file_path();
+        let m3u_content = read_from_file(&file_path)?;
         let channels = parse_channels(&m3u_content);
         Ok(channels)
     } else {

@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
-use std::fs;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
+use std::{env, fs};
 
 use crate::app::Settings;
 
@@ -11,17 +11,17 @@ struct Config {
     settings: Settings,
 }
 
-// #[derive(Debug, Deserialize, Serialize)]
-// pub struct Settings {
-//     player: String,
-//     m3u_url: String,
-//     args: Vec<String>,
-// }
-
 pub fn init_settings() -> Settings {
-    let mut config_path: PathBuf = dirs::home_dir().expect("Failed to get home directory.");
-    config_path.push(".config/tollo/tollo.toml");
-
+    let mut config_path: PathBuf;
+    match env::var_os("XDG_CONFIG_HOME") {
+        Some(val) => config_path = PathBuf::from(val),
+        None => {
+            config_path =
+                PathBuf::from(env::var_os("HOME").expect("Failed to get home directory."));
+            config_path.push(".config");
+        }
+    }
+    config_path.push("tollo/tollo.toml");
     if !config_path.exists() {
         return create_default_settings(config_path);
     }

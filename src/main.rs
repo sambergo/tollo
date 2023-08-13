@@ -1,5 +1,5 @@
 use app::Channel;
-use appdata::config::init_settings;
+use appdata::{config::init_settings, local::is_same_as_prev};
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
     execute,
@@ -31,13 +31,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut terminal = Terminal::new(backend)?;
 
     let mut settings = init_settings();
-    let mut always_update: bool = false;
     let args: Vec<String> = env::args().collect();
     if args.len() > 1 && (args[1].starts_with("http://") || args[1].starts_with("https://")) {
         let m3u_url = args[1].clone();
         settings.m3u_url = m3u_url;
-        always_update = true;
     };
+    let always_update: bool = !is_same_as_prev(&settings.m3u_url);
     // create app and run it
     let mut app = App::new(settings);
     app.get_channels(always_update);
