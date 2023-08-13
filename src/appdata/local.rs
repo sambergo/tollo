@@ -24,6 +24,7 @@ pub fn get_local_path() -> PathBuf {
     local_path
 }
 
+#[allow(dead_code)]
 fn write_prev_url(local_path: PathBuf, m3u_url: &str) {
     if let Some(parent) = local_path.parent() {
         if !parent.exists() {
@@ -35,6 +36,7 @@ fn write_prev_url(local_path: PathBuf, m3u_url: &str) {
         .expect("Failed to write data");
 }
 
+#[allow(dead_code)]
 pub fn is_same_as_prev(m3u_url: &str) -> bool {
     let mut local_path = get_local_path();
     local_path.push("prev_url");

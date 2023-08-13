@@ -11,6 +11,7 @@ struct Config {
     settings: Settings,
 }
 
+#[allow(dead_code)]
 pub fn init_settings() -> Settings {
     let mut config_path: PathBuf;
     match env::var_os("XDG_CONFIG_HOME") {
