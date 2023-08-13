@@ -20,7 +20,7 @@ pub fn play_channel(app: &mut App, mpv_player_ref: Arc<Mutex<MpvPlayer>>) {
         app.mpv_started = true;
         app.mode = Mode::Playing;
         let channel_name = channel.name.clone();
-        let mut args: Vec<String> = app.settings.arguments.clone();
+        let mut args: Vec<String> = app.settings.args.clone();
         args.push(channel.url.clone());
         // let cmd = format!(
         //     "{} {} {}",

@@ -48,9 +48,9 @@ pub fn check_local_playlist_status() -> bool {
 }
 
 /// Read from file if its fresh enough, otherwise fetch from url
-pub fn fetch_channels(m3u_url: &str) -> Result<Vec<Channel>, Box<dyn Error>> {
+pub fn fetch_channels(m3u_url: &str, always_update: bool) -> Result<Vec<Channel>, Box<dyn Error>> {
     // make a GET request
-    if check_local_playlist_status() {
+    if check_local_playlist_status() && !always_update {
         let file_path = "/tmp/tollo_playlist.m3u";
         let m3u_content = read_from_file(file_path)?;
         let channels = parse_channels(&m3u_content);
@@ -71,7 +71,7 @@ mod tests {
     #[test]
     fn test_fetch_channels() {
         let m3u_url = "https://iptv-org.github.io/iptv/index.m3u";
-        let result = fetch_channels(m3u_url);
+        let result = fetch_channels(m3u_url, false);
         if let Ok(channels) = &result {
             println!("channels len: {}", channels.len());
         }

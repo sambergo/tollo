@@ -131,7 +131,7 @@ Quit app:           Ctrl-Q
 
     // FOOTER
 
-    let m3u_url_text = app.m3u_url.clone();
+    let m3u_url_text = app.settings.m3u_url.clone();
     let m3u_url_footer = Paragraph::new(m3u_url_text)
         .block(Block::default().borders(Borders::ALL))
         .alignment(Alignment::Center);

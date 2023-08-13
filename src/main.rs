@@ -1,4 +1,5 @@
 use app::Channel;
+use appdata::config::init_settings;
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
     execute,
@@ -14,6 +15,7 @@ use ratatui::{
 use std::{env, error::Error, io, iter::Iterator, sync::Arc};
 use strsim::levenshtein;
 mod app;
+mod appdata;
 mod components;
 mod m3u;
 mod ui;
@@ -28,16 +30,17 @@ fn main() -> Result<(), Box<dyn Error>> {
     let backend = CrosstermBackend::new(stderr);
     let mut terminal = Terminal::new(backend)?;
 
+    let mut settings = init_settings();
+    let mut always_update: bool = false;
     let args: Vec<String> = env::args().collect();
-    let m3u_url =
-        if args.len() > 1 && (args[1].starts_with("http://") || args[1].starts_with("https://")) {
-            args[1].clone()
-        } else {
-            "https://iptv-org.github.io/iptv/index.m3u".to_string()
-        };
+    if args.len() > 1 && (args[1].starts_with("http://") || args[1].starts_with("https://")) {
+        let m3u_url = args[1].clone();
+        settings.m3u_url = m3u_url;
+        always_update = true;
+    };
     // create app and run it
-    let mut app = App::new(m3u_url);
-    app.get_channels();
+    let mut app = App::new(settings);
+    app.get_channels(always_update);
     run_app(&mut terminal, &mut app);
 
     // restore terminal
