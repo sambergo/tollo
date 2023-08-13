@@ -419,19 +419,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "28b29a3cd74f0f4598934efe3aeba42bae0eb4680554128851ebbecb02af14e6"
 
 [[package]]
-name = "iptv-tui"
-version = "0.1.0"
-dependencies = [
- "crossterm 0.27.0",
- "fuzzy-matcher",
- "ratatui",
- "regex",
- "reqwest",
- "strsim",
- "tokio",
-]
-
-[[package]]
 name = "itoa"
 version = "1.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -984,23 +971,9 @@ dependencies = [
  "libc",
  "mio",
  "num_cpus",
- "parking_lot",
  "pin-project-lite",
- "signal-hook-registry",
  "socket2 0.5.3",
- "tokio-macros",
  "windows-sys",
-]
-
-[[package]]
-name = "tokio-macros"
-version = "2.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "630bdcf245f78637c13ec01ffae6187cca34625e8c63150d424b59e55af2675e"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
 ]
 
 [[package]]
@@ -1025,6 +998,18 @@ dependencies = [
  "pin-project-lite",
  "tokio",
  "tracing",
+]
+
+[[package]]
+name = "tollo"
+version = "0.1.0"
+dependencies = [
+ "crossterm 0.27.0",
+ "fuzzy-matcher",
+ "ratatui",
+ "regex",
+ "reqwest",
+ "strsim",
 ]
 
 [[package]]

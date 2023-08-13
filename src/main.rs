@@ -64,7 +64,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
         } {
             match app.mode {
                 Mode::Playing => match key.code {
-                    KeyCode::Esc | KeyCode::Enter => app.mode = Mode::Search,
+                    KeyCode::Esc | KeyCode::Enter => app.mode = Mode::Normal,
                     KeyCode::Char('q') if key.modifiers.contains(event::KeyModifiers::CONTROL) => {
                         app.running = false
                     }
@@ -74,7 +74,6 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                     KeyCode::Char('q') => {
                         app.running = false;
                     }
-                    // KeyCode::Char('r') => app.get_channels("m3u urli"),
                     KeyCode::Char('s') | KeyCode::Char('/') | KeyCode::Char('i') => {
                         app.mode = Mode::Search
                     }
@@ -93,6 +92,8 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                         app.clear_filter();
                         handle_search(app);
                     }
+                    KeyCode::Char('g') => app.channel_state.first(),
+                    KeyCode::Char('G') => app.channel_state.last(),
                     _ => {}
                 },
                 Mode::Search => match key.code {

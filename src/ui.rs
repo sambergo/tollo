@@ -4,7 +4,7 @@ use ratatui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout},
     prelude::Alignment,
-    style::{Color, Modifier, Style},
+    style::{Color, Modifier, Style, Stylize},
     text::Text,
     widgets::{Block, Borders, List, ListItem, Paragraph},
     Frame,
@@ -35,9 +35,9 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
     // HEAD
     let header_block = Block::default()
         .borders(Borders::ALL)
-        .style(Style::default().bg(Color::Rgb(42, 43, 60)));
+        .style(Style::default());
 
-    let header = Paragraph::new(Text::styled("TOLLO", Style::default().fg(Color::Green)))
+    let header = Paragraph::new(Text::styled("TOLLO", Style::default()))
         .alignment(Alignment::Center)
         .block(header_block);
 
@@ -89,7 +89,7 @@ Quit app:           Ctrl-Q
             let title = format!("Channels ({})", list_items.len());
             let list = List::new(list_items)
                 .block(Block::default().title(title).borders(Borders::ALL))
-                .style(Style::default().fg(Color::White))
+                .style(Style::default())
                 .highlight_style(Style::default().add_modifier(Modifier::ITALIC))
                 .highlight_symbol(">>");
             frame.render_stateful_widget(list, body_chunks[0], &mut app.channel_state.state);
@@ -138,7 +138,7 @@ Quit app:           Ctrl-Q
 
     // let search_text = Paragraph::new(app.filter.clone()).block(key_block);
     let search_footer = Paragraph::new(app.filter.clone())
-        .block(Block::default().borders(Borders::ALL))
+        .block(Block::default().borders(Borders::ALL).fg(Color::White))
         .alignment(Alignment::Center);
 
     let footer_chunks = Layout::default()

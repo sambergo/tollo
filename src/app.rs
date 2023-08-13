@@ -28,6 +28,12 @@ pub struct ChannelList {
 
 #[allow(dead_code)]
 impl ChannelList {
+    pub fn first(&mut self) {
+        self.state.select(Some(0))
+    }
+    pub fn last(&mut self) {
+        self.state.select(Some(self.items.len()))
+    }
     pub fn next(&mut self) {
         let i = match self.state.selected() {
             Some(i) => {
