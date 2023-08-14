@@ -9,3 +9,5 @@ mod m3u;
 mod components;
 
 mod appdata;
+
+mod help_message;

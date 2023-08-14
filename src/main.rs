@@ -7,6 +7,7 @@ use crossterm::{
 };
 use fuzzy_matcher::skim::SkimMatcherV2;
 use fuzzy_matcher::FuzzyMatcher;
+use help_message::print_help_message;
 use m3u::play_channel::play_channel;
 use ratatui::{
     backend::{Backend, CrosstermBackend},
@@ -17,6 +18,7 @@ use strsim::levenshtein;
 mod app;
 mod appdata;
 mod components;
+mod help_message;
 mod m3u;
 mod ui;
 use crate::app::{App, Mode};
@@ -24,6 +26,11 @@ use crate::ui::render;
 
 fn main() -> Result<(), Box<dyn Error>> {
     // setup terminal
+    let args: Vec<String> = env::args().collect();
+    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+        print_help_message();
+        std::process::exit(0);
+    }
     enable_raw_mode()?;
     let mut stderr = io::stderr(); // This is a special case. Normally using stdout is fine
     execute!(stderr, EnterAlternateScreen, EnableMouseCapture)?;

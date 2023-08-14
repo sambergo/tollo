@@ -1,51 +1,15 @@
-# Tollo
+#[allow(dead_code)]
+pub fn print_help_message() {
+    println!(
+        r#"
+Usage:
+tollo [url]
+Settings: ~/.config/tollo/tollo.toml
 
-IPTV terminal UI player with fuzzy search written in rust.
-
-## Features
-
-- [Built with ratatui](https://github.com/ratatui-org/ratatui)
-- Compatible with `m3u` playlists.
-- Fuzzy search for channels by name.
-- Keyboard shortcuts for easy navigation.
-- Utilizes `mpv` or player of your choice for playing the streams.
-
-## Installation
-
-Before you can run this application, make sure you have Rust installed. If you don't, you can install it from the [official website](https://www.rust-lang.org/tools/install).
-
-Now clone the repository and run the application:
-
-```bash
-git clone https://github.com/sambergo/tollo.git
-cd tollo
-chmod +x install.sh
-./install.sh
-```
-
-## Configuration
-
-```toml
-[settings]
-player = "mpv"
-args = ["--fullscreen", "--volume=50" ]
-m3u_url = "https://iptv-org.github.io/iptv/index.m3u"
-
-```
-
-## TODO
-
-- [] Favorites
-- [] Playlist from path?
-
-## Usage
-
-```bash
-# defaults ~/.config/tollo/tollo.toml url
-tollo [URL]
-```
-
-### Key bindings
+Options:
+-h, --help               Display this help message
+[url]                    playlist for this run (this option will use the specified URL for a single run, doesn't change the default URL.)
+Note: To set a default URL, please add it to the `~/.config/tollo/tollo.toml` config file.
 
 | Key                     | Action                                    |
 | ----------------------- | ----------------------------------------- |
@@ -67,11 +31,6 @@ tollo [URL]
 | `Ctrl+q`                | Quit application                          |
 | `Enter`                 | Plays the selected channel                |
 | -----------------       | ----------------------------------------- |
-
-## Dependencies
-
-- mpv or video player of your choice
-
-## License
-
-[The MIT License](https://opensource.org/licenses/MIT)
+        "#
+    );
+}
