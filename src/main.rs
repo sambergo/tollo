@@ -1,4 +1,4 @@
-use app::Channel;
+use app::{Channel, LastKeyPress};
 use appdata::{config::init_settings, local::is_same_as_prev};
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
@@ -12,7 +12,7 @@ use ratatui::{
     backend::{Backend, CrosstermBackend},
     Terminal,
 };
-use std::{env, error::Error, io, iter::Iterator, sync::Arc};
+use std::{env, error::Error, io, iter::Iterator, sync::Arc, time::Instant};
 use strsim::levenshtein;
 mod app;
 mod appdata;
@@ -76,9 +76,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                     KeyCode::Char('q') => {
                         app.running = false;
                     }
-                    KeyCode::Char('s') | KeyCode::Char('/') | KeyCode::Char('i') => {
-                        app.mode = Mode::Search
-                    }
+                    KeyCode::Char('/') | KeyCode::Char('i') => app.mode = Mode::Search,
                     KeyCode::Down | KeyCode::Char('j') => app.channel_state.next(),
                     KeyCode::Up | KeyCode::Char('k') => app.channel_state.previous(),
                     KeyCode::Esc => app.clear_state(),
@@ -98,48 +96,85 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                     KeyCode::Char('G') => app.channel_state.last(),
                     _ => {}
                 },
-                Mode::Search => match key.code {
-                    KeyCode::Char('c') if key.modifiers.contains(event::KeyModifiers::CONTROL) => {
-                        app.mode = Mode::Normal
-                    }
-                    KeyCode::Esc => app.mode = Mode::Normal,
-                    KeyCode::Down => app.channel_state.next(),
-                    KeyCode::Up => app.channel_state.previous(),
-                    KeyCode::Char('l') if key.modifiers.contains(event::KeyModifiers::CONTROL) => {
-                        app.clear_filter();
-                        handle_search(app);
-                    }
-                    KeyCode::Char('j') if key.modifiers.contains(event::KeyModifiers::CONTROL) => {
-                        app.channel_state.next()
-                    }
-                    KeyCode::Char('k') if key.modifiers.contains(event::KeyModifiers::CONTROL) => {
-                        app.channel_state.previous()
-                    }
-                    KeyCode::Char('q') if key.modifiers.contains(event::KeyModifiers::CONTROL) => {
-                        app.running = false
-                    }
-                    KeyCode::Backspace => {
-                        app.filter.pop();
-                        handle_search(app)
-                    }
-                    KeyCode::Char(value) => {
-                        app.filter.push(value);
-                        handle_search(app)
-                    }
-                    KeyCode::Enter => {
-                        if app.notification.is_some() {
-                            app.clear_state()
-                        } else {
-                            let mpv_player_ref = Arc::clone(&app.mpv_player);
-                            play_channel(app, mpv_player_ref)
+                Mode::Search => {
+                    match key.code {
+                        KeyCode::Char('c')
+                            if key.modifiers.contains(event::KeyModifiers::CONTROL) =>
+                        {
+                            app.mode = Mode::Normal;
                         }
-                    }
-                    _ => {}
-                },
+                        KeyCode::Esc => app.mode = Mode::Normal,
+                        KeyCode::Down => app.channel_state.next(),
+                        KeyCode::Up => app.channel_state.previous(),
+                        KeyCode::Char('l')
+                            if key.modifiers.contains(event::KeyModifiers::CONTROL) =>
+                        {
+                            app.clear_filter();
+                            handle_search(app);
+                        }
+                        KeyCode::Char('j')
+                            if key.modifiers.contains(event::KeyModifiers::CONTROL) =>
+                        {
+                            app.channel_state.next();
+                        }
+                        KeyCode::Char('k')
+                            if key.modifiers.contains(event::KeyModifiers::CONTROL) =>
+                        {
+                            app.channel_state.previous();
+                        }
+                        KeyCode::Char('q')
+                            if key.modifiers.contains(event::KeyModifiers::CONTROL) =>
+                        {
+                            app.running = false;
+                        }
+                        KeyCode::Backspace => {
+                            app.filter.pop();
+                            handle_search(app);
+                        }
+                        KeyCode::Char(value) => {
+                            if check_last_keypress_jk(&app.last_key_press, key.code) {
+                                app.filter.pop();
+                                handle_search(app);
+                                app.mode = Mode::Normal;
+                            } else {
+                                app.filter.push(value);
+                                handle_search(app);
+                            }
+                        }
+                        KeyCode::Enter => {
+                            if app.notification.is_some() {
+                                app.clear_state();
+                            } else {
+                                let mpv_player_ref = Arc::clone(&app.mpv_player);
+                                play_channel(app, mpv_player_ref);
+                            }
+                        }
+                        _ => {}
+                    };
+                    app.last_key_press = Some(LastKeyPress {
+                        code: key.code,
+                        time: Instant::now(),
+                    });
+                }
                 Mode::UrlEdit => todo!(),
             }
         }
     }
+}
+
+fn check_last_keypress_jk(last_key_press: &Option<LastKeyPress>, current_key: KeyCode) -> bool {
+    if current_key == KeyCode::Char('k') {
+        if let Some(last_key) = last_key_press {
+            if last_key.code == KeyCode::Char('j') {
+                let now = Instant::now();
+                let duration_since = now.duration_since(last_key.time);
+                if duration_since.as_millis() < 300 {
+                    return true;
+                }
+            }
+        }
+    }
+    false
 }
 
 pub fn handle_search(app: &mut App) {

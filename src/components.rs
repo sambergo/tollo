@@ -17,7 +17,7 @@ pub fn mode_box(app: &App) -> Paragraph {
         Mode::Normal => {
             "
 Navigate:           🠳, J & 🠱, K
-Search:             S, /, I
+Search:             /, I
 Play:               Return
 Toggle favorite:    F
 Clear search:       Ctrl-L

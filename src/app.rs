@@ -1,5 +1,9 @@
+use crossterm::event::KeyCode;
 use serde::{Deserialize, Serialize};
-use std::sync::{Arc, Mutex};
+use std::{
+    sync::{Arc, Mutex},
+    time::Instant,
+};
 
 use ratatui::widgets::ListState;
 
@@ -83,6 +87,11 @@ pub struct MpvPlayer {
     pub started: bool,
 }
 
+pub struct LastKeyPress {
+    pub code: KeyCode,
+    pub time: Instant,
+}
+
 pub struct App {
     pub mode: Mode,
     pub running: bool,
@@ -94,6 +103,7 @@ pub struct App {
     pub settings: Settings,
     pub notification: Option<String>,
     pub mpv_player: Arc<Mutex<MpvPlayer>>,
+    pub last_key_press: Option<LastKeyPress>,
 }
 
 #[allow(dead_code)]
@@ -118,6 +128,7 @@ impl App {
                 channel: None,
                 started: false,
             })),
+            last_key_press: None,
         }
     }
     pub fn tick(&self) {}
