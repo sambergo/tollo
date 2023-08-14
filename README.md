@@ -21,7 +21,6 @@ Clone the repository and run the application:
 ```bash
 git clone https://github.com/sambergo/tollo.git
 cd tollo
-chmod +x install.sh
 ./install.sh
 ```
 
