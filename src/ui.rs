@@ -59,16 +59,16 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
             let playing_text = format!(
                 "
 Playing:        {}
-PID:                {}
+PID:            {}
 
-Return:             Return, Esc
-Quit app:           Ctrl-Q
+Return:         Return, Esc
+Quit app:       Ctrl-Q
 ",
                 channel, pid
             );
             let playing_widget = Paragraph::new(playing_text)
                 .block(Block::default().borders(Borders::ALL))
-                .alignment(Alignment::Center);
+                .alignment(Alignment::Left);
             frame.render_widget(playing_widget, vertical_chunks[1])
         }
         _ => {
