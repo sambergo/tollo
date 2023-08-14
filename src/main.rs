@@ -5,8 +5,7 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use fuzzy_matcher::skim::SkimMatcherV2;
-use fuzzy_matcher::FuzzyMatcher;
+use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 use help_message::print_help_message;
 use m3u::play_channel::play_channel;
 use ratatui::{
@@ -21,8 +20,10 @@ mod components;
 mod help_message;
 mod m3u;
 mod ui;
-use crate::app::{App, Mode};
-use crate::ui::render;
+use crate::{
+    app::{App, Mode},
+    ui::render,
+};
 
 fn main() -> Result<(), Box<dyn Error>> {
     // setup terminal
@@ -38,7 +39,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut terminal = Terminal::new(backend)?;
 
     let mut settings = init_settings();
-    let args: Vec<String> = env::args().collect();
     if args.len() > 1 && (args[1].starts_with("http://") || args[1].starts_with("https://")) {
         let m3u_url = args[1].clone();
         settings.m3u_url = m3u_url;
@@ -73,7 +73,10 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
         } {
             match app.mode {
                 Mode::Playing => match key.code {
-                    KeyCode::Esc | KeyCode::Enter => app.mode = Mode::Normal,
+                    KeyCode::Esc | KeyCode::Enter => {
+                        app.mode = Mode::Normal;
+                        app.clear_state()
+                    }
                     KeyCode::Char('q') if key.modifiers.contains(event::KeyModifiers::CONTROL) => {
                         app.running = false
                     }
@@ -138,15 +141,16 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                             app.filter.pop();
                             handle_search(app);
                         }
+                        KeyCode::Char('k')
+                            if check_last_keypress_jk(&app.last_key_press, key.code) =>
+                        {
+                            app.filter.pop();
+                            handle_search(app);
+                            app.mode = Mode::Normal;
+                        }
                         KeyCode::Char(value) => {
-                            if check_last_keypress_jk(&app.last_key_press, key.code) {
-                                app.filter.pop();
-                                handle_search(app);
-                                app.mode = Mode::Normal;
-                            } else {
-                                app.filter.push(value);
-                                handle_search(app);
-                            }
+                            app.filter.push(value);
+                            handle_search(app);
                         }
                         KeyCode::Enter => {
                             if app.notification.is_some() {
@@ -207,5 +211,5 @@ pub fn handle_search(app: &mut App) {
         });
         app.channel_state.items = result;
     }
-    app.channel_state.select_first();
+    app.channel_state.first();
 }

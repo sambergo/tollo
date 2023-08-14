@@ -37,7 +37,7 @@ impl ChannelList {
         self.state.select(Some(0))
     }
     pub fn last(&mut self) {
-        self.state.select(Some(self.items.len()))
+        self.state.select(Some(self.items.len() - 1))
     }
     pub fn next(&mut self) {
         let i = match self.state.selected() {
@@ -64,9 +64,6 @@ impl ChannelList {
             None => 0,
         };
         self.state.select(Some(i));
-    }
-    pub fn select_first(&mut self) {
-        self.state.select(Some(0));
     }
     fn unselect(&mut self) {
         self.state.select(None);
@@ -141,7 +138,7 @@ impl App {
         };
         self.channel_state.items = self.all_channels.clone();
         if self.all_channels.first().is_some() {
-            self.channel_state.select_first()
+            self.channel_state.first()
         }
     }
     pub fn add_notification(&mut self, notification: String) {
