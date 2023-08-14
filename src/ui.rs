@@ -59,10 +59,10 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
             let playing_text = format!(
                 "
 Playing:        {}
-PID:                {}
+PID:            {}
 
-Return:             Return, Esc
-Quit app:           Ctrl-Q
+Return:         Return, Esc
+Quit app:       Ctrl-Q
 ",
                 channel, pid
             );
