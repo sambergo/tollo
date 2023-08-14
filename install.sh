@@ -10,4 +10,8 @@ fi
 
 cp ./target/release/tollo "$target_dir"
 
-echo "Installation is complete to $target_dir. You can run the program with 'tollo'"
+if [ $? -eq 0 ]; then
+	echo "Installation is completed to $target_dir. You can run the program with 'tollo'"
+else
+	echo "Installation failed. Make sure you have rust installed."
+fi

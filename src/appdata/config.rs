@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::fs::File;
+use std::fs::{create_dir_all, File};
 use std::io::Write;
 use std::path::PathBuf;
 use std::{env, fs};
@@ -36,6 +36,11 @@ pub fn init_settings() -> Settings {
 }
 
 fn create_default_settings(config_path: PathBuf) -> Settings {
+    if let Some(parent) = config_path.parent() {
+        if !parent.exists() {
+            create_dir_all(parent).expect("Failed to create directory");
+        }
+    }
     let config = Config {
         settings: Settings {
             player: "mpv".to_string(),
