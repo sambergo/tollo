@@ -29,7 +29,7 @@ Quit:               Q
             "
 Type to search.
 
-Normal mode:    ESC, Ctrl-C
+Normal mode:    ESC, Ctrl-C, JK
 Play:           Return
 Navigate:       🠳, Ctrl-J & 🠱, Ctrl-K
 Clear:          Ctrl-L

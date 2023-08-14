@@ -32,7 +32,7 @@ tollo [URL]
 
 ## Configuration example
 
-`~/.config/tollo/tollo.toml`
+Run `tollo` once to create default config `~/.config/tollo/tollo.toml`
 
 ```toml
 [settings]
