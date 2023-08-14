@@ -88,8 +88,9 @@ pub fn settings_box<'a>(app: &App) -> Paragraph<'a> {
     let title = "Settings";
     let p = format!(
         "Command to run:
-{}",
-        app.settings.player
+{} {}",
+        app.settings.player,
+        app.settings.args.join(" ")
     );
     let settings_box = Paragraph::new(Text::styled(p, Style::default()))
         .block(Block::default().title(title).borders(Borders::ALL))

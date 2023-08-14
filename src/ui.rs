@@ -45,7 +45,7 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
 
     match app.mode {
         Mode::Playing => {
-            let (channel, pid, running) = {
+            let (channel, pid, _running) = {
                 let mpv_player_ref = Arc::clone(&app.mpv_player);
                 let mpv = mpv_player_ref.lock().unwrap();
                 let channel = mpv.channel.as_ref().unwrap_or(&String::from("")).clone();
@@ -53,9 +53,9 @@ pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
                 let running = mpv.running;
                 (channel, pid, running)
             };
-            if !running {
-                app.mode = Mode::Normal;
-            }
+            // if !running {
+            //     app.mode = Mode::Normal;
+            // }
             let playing_text = format!(
                 "
 Playing:        {}
