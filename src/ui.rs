@@ -86,7 +86,12 @@ Quit app:       Ctrl-Q
                     .map(|channel| ListItem::new(channel.name.to_string())),
             );
 
-            let title = format!("Channels ({})", list_items.len());
+            let cha_or_fav = if app.show_favorites {
+                "Favorites"
+            } else {
+                "Channels"
+            };
+            let title = format!("{} ({})", cha_or_fav, list_items.len());
             let list = List::new(list_items)
                 .block(Block::default().title(title).borders(Borders::ALL))
                 .style(Style::default())
