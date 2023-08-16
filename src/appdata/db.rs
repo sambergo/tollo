@@ -2,7 +2,7 @@ extern crate rusqlite;
 use std::env;
 
 use crate::app::Channel;
-use rusqlite::{Connection, Result};
+use rusqlite::{params, Connection, Result};
 
 pub fn connect_db() -> Result<Connection, rusqlite::Error> {
     let data_home = env::var("XDG_DATA_HOME").unwrap_or_else(|_| String::from(".local/share"));
@@ -49,25 +49,19 @@ pub fn add_favorite(db: Connection, channel: &Channel) -> bool {
     result.is_ok()
 }
 
+pub fn delete_favorite(db: Connection, channel: &Channel) -> bool {
+    let result = db.execute(
+        "DELETE FROM favorites WHERE url = ?1",
+        params![&channel.url],
+    );
+    result.is_ok()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    #[test]
-    fn test_db() {
-        let db = connect_db();
-        assert!(db.is_ok());
-    }
 
-    #[test]
-    fn test_get_favorites() {
-        let db = connect_db();
-        let favs = get_favorites(db.unwrap());
-        println!("{:?}", favs);
-        assert!(favs.is_ok());
-    }
-
-    #[test]
-    fn test_add_favorite() {
+    fn setup() -> (Result<Connection, rusqlite::Error>, Channel) {
         let db = connect_db();
         let newfav = Channel {
             name: "MOCK channel".to_owned(),
@@ -77,7 +71,34 @@ mod tests {
             group: "MOCK group".to_owned(),
             url: "MOCK url".to_owned(),
         };
+        (db, newfav)
+    }
+
+    #[test]
+    fn test_db() {
+        let (db, _) = setup();
+        assert!(db.is_ok());
+    }
+
+    #[test]
+    fn test_get_favorites() {
+        let (db, _) = setup();
+        let favs = get_favorites(db.unwrap());
+        println!("{:?}", favs);
+        assert!(favs.is_ok());
+    }
+
+    #[test]
+    fn test_add_favorite() {
+        let (db, newfav) = setup();
         let add_ok = add_favorite(db.unwrap(), &newfav);
         assert!(add_ok);
+    }
+
+    #[test]
+    fn test_delete_favorite() {
+        let (db, newfav) = setup();
+        let delete_ok = delete_favorite(db.unwrap(), &newfav);
+        assert!(delete_ok);
     }
 }
