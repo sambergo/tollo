@@ -1,4 +1,5 @@
 use crossterm::event::KeyCode;
+use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
 use std::{
     sync::{Arc, Mutex},
@@ -7,7 +8,10 @@ use std::{
 
 use ratatui::widgets::ListState;
 
-use crate::m3u::fetch_channels::fetch_channels;
+use crate::{
+    appdata::db::{add_favorite, delete_favorite, get_favorites},
+    m3u::fetch_channels::fetch_channels,
+};
 
 #[allow(dead_code)]
 pub enum Mode {
@@ -34,6 +38,14 @@ pub struct ChannelList {
 
 #[allow(dead_code)]
 impl ChannelList {
+    pub fn current(&mut self) -> Option<&Channel> {
+        let selected_channel = if let Some(i) = self.state.selected() {
+            self.items.get(i)
+        } else {
+            None
+        };
+        selected_channel
+    }
     pub fn first(&mut self) {
         self.state.select(Some(0))
     }
@@ -97,16 +109,17 @@ pub struct App {
     pub all_channels: Vec<Channel>,
     pub filter: String,
     pub channel_state: ChannelList,
-    pub favorites: Vec<String>,
+    pub favorites: ChannelList,
     pub settings: Settings,
     pub notification: Option<String>,
     pub mpv_player: Arc<Mutex<MpvPlayer>>,
     pub last_key_press: Option<LastKeyPress>,
+    pub db: Result<Connection, rusqlite::Error>,
 }
 
 #[allow(dead_code)]
 impl App {
-    pub fn new(settings: Settings) -> App {
+    pub fn new(settings: Settings, db: Result<Connection, rusqlite::Error>) -> App {
         App {
             mode: Mode::Search,
             running: true,
@@ -117,7 +130,10 @@ impl App {
                 state: ListState::default(),
                 items: vec![],
             },
-            favorites: Vec::new(),
+            favorites: ChannelList {
+                state: ListState::default(),
+                items: vec![],
+            },
             settings,
             notification: None,
             mpv_player: Arc::new(Mutex::new(MpvPlayer {
@@ -127,6 +143,7 @@ impl App {
                 started: false,
             })),
             last_key_press: None,
+            db,
         }
     }
     pub fn tick(&self) {}
@@ -140,6 +157,23 @@ impl App {
         self.channel_state.items = self.all_channels.clone();
         if self.all_channels.first().is_some() {
             self.channel_state.first()
+        }
+    }
+    pub fn get_favorites(&mut self) {
+        if let Ok(favs) = get_favorites(&self.db) {
+            self.favorites.items = favs
+        }
+    }
+    pub fn toggle_favorite(&mut self) {
+        if let Some(i) = self.channel_state.state.selected() {
+            if let Some(item) = self.channel_state.items.get_mut(i) {
+                item.favorite = !item.favorite;
+                if item.favorite {
+                    add_favorite(&self.db, item);
+                } else {
+                    delete_favorite(&self.db, item);
+                }
+            }
         }
     }
     pub fn add_notification(&mut self, notification: String) {

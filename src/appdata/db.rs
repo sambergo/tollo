@@ -22,39 +22,53 @@ pub fn connect_db() -> Result<Connection, rusqlite::Error> {
     Ok(db)
 }
 
-pub fn get_favorites(db: Connection) -> Result<Vec<Channel>, rusqlite::Error> {
-    let mut stmt = db.prepare("SELECT * FROM favorites")?;
-    let favorites_iter = stmt.query_map([], |row| {
-        Ok(Channel {
-            name: row.get(0)?,
-            id: row.get(1)?,
-            logo: row.get(2)?,
-            favorite: row.get(3)?,
-            group: row.get(4)?,
-            url: row.get(5)?,
-        })
-    })?;
-    let mut result = vec![];
-    for favorite in favorites_iter {
-        result.push(favorite.unwrap())
+pub fn get_favorites(
+    db: &Result<Connection, rusqlite::Error>,
+) -> Result<Vec<Channel>, rusqlite::Error> {
+    if let Ok(db) = db {
+        let mut stmt = db.prepare("SELECT * FROM favorites")?;
+        let favorites_iter = stmt.query_map([], |row| {
+            Ok(Channel {
+                name: row.get(0)?,
+                id: row.get(1)?,
+                logo: row.get(2)?,
+                favorite: row.get(3)?,
+                group: row.get(4)?,
+                url: row.get(5)?,
+            })
+        })?;
+        let mut result = vec![];
+        for favorite in favorites_iter {
+            result.push(favorite.unwrap())
+        }
+        Ok(result)
+    } else {
+        Err(rusqlite::Error::InvalidQuery)
     }
-    Ok(result)
 }
 
-pub fn add_favorite(db: Connection, channel: &Channel) -> bool {
-    let result = db.execute(
+pub fn add_favorite(db: &Result<Connection, rusqlite::Error>, channel: &Channel) -> bool {
+    if let Ok(db) = db {
+        let result = db.execute(
         "INSERT INTO favorites (name, id, logo, favorite, agroup, url) values (?1, ?2, ?3, ?4, ?5, ?6)",
         (&channel.name, &channel.id, &channel.logo, 1, &channel.group, &channel.url ),
     );
-    result.is_ok()
+        result.is_ok()
+    } else {
+        false
+    }
 }
 
-pub fn delete_favorite(db: Connection, channel: &Channel) -> bool {
-    let result = db.execute(
-        "DELETE FROM favorites WHERE url = ?1",
-        params![&channel.url],
-    );
-    result.is_ok()
+pub fn delete_favorite(db: &Result<Connection, rusqlite::Error>, channel: &Channel) -> bool {
+    if let Ok(db) = db {
+        let result = db.execute(
+            "DELETE FROM favorites WHERE url = ?1",
+            params![&channel.url],
+        );
+        result.is_ok()
+    } else {
+        false
+    }
 }
 
 #[cfg(test)]
@@ -83,7 +97,7 @@ mod tests {
     #[test]
     fn test_get_favorites() {
         let (db, _) = setup();
-        let favs = get_favorites(db.unwrap());
+        let favs = get_favorites(&db);
         println!("{:?}", favs);
         assert!(favs.is_ok());
     }
@@ -91,14 +105,14 @@ mod tests {
     #[test]
     fn test_add_favorite() {
         let (db, newfav) = setup();
-        let add_ok = add_favorite(db.unwrap(), &newfav);
+        let add_ok = add_favorite(&db, &newfav);
         assert!(add_ok);
     }
 
     #[test]
     fn test_delete_favorite() {
         let (db, newfav) = setup();
-        let delete_ok = delete_favorite(db.unwrap(), &newfav);
+        let delete_ok = delete_favorite(&db, &newfav);
         assert!(delete_ok);
     }
 }

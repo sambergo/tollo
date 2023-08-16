@@ -1,5 +1,5 @@
 use app::{Channel, LastKeyPress};
-use appdata::{config::init_settings, local::is_same_as_prev};
+use appdata::{config::init_settings, db::connect_db, local::is_same_as_prev};
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
     execute,
@@ -45,7 +45,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     };
     let always_update: bool = !is_same_as_prev(&settings.m3u_url);
     // create app and run it
-    let mut app = App::new(settings);
+    let db = connect_db();
+    let mut app = App::new(settings, db);
+    app.get_favorites();
     app.get_channels(always_update);
     run_app(&mut terminal, &mut app);
 
@@ -104,6 +106,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                     }
                     KeyCode::Char('g') => app.channel_state.first(),
                     KeyCode::Char('G') => app.channel_state.last(),
+                    KeyCode::Char('f') => app.toggle_favorite(),
                     _ => {}
                 },
                 Mode::Search => {
