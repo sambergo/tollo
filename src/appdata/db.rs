@@ -4,6 +4,7 @@ use std::env;
 use crate::app::Channel;
 use rusqlite::{params, Connection, Result};
 
+#[allow(dead_code)]
 pub fn connect_db() -> Result<Connection, rusqlite::Error> {
     let data_home = env::var("XDG_DATA_HOME").unwrap_or_else(|_| String::from(".local/share"));
     let db_path = format!("{}/tollo/favorites.db", data_home);

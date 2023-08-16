@@ -115,6 +115,7 @@ pub struct App {
     pub mpv_player: Arc<Mutex<MpvPlayer>>,
     pub last_key_press: Option<LastKeyPress>,
     pub db: Result<Connection, rusqlite::Error>,
+    pub show_favorites: bool,
 }
 
 #[allow(dead_code)]
@@ -144,6 +145,7 @@ impl App {
             })),
             last_key_press: None,
             db,
+            show_favorites: false,
         }
     }
     pub fn tick(&self) {}
@@ -151,7 +153,9 @@ impl App {
         self.running = false;
     }
     pub fn get_channels(&mut self, always_update: bool) {
-        if let Ok(fetched_channels) = fetch_channels(&self.settings.m3u_url, always_update) {
+        if let Ok(fetched_channels) =
+            fetch_channels(&self.settings.m3u_url, always_update, &self.favorites.items)
+        {
             self.all_channels = fetched_channels
         };
         self.channel_state.items = self.all_channels.clone();
@@ -168,6 +172,11 @@ impl App {
         if let Some(i) = self.channel_state.state.selected() {
             if let Some(item) = self.channel_state.items.get_mut(i) {
                 item.favorite = !item.favorite;
+                for channel in self.all_channels.iter_mut() {
+                    if channel.url == item.url {
+                        channel.favorite = !channel.favorite
+                    }
+                }
                 if item.favorite {
                     add_favorite(&self.db, item);
                 } else {

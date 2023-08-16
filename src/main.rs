@@ -106,7 +106,11 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                     }
                     KeyCode::Char('g') => app.channel_state.first(),
                     KeyCode::Char('G') => app.channel_state.last(),
-                    KeyCode::Char('f') => app.toggle_favorite(),
+                    KeyCode::Char('F') => app.toggle_favorite(),
+                    KeyCode::Char('f') if key.modifiers.contains(event::KeyModifiers::CONTROL) => {
+                        app.show_favorites = !app.show_favorites;
+                        handle_search(app);
+                    }
                     _ => {}
                 },
                 Mode::Search => {
@@ -139,6 +143,12 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                             if key.modifiers.contains(event::KeyModifiers::CONTROL) =>
                         {
                             app.running = false;
+                        }
+                        KeyCode::Char('f')
+                            if key.modifiers.contains(event::KeyModifiers::CONTROL) =>
+                        {
+                            app.show_favorites = !app.show_favorites;
+                            handle_search(app);
                         }
                         KeyCode::Backspace => {
                             app.filter.pop();
@@ -193,11 +203,19 @@ fn check_last_keypress_jk(last_key_press: &Option<LastKeyPress>, current_key: Ke
 
 pub fn handle_search(app: &mut App) {
     let matcher = SkimMatcherV2::default();
-    if app.filter.is_empty() {
-        app.channel_state.items = app.all_channels.clone();
+    let channels = if app.show_favorites {
+        app.all_channels
+            .iter()
+            .filter(|channel| channel.favorite)
+            .cloned()
+            .collect()
     } else {
-        let mut result: Vec<Channel> = app
-            .all_channels
+        app.all_channels.clone()
+    };
+    if app.filter.is_empty() {
+        app.channel_state.items = channels;
+    } else {
+        let mut result: Vec<Channel> = channels
             .iter()
             .filter(|channel| {
                 let score =

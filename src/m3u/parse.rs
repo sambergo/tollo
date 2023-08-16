@@ -1,7 +1,7 @@
 use regex::Regex;
 
 use crate::app::Channel;
-pub fn parse_channels(m3u_content: &str) -> Vec<Channel> {
+pub fn parse_channels(m3u_content: &str, favorites: &[Channel]) -> Vec<Channel> {
     let re = Regex::new(r#"EXTINF:-?1?[^\n]+\n(https?://\S+)"#).expect("Invalid regex pattern");
     let channel_text_captures: Vec<String> = re
         .captures_iter(m3u_content)
@@ -15,6 +15,7 @@ pub fn parse_channels(m3u_content: &str) -> Vec<Channel> {
     let re_url = Regex::new(r#"EXTINF[^\n]+\n(https?://\S+)"#).expect("Invalid regex pattern");
     let re_tail_name = Regex::new(r#",([^\n]+)"#).expect("Invalid regex pattern");
     let mut channels: Vec<Channel> = vec![];
+    let favorite_urls: Vec<String> = favorites.iter().map(|f| f.url.clone()).collect();
 
     for channel_text in channel_text_captures {
         let id: String = re_id
@@ -51,7 +52,7 @@ pub fn parse_channels(m3u_content: &str) -> Vec<Channel> {
             name,
             id,
             logo,
-            favorite: false,
+            favorite: favorite_urls.contains(&url),
             group,
             url,
         });

@@ -15,26 +15,54 @@ pub fn mode_box(app: &App) -> Paragraph {
     };
     let p = match app.mode {
         Mode::Normal => {
-            "
+            if app.show_favorites {
+                "
 Navigate:           🠳, J & 🠱, K
 Search:             /, I
 Play:               Return
-Toggle favorite:    F
+Show all:           Ctrl-F
+Remove favorite:    Shift-F
 Clear search:       Ctrl-L
 Reload channels:    R
 Quit:               Q
 "
+            } else {
+                "
+Navigate:           🠳, J & 🠱, K
+Search:             /, I
+Play:               Return
+Show favorites:     Ctrl-F
+Add favorite:       Shift-F
+Clear search:       Ctrl-L
+Reload channels:    R
+Quit:               Q
+"
+            }
         }
         Mode::Search => {
-            "
+            if app.show_favorites {
+                "
 Type to search.
 
-Normal mode:    ESC, Ctrl-C, JK
-Play:           Return
-Navigate:       🠳, Ctrl-J & 🠱, Ctrl-K
-Clear:          Ctrl-L
-Quit:           Ctrl-Q
+Normal mode:        ESC, Ctrl-C, JK
+Play:               Return
+Navigate:           🠳, Ctrl-J & 🠱, Ctrl-K
+Show all:           Ctrl-F
+Clear:              Ctrl-L
+Quit:               Ctrl-Q
 "
+            } else {
+                "
+Type to search.
+
+Normal mode:        ESC, Ctrl-C, JK
+Play:               Return
+Navigate:           🠳, Ctrl-J & 🠱, Ctrl-K
+Show favorites:     Ctrl-F
+Clear:              Ctrl-L
+Quit:               Ctrl-Q
+"
+            }
         }
         _ => "Edit mode",
     };
