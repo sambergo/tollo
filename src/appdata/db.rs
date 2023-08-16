@@ -1,67 +1,83 @@
-use sqlx::{SqliteConnection, Sqlite, migrate::MigrateDatabase, Connection, pool::PoolConnection, sqlite::SqliteQueryResult};
+extern crate rusqlite;
 use std::env;
 
 use crate::app::Channel;
+use rusqlite::{Connection, Result};
 
-#[tokio::main]
-pub async fn connect_database() -> Result<SqliteConnection, sqlx::Error> {
+pub fn connect_db() -> Result<Connection, rusqlite::Error> {
     let data_home = env::var("XDG_DATA_HOME").unwrap_or_else(|_| String::from(".local/share"));
     let db_path = format!("{}/tollo/favorites.db", data_home);
-    if !Sqlite::database_exists(&db_path).await.unwrap_or(false) {
-        match Sqlite::create_database(&db_path).await {
-            Ok(_) => {
-                let pool = SqliteConnection::connect(&db_path).await?;
-                Ok(pool)
-            },
-            Err(error) => panic!("Error creating database: {}", error),
-        }
-    } else {
-        let pool = SqliteConnection::connect(&db_path).await?;
-        Ok(pool)
+    let db = Connection::open(db_path)?;
+    db.execute(
+        "CREATE TABLE IF NOT EXISTS favorites (
+            name TEXT,
+            id   TEXT,
+            logo TEXT,
+            favorite   INTEGER,
+            agroup TEXT,
+            url TEXT PRIMARY KEY
+        )",
+        (),
+    )?;
+    Ok(db)
+}
+
+pub fn get_favorites(db: Connection) -> Result<Vec<Channel>, rusqlite::Error> {
+    let mut stmt = db.prepare("SELECT * FROM favorites")?;
+    let favorites_iter = stmt.query_map([], |row| {
+        Ok(Channel {
+            name: row.get(0)?,
+            id: row.get(1)?,
+            logo: row.get(2)?,
+            favorite: row.get(3)?,
+            group: row.get(4)?,
+            url: row.get(5)?,
+        })
+    })?;
+    let mut result = vec![];
+    for favorite in favorites_iter {
+        result.push(favorite.unwrap())
     }
+    Ok(result)
 }
 
-
-async fn query_and_create(db: &mut SqliteConnection) {
-    let create_table = sqlx::query("
-        CREATE TABLE IF NOT EXISTS favorites (
-            id   String PRIMARY KEY,
-            name String NOT NULL,
-            logo String,
-            group String,
-            url String,
-            favorites Bool
-        );
-INSERT INTO favorites VALUES ('1', 'lempikananva', 'loogourli', 'ryhma', 'urrrrrrrrrrrrrrrrrrrrrrrrrrliiiiiiiiiiiiii', true)
-    ").execute(db)
-    .await
-    .expect("Could not create table if it does not exist"); 
-    // let favorites_list: Vec<Favorite> = sqlx::query_as("SELECT * FROM favorites")
-    // .fetch_all(db)
-    // .await
-    // .expect("Could not fetch all rows from the table");
-    // println!("{:?}", favorites_list);
+pub fn add_favorite(db: Connection, channel: &Channel) -> bool {
+    let result = db.execute(
+        "INSERT INTO favorites (name, id, logo, favorite, agroup, url) values (?1, ?2, ?3, ?4, ?5, ?6)",
+        (&channel.name, &channel.id, &channel.logo, 1, &channel.group, &channel.url ),
+    );
+    result.is_ok()
 }
-
-async fn query_favorites(db: &mut SqliteConnection)  {
-    let favorites = sqlx::query_as("SELECT * FROM favorites")
-        .fetch_all(db)
-        .await.expect("ei");
-    println!("{:?}", favorites);
-}
-
 
 #[cfg(test)]
 mod tests {
     use super::*;
     #[test]
-    fn test_connect_db() {
-        let db = connect_database();
+    fn test_db() {
+        let db = connect_db();
         assert!(db.is_ok());
     }
+
     #[test]
-    fn test_table_db() {
-        let db = connect_database();
-        let _ = query_and_create(& mut db.unwrap());
+    fn test_get_favorites() {
+        let db = connect_db();
+        let favs = get_favorites(db.unwrap());
+        println!("{:?}", favs);
+        assert!(favs.is_ok());
+    }
+
+    #[test]
+    fn test_add_favorite() {
+        let db = connect_db();
+        let newfav = Channel {
+            name: "MOCK channel".to_owned(),
+            id: "MOCK id".to_owned(),
+            logo: "MOCK logo".to_owned(),
+            favorite: true,
+            group: "MOCK group".to_owned(),
+            url: "MOCK url".to_owned(),
+        };
+        let add_ok = add_favorite(db.unwrap(), &newfav);
+        assert!(add_ok);
     }
 }

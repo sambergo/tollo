@@ -17,7 +17,7 @@ pub enum Mode {
     Playing,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Channel {
     pub name: String,
     pub id: String,
