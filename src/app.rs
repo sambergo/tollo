@@ -1,10 +1,12 @@
 use crossterm::event::KeyCode;
+use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
 use std::{
     sync::{Arc, Mutex},
     time::Instant,
 };
+use strsim::levenshtein;
 
 use ratatui::widgets::ListState;
 
@@ -184,6 +186,40 @@ impl App {
                 }
             }
         }
+        self.handle_search()
+    }
+    pub fn handle_search(&mut self) {
+        let matcher = SkimMatcherV2::default();
+        let channels = if self.show_favorites {
+            self.all_channels
+                .iter()
+                .filter(|channel| channel.favorite)
+                .cloned()
+                .collect()
+        } else {
+            self.all_channels.clone()
+        };
+        if self.filter.is_empty() {
+            self.channel_state.items = channels;
+        } else {
+            let mut result: Vec<Channel> = channels
+                .iter()
+                .filter(|channel| {
+                    let score = matcher
+                        .fuzzy_match(&channel.name.to_lowercase(), &self.filter.to_lowercase());
+                    score.unwrap_or(0) > 50
+                })
+                .cloned()
+                .collect();
+
+            result.sort_by(|a, b| {
+                let distance_a = levenshtein(&a.name, &self.filter.to_lowercase());
+                let distance_b = levenshtein(&b.name, &self.filter.to_lowercase());
+                distance_a.cmp(&distance_b)
+            });
+            self.channel_state.items = result;
+        }
+        self.channel_state.first();
     }
     pub fn add_notification(&mut self, notification: String) {
         if let Some(old) = &self.notification {

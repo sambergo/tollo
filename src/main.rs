@@ -1,11 +1,10 @@
-use app::{Channel, LastKeyPress};
+use app::LastKeyPress;
 use appdata::{config::init_settings, db::connect_db, local::is_same_as_prev};
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 use help_message::print_help_message;
 use m3u::play_channel::play_channel;
 use ratatui::{
@@ -13,7 +12,6 @@ use ratatui::{
     Terminal,
 };
 use std::{env, error::Error, io, iter::Iterator, sync::Arc, time::Instant};
-use strsim::levenshtein;
 mod app;
 mod appdata;
 mod components;
@@ -102,14 +100,14 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                     }
                     KeyCode::Char('l') if key.modifiers.contains(event::KeyModifiers::CONTROL) => {
                         app.clear_filter();
-                        handle_search(app);
+                        app.handle_search();
                     }
                     KeyCode::Char('g') => app.channel_state.first(),
                     KeyCode::Char('G') => app.channel_state.last(),
                     KeyCode::Char('F') => app.toggle_favorite(),
                     KeyCode::Char('f') if key.modifiers.contains(event::KeyModifiers::CONTROL) => {
                         app.show_favorites = !app.show_favorites;
-                        handle_search(app);
+                        app.handle_search();
                     }
                     _ => {}
                 },
@@ -127,7 +125,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                             if key.modifiers.contains(event::KeyModifiers::CONTROL) =>
                         {
                             app.clear_filter();
-                            handle_search(app);
+                            app.handle_search();
                         }
                         KeyCode::Char('j')
                             if key.modifiers.contains(event::KeyModifiers::CONTROL) =>
@@ -148,22 +146,22 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                             if key.modifiers.contains(event::KeyModifiers::CONTROL) =>
                         {
                             app.show_favorites = !app.show_favorites;
-                            handle_search(app);
+                            app.handle_search();
                         }
                         KeyCode::Backspace => {
                             app.filter.pop();
-                            handle_search(app);
+                            app.handle_search();
                         }
                         KeyCode::Char('k')
                             if check_last_keypress_jk(&app.last_key_press, key.code) =>
                         {
                             app.filter.pop();
-                            handle_search(app);
+                            app.handle_search();
                             app.mode = Mode::Normal;
                         }
                         KeyCode::Char(value) => {
                             app.filter.push(value);
-                            handle_search(app);
+                            app.handle_search();
                         }
                         KeyCode::Enter => {
                             if app.notification.is_some() {
@@ -201,36 +199,36 @@ fn check_last_keypress_jk(last_key_press: &Option<LastKeyPress>, current_key: Ke
     false
 }
 
-pub fn handle_search(app: &mut App) {
-    let matcher = SkimMatcherV2::default();
-    let channels = if app.show_favorites {
-        app.all_channels
-            .iter()
-            .filter(|channel| channel.favorite)
-            .cloned()
-            .collect()
-    } else {
-        app.all_channels.clone()
-    };
-    if app.filter.is_empty() {
-        app.channel_state.items = channels;
-    } else {
-        let mut result: Vec<Channel> = channels
-            .iter()
-            .filter(|channel| {
-                let score =
-                    matcher.fuzzy_match(&channel.name.to_lowercase(), &app.filter.to_lowercase());
-                score.unwrap_or(0) > 50
-            })
-            .cloned()
-            .collect();
+// pub fn handle_search(app: &mut App) {
+//     let matcher = SkimMatcherV2::default();
+//     let channels = if app.show_favorites {
+//         app.all_channels
+//             .iter()
+//             .filter(|channel| channel.favorite)
+//             .cloned()
+//             .collect()
+//     } else {
+//         app.all_channels.clone()
+//     };
+//     if app.filter.is_empty() {
+//         app.channel_state.items = channels;
+//     } else {
+//         let mut result: Vec<Channel> = channels
+//             .iter()
+//             .filter(|channel| {
+//                 let score =
+//                     matcher.fuzzy_match(&channel.name.to_lowercase(), &app.filter.to_lowercase());
+//                 score.unwrap_or(0) > 50
+//             })
+//             .cloned()
+//             .collect();
 
-        result.sort_by(|a, b| {
-            let distance_a = levenshtein(&a.name, &app.filter.to_lowercase());
-            let distance_b = levenshtein(&b.name, &app.filter.to_lowercase());
-            distance_a.cmp(&distance_b)
-        });
-        app.channel_state.items = result;
-    }
-    app.channel_state.first();
-}
+//         result.sort_by(|a, b| {
+//             let distance_a = levenshtein(&a.name, &app.filter.to_lowercase());
+//             let distance_b = levenshtein(&b.name, &app.filter.to_lowercase());
+//             distance_a.cmp(&distance_b)
+//         });
+//         app.channel_state.items = result;
+//     }
+//     app.channel_state.first();
+// }
