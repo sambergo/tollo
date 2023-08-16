@@ -75,7 +75,7 @@ m3u_url = "https://iptv-org.github.io/iptv/index.m3u"
 
 ## TODO
 
-- [ ] Favorites
+- [x] Favorites
 - [ ] Playlist from path?
 
 ## License
