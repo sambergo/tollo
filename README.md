@@ -53,6 +53,8 @@ m3u_url = "https://iptv-org.github.io/iptv/index.m3u"
 | `k` or `up`             | Previous channel          |
 | `Enter`                 | Play the selected channel |
 | `Ctrl+l`                | Clear filter              |
+| `Ctrl+f`                | Show favorites            |
+| `Shift+f`               | Add / rm favorites        |
 | `g`                     | Select the first channel  |
 | `G`                     | Select the last channel   |
 |                         |                           |
@@ -60,6 +62,7 @@ m3u_url = "https://iptv-org.github.io/iptv/index.m3u"
 | `Enter`                 | Play the selected channel |
 | `Ctrl+j` or `down`      | Next channel              |
 | `Ctrl+k` or `up`        | Previous channel          |
+| `Ctrl+f`                | Show favorites            |
 | `Ctrl+l`                | Clear filter              |
 | `Ctrl+c`, `Esc` or `jk` | Normal mode               |
 | `Ctrl+q`                | Quit the application      |
@@ -68,6 +71,7 @@ m3u_url = "https://iptv-org.github.io/iptv/index.m3u"
 ## Dependencies
 
 - mpv or a video player of your choice
+- sqlite
 
 ## TODO
 
