@@ -16,6 +16,7 @@ pub enum Mode {
     UrlEdit,
     Playing,
 }
+
 #[derive(Clone)]
 pub struct Channel {
     pub name: String,
