@@ -99,7 +99,7 @@ mod tests {
     fn test_get_favorites() {
         let (db, _) = setup();
         let favs = get_favorites(&db);
-        println!("{:?}", favs);
+        println!("{:#?}", favs);
         assert!(favs.is_ok());
     }
 
