@@ -188,6 +188,14 @@ impl App {
         }
         self.handle_search()
     }
+    pub fn ctrl_w(&mut self) {
+        if self.filter.is_empty() {
+            return;
+        }
+        let mut words = self.filter.split_whitespace().collect::<Vec<&str>>();
+        words.pop();
+        self.filter = words.join(" ");
+    }
     pub fn handle_search(&mut self) {
         let matcher = SkimMatcherV2::default();
         let channels = if self.show_favorites {

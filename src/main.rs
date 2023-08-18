@@ -121,6 +121,12 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                         KeyCode::Esc => app.mode = Mode::Normal,
                         KeyCode::Down => app.channel_state.next(),
                         KeyCode::Up => app.channel_state.previous(),
+                        KeyCode::Char('w')
+                            if key.modifiers.contains(event::KeyModifiers::CONTROL) =>
+                        {
+                            app.ctrl_w();
+                            app.handle_search();
+                        }
                         KeyCode::Char('l')
                             if key.modifiers.contains(event::KeyModifiers::CONTROL) =>
                         {
