@@ -109,6 +109,9 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                         app.show_favorites = !app.show_favorites;
                         app.handle_search();
                     }
+                    KeyCode::Char('r') if key.modifiers.contains(event::KeyModifiers::CONTROL) => {
+                        app.get_channels(true);
+                    }
                     _ => {}
                 },
                 Mode::Search => {

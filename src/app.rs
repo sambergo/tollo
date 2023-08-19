@@ -3,7 +3,7 @@ use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
 use std::{
-    sync::{Arc, Mutex},
+    sync::{Arc, Mutex, MutexGuard},
     time::Instant,
 };
 use strsim::levenshtein;
@@ -244,6 +244,10 @@ impl App {
     pub fn clear_state(&mut self) {
         self.notification = None;
         self.mpv_started = false;
+        let mut mpv: MutexGuard<'_, MpvPlayer> = self.mpv_player.lock().unwrap();
+        mpv.channel = None;
+        mpv.pid = None;
+        // drop(mpv);
     }
     pub fn clear_filter(&mut self) {
         self.filter = String::new();
