@@ -22,6 +22,7 @@ use crate::{
     app::{App, Mode},
     ui::render,
 };
+// use arboard::Clipboard;
 
 fn main() -> Result<(), Box<dyn Error>> {
     // setup terminal
@@ -112,6 +113,21 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                     KeyCode::Char('r') if key.modifiers.contains(event::KeyModifiers::CONTROL) => {
                         app.get_channels(true);
                     }
+                    KeyCode::Char('c') => {
+                        if check_last_keypress_interval(&app.last_key_press, key.code, 'c', 'c') {
+                            app.clear_filter();
+                            app.handle_search();
+                            app.mode = Mode::Search;
+                        }
+                    }
+                    // TODO
+                    // KeyCode::Char('y') => {
+                    //     if check_last_keypress_interval(&app.last_key_press, key.code, 'y', 'y') {
+                    //         let mut clipboard = Clipboard::new().unwrap();
+                    //         let the_string = "Hello, world!";
+                    //         clipboard.set_text(the_string).unwrap();
+                    //     }
+                    // }
                     _ => {}
                 },
                 Mode::Search => {
@@ -162,7 +178,12 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                             app.handle_search();
                         }
                         KeyCode::Char('k')
-                            if check_last_keypress_jk(&app.last_key_press, key.code) =>
+                            if check_last_keypress_interval(
+                                &app.last_key_press,
+                                key.code,
+                                'j',
+                                'k',
+                            ) =>
                         {
                             app.filter.pop();
                             app.handle_search();
@@ -182,21 +203,26 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                         }
                         _ => {}
                     };
-                    app.last_key_press = Some(LastKeyPress {
-                        code: key.code,
-                        time: Instant::now(),
-                    });
                 }
                 Mode::UrlEdit => todo!(),
             }
+            app.last_key_press = Some(LastKeyPress {
+                code: key.code,
+                time: Instant::now(),
+            });
         }
     }
 }
 
-fn check_last_keypress_jk(last_key_press: &Option<LastKeyPress>, current_key: KeyCode) -> bool {
-    if current_key == KeyCode::Char('k') {
+fn check_last_keypress_interval(
+    last_key_press: &Option<LastKeyPress>,
+    current_key: KeyCode,
+    target_last: char,
+    target_now: char,
+) -> bool {
+    if current_key == KeyCode::Char(target_now) {
         if let Some(last_key) = last_key_press {
-            if last_key.code == KeyCode::Char('j') {
+            if last_key.code == KeyCode::Char(target_last) {
                 let now = Instant::now();
                 let duration_since = now.duration_since(last_key.time);
                 if duration_since.as_millis() < 300 {
@@ -207,37 +233,3 @@ fn check_last_keypress_jk(last_key_press: &Option<LastKeyPress>, current_key: Ke
     }
     false
 }
-
-// pub fn handle_search(app: &mut App) {
-//     let matcher = SkimMatcherV2::default();
-//     let channels = if app.show_favorites {
-//         app.all_channels
-//             .iter()
-//             .filter(|channel| channel.favorite)
-//             .cloned()
-//             .collect()
-//     } else {
-//         app.all_channels.clone()
-//     };
-//     if app.filter.is_empty() {
-//         app.channel_state.items = channels;
-//     } else {
-//         let mut result: Vec<Channel> = channels
-//             .iter()
-//             .filter(|channel| {
-//                 let score =
-//                     matcher.fuzzy_match(&channel.name.to_lowercase(), &app.filter.to_lowercase());
-//                 score.unwrap_or(0) > 50
-//             })
-//             .cloned()
-//             .collect();
-
-//         result.sort_by(|a, b| {
-//             let distance_a = levenshtein(&a.name, &app.filter.to_lowercase());
-//             let distance_b = levenshtein(&b.name, &app.filter.to_lowercase());
-//             distance_a.cmp(&distance_b)
-//         });
-//         app.channel_state.items = result;
-//     }
-//     app.channel_state.first();
-// }

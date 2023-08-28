@@ -38,10 +38,9 @@ pub fn get_favorites(
                 url: row.get(5)?,
             })
         })?;
-        let mut result = vec![];
-        for favorite in favorites_iter {
-            result.push(favorite.unwrap())
-        }
+        let mut result: Vec<Channel> = favorites_iter
+            .filter_map(|favorite| favorite.ok())
+            .collect();
         Ok(result)
     } else {
         Err(rusqlite::Error::InvalidQuery)

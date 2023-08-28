@@ -210,19 +210,19 @@ impl App {
         if self.filter.is_empty() {
             self.channel_state.items = channels;
         } else {
+            let filter_low = self.filter.clone().to_lowercase();
             let mut result: Vec<Channel> = channels
                 .iter()
                 .filter(|channel| {
-                    let score = matcher
-                        .fuzzy_match(&channel.name.to_lowercase(), &self.filter.to_lowercase());
+                    let score = matcher.fuzzy_match(&channel.name.to_lowercase(), &filter_low);
                     score.unwrap_or(0) > 50
                 })
                 .cloned()
                 .collect();
 
             result.sort_by(|a, b| {
-                let distance_a = levenshtein(&a.name, &self.filter.to_lowercase());
-                let distance_b = levenshtein(&b.name, &self.filter.to_lowercase());
+                let distance_a = levenshtein(&a.name, &filter_low);
+                let distance_b = levenshtein(&b.name, &filter_low);
                 distance_a.cmp(&distance_b)
             });
             self.channel_state.items = result;
