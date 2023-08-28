@@ -52,10 +52,12 @@ m3u_url = "https://iptv-org.github.io/iptv/index.m3u"
 | `j` or `down`           | Next channel              |
 | `k` or `up`             | Previous channel          |
 | `Enter`                 | Play the selected channel |
-| `Ctrl+l`                | Clear filter              |
-| `Ctrl+f`                | Show favorites            |
-| `Shift+f`               | Add / rm favorites        |
-| `g`                     | Select the first channel  |
+| `Ctrl+l` or `dd`        | Clear filter              |
+| `cc`                    | Clear filter & search     |
+| `Ctrl+f` or `gf`        | Show favorites            |
+| `Shift+f` or `cf`       | Add / rm favorites        |
+| `Shift+r` or `gr`       | Reload playlist           |
+| `gg`                    | Select the first channel  |
 | `G`                     | Select the last channel   |
 |                         |                           |
 | Search mode             |                           |

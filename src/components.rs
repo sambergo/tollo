@@ -20,10 +20,10 @@ pub fn mode_box(app: &App) -> Paragraph {
 Navigate:           🠳, J & 🠱, K
 Search:             /, I
 Play:               Return
-Show all:           Ctrl-F
-Remove favorite:    Shift-F
-Clear search:       Ctrl-L
-Reload channels:    R
+Show all:           Ctrl-F, gf
+Toggle favorite:    Shift-F, cf
+Clear search:       Ctrl-L, dd
+Reload channels:    Ctrl-R, gr
 Quit:               Q
 "
             } else {
@@ -31,10 +31,10 @@ Quit:               Q
 Navigate:           🠳, J & 🠱, K
 Search:             /, I
 Play:               Return
-Show favorites:     Ctrl-F
-Add favorite:       Shift-F
-Clear search:       Ctrl-L
-Reload channels:    R
+Show favorites:     Ctrl-F, gf
+Toggle favorite:    Shift-F, cf
+Clear search:       Ctrl-L, dd
+Reload channels:    Ctrl-R, gr
 Quit:               Q
 "
             }
