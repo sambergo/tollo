@@ -38,7 +38,7 @@ pub fn get_favorites(
                 url: row.get(5)?,
             })
         })?;
-        let mut result: Vec<Channel> = favorites_iter
+        let result: Vec<Channel> = favorites_iter
             .filter_map(|favorite| favorite.ok())
             .collect();
         Ok(result)
