@@ -103,15 +103,36 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                         app.clear_filter();
                         app.handle_search();
                     }
-                    KeyCode::Char('g') => app.channel_state.first(),
+                    KeyCode::Char('d') => {
+                        if check_last_keypress_interval(&app.last_key_press, key.code, 'd', 'd') {
+                            app.clear_filter();
+                            app.handle_search();
+                        }
+                    }
+                    KeyCode::Char('g') => {
+                        if check_last_keypress_interval(&app.last_key_press, key.code, 'g', 'g') {
+                            app.channel_state.first();
+                        }
+                    }
                     KeyCode::Char('G') => app.channel_state.last(),
                     KeyCode::Char('F') => app.toggle_favorite(),
-                    KeyCode::Char('f') if key.modifiers.contains(event::KeyModifiers::CONTROL) => {
-                        app.show_favorites = !app.show_favorites;
-                        app.handle_search();
+                    KeyCode::Char('f') => {
+                        if key.modifiers.contains(event::KeyModifiers::CONTROL)
+                            || check_last_keypress_interval(&app.last_key_press, key.code, 'g', 'f')
+                        {
+                            app.show_favorites = !app.show_favorites;
+                            app.handle_search();
+                        }
+                        if check_last_keypress_interval(&app.last_key_press, key.code, 'c', 'f') {
+                            app.toggle_favorite();
+                        }
                     }
-                    KeyCode::Char('r') if key.modifiers.contains(event::KeyModifiers::CONTROL) => {
-                        app.get_channels(true);
+                    KeyCode::Char('r') => {
+                        if key.modifiers.contains(event::KeyModifiers::CONTROL)
+                            || check_last_keypress_interval(&app.last_key_press, key.code, 'g', 'r')
+                        {
+                            app.get_channels(true);
+                        }
                     }
                     KeyCode::Char('c') => {
                         if check_last_keypress_interval(&app.last_key_press, key.code, 'c', 'c') {

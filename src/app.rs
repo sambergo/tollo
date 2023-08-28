@@ -183,10 +183,10 @@ impl App {
                     add_favorite(&self.db, item);
                 } else {
                     delete_favorite(&self.db, item);
+                    self.handle_search();
                 }
             }
         }
-        self.handle_search()
     }
     pub fn ctrl_w(&mut self) {
         if self.filter.is_empty() {
