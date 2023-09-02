@@ -75,11 +75,6 @@ m3u_url = "https://iptv-org.github.io/iptv/index.m3u"
 - mpv or a video player of your choice
 - sqlite
 
-## TODO
-
-- [x] Favorites
-- [ ] Playlist from path?
-
 ## License
 
 [The MIT License](https://opensource.org/licenses/MIT)

@@ -3,12 +3,12 @@ pub fn print_help_message() {
     println!(
         r#"
 Usage:
-tollo [url]
+tollo [url / path]
 Settings: ~/.config/tollo/tollo.toml
 
 Options:
 -h, --help               Display this help message
-[url]                    playlist for this run (this option will use the specified URL for a single run, doesn't change the default URL.)
+[url / path]             playlist for this run (this option will use the specified URL or filepath for a single run, doesn't change the default URL.)
 Note: To set a default URL, please add it to the `~/.config/tollo/tollo.toml` config file.
 
 | Key                     | Action                    |
