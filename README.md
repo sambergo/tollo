@@ -1,6 +1,6 @@
 # Tollo
 
-Tollo is an IPTV terminal UI player with fuzzy search written in Rust.
+Tollo is an IPTV terminal UI player for Linux with fuzzy search written in Rust.
 
 ![tollo](./img/tollo.png)
 
