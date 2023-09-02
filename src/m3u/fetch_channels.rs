@@ -1,6 +1,7 @@
 use crate::appdata::local::get_local_path;
 use crate::m3u::parse::parse_channels;
 use std::error::Error;
+use std::path::Path;
 use std::result::Result;
 
 use std::fs::{self, File};
@@ -31,7 +32,7 @@ fn read_from_file(file_path: &str) -> std::io::Result<String> {
     Ok(contents)
 }
 
-/// Checks if the file at "/tmp/tollo_playlist.m3u" exists and has been modified within the last 48 hours.
+/// Checks if the file at "~/.local/share/tollo/playlist.m3u" exists and has been modified within the last 24 hours.
 pub fn check_local_playlist_status() -> bool {
     let file_path = get_file_path();
     if let Ok(metadata) = fs::metadata(file_path) {
@@ -44,8 +45,22 @@ pub fn check_local_playlist_status() -> bool {
                     - modified_time
                         .duration_since(SystemTime::UNIX_EPOCH)
                         .unwrap_or(Duration::from_secs(0));
-                // Check if the time difference is less than 48 hours (172800 seconds)
-                if time_difference.as_secs() < 172800 {
+                // Check if the time difference is less than 24 hours
+                if time_difference.as_secs() < (60 * 60 * 24) {
+                    return true;
+                }
+            }
+        }
+    }
+    false
+}
+
+pub fn check_is_m3u_filepath(argument: &str) -> bool {
+    let path = Path::new(argument);
+    if path.exists() && path.is_file() {
+        if let Some(file_name) = path.file_name() {
+            if let Some(extension) = file_name.to_str().and_then(|s| s.split('.').last()) {
+                if extension == "m3u" || extension == "m3u8" {
                     return true;
                 }
             }
@@ -60,8 +75,11 @@ pub fn fetch_channels(
     always_update: bool,
     favorites: &[Channel],
 ) -> Result<Vec<Channel>, Box<dyn Error>> {
-    // make a GET request
-    if check_local_playlist_status() && !always_update {
+    if check_is_m3u_filepath(m3u_url) {
+        let m3u_content = read_from_file(m3u_url)?;
+        let channels = parse_channels(&m3u_content, favorites);
+        Ok(channels)
+    } else if check_local_playlist_status() && !always_update {
         let file_path = get_file_path();
         let m3u_content = read_from_file(&file_path)?;
         let channels = parse_channels(&m3u_content, favorites);
@@ -77,7 +95,9 @@ pub fn fetch_channels(
 
 #[cfg(test)]
 mod tests {
-    use super::{check_local_playlist_status, fetch_channels};
+    use super::{
+        check_is_m3u_filepath, check_local_playlist_status, fetch_channels, get_file_path,
+    };
 
     #[test]
     fn test_fetch_channels() {
@@ -93,5 +113,29 @@ mod tests {
     fn test_check_local_playlist_status() {
         let is_ok = check_local_playlist_status();
         println!("file is ok: {}", is_ok);
+    }
+
+    #[test]
+    fn test_file_path() {
+        let file_path = get_file_path();
+        assert!(check_is_m3u_filepath(&file_path));
+    }
+
+    #[test]
+    fn test_check_is_m3u_filepath_with_directory() {
+        let directory = "path/to/directory/";
+        assert!(!check_is_m3u_filepath(directory));
+    }
+
+    #[test]
+    fn test_check_is_m3u_filepath_with_invalid_extension() {
+        let filepath = "path/to/file.txt";
+        assert!(!check_is_m3u_filepath(filepath));
+    }
+
+    #[test]
+    fn test_check_is_m3u_filepath_with_url() {
+        let url = "https://iptv-org.github.io/iptv/index.m3u";
+        assert!(!check_is_m3u_filepath(url));
     }
 }

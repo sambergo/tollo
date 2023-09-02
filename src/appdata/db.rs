@@ -103,14 +103,10 @@ mod tests {
     }
 
     #[test]
-    fn test_add_favorite() {
+    fn test_add_and_delete_favorite() {
         let (db, newfav) = setup();
         let add_ok = add_favorite(&db, &newfav);
         assert!(add_ok);
-    }
-
-    #[test]
-    fn test_delete_favorite() {
         let (db, newfav) = setup();
         let delete_ok = delete_favorite(&db, &newfav);
         assert!(delete_ok);

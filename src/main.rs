@@ -11,7 +11,7 @@ use ratatui::{
     backend::{Backend, CrosstermBackend},
     Terminal,
 };
-use std::{env, error::Error, io, iter::Iterator, sync::Arc, time::Instant};
+use std::{env, error::Error, io, iter::Iterator, path::Path, sync::Arc, time::Instant};
 mod app;
 mod appdata;
 mod components;
@@ -41,7 +41,27 @@ fn main() -> Result<(), Box<dyn Error>> {
     if args.len() > 1 && (args[1].starts_with("http://") || args[1].starts_with("https://")) {
         let m3u_url = args[1].clone();
         settings.m3u_url = m3u_url;
-    };
+    } else if args.len() > 1 {
+        let argument = &args[1];
+        let path = Path::new(argument);
+        if let Some(file_name) = path.file_name() {
+            if let Some(extension) = file_name.to_str().and_then(|s| s.split('.').last()) {
+                if extension == "m3u" {
+                    settings.m3u_url = argument.to_string();
+                } else {
+                    println!("Invalid M3U file or path: {}", argument);
+                    std::process::exit(0);
+                }
+            } else {
+                println!("Invalid M3U file or path: {}", argument);
+                std::process::exit(0);
+            }
+        } else {
+            println!("Invalid M3U file or path: {}", argument);
+            std::process::exit(0);
+        }
+    }
+
     let always_update: bool = !is_same_as_prev(&settings.m3u_url);
     // create app and run it
     let db = connect_db();
