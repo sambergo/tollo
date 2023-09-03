@@ -266,7 +266,7 @@ fn check_last_keypress_interval(
             if last_key.code == KeyCode::Char(target_last) {
                 let now = Instant::now();
                 let duration_since = now.duration_since(last_key.time);
-                if duration_since.as_millis() < 300 {
+                if duration_since.as_millis() < 500 {
                     return true;
                 }
             }
