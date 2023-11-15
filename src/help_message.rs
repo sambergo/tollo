@@ -8,6 +8,8 @@ Settings: ~/.config/tollo/tollo.toml
 
 Options:
 -h, --help               Display this help message
+-r, --reload             Reload playlist
+-p, --preserve           Preserve old playlist
 [url / path]             playlist for this run (this option will use the specified URL or filepath for a single run, doesn't change the default URL.)
 Note: To set a default URL, please add it to the `~/.config/tollo/tollo.toml` config file.
 

@@ -26,10 +26,23 @@ use crate::{
 
 fn main() -> Result<(), Box<dyn Error>> {
     // setup terminal
-    let args: Vec<String> = env::args().collect();
-    if args.iter().any(|arg| arg == "-h" || arg == "--help") {
+
+    let mut args: Vec<String> = env::args().collect();
+    let mut always_reload: bool = false;
+    let mut never_reload: bool = false;
+    if let Some(index) = args.iter().position(|arg| arg == "-h" || arg == "--help") {
         print_help_message();
+        args.remove(index);
         std::process::exit(0);
+    } else if let Some(index) = args.iter().position(|arg| arg == "-r" || arg == "--reload") {
+        always_reload = true;
+        args.remove(index);
+    } else if let Some(index) = args
+        .iter()
+        .position(|arg| arg == "-p" || arg == "--preserve")
+    {
+        never_reload = true;
+        args.remove(index);
     }
     enable_raw_mode()?;
     let mut stderr = io::stderr(); // This is a special case. Normally using stdout is fine
@@ -38,6 +51,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut terminal = Terminal::new(backend)?;
 
     let mut settings = init_settings();
+
     if args.len() > 1 && (args[1].starts_with("http://") || args[1].starts_with("https://")) {
         let m3u_url = args[1].clone();
         settings.m3u_url = m3u_url;
@@ -61,13 +75,15 @@ fn main() -> Result<(), Box<dyn Error>> {
             std::process::exit(0);
         }
     }
+    if !always_reload {
+        always_reload = !is_same_as_prev(&settings.m3u_url);
+    }
 
-    let always_update: bool = !is_same_as_prev(&settings.m3u_url);
     // create app and run it
     let db = connect_db();
     let mut app = App::new(settings, db);
     app.get_favorites();
-    app.get_channels(always_update);
+    app.get_channels(always_reload, never_reload);
     run_app(&mut terminal, &mut app);
 
     // restore terminal
@@ -151,7 +167,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                         if key.modifiers.contains(event::KeyModifiers::CONTROL)
                             || check_last_keypress_interval(&app.last_key_press, key.code, 'g', 'r')
                         {
-                            app.get_channels(true);
+                            app.get_channels(true, false);
                         }
                     }
                     KeyCode::Char('c') => {

@@ -73,13 +73,14 @@ pub fn check_is_m3u_filepath(argument: &str) -> bool {
 pub fn fetch_channels(
     m3u_url: &str,
     always_update: bool,
+    never_update: bool,
     favorites: &[Channel],
 ) -> Result<Vec<Channel>, Box<dyn Error>> {
     if check_is_m3u_filepath(m3u_url) {
         let m3u_content = read_from_file(m3u_url)?;
         let channels = parse_channels(&m3u_content, favorites);
         Ok(channels)
-    } else if check_local_playlist_status() && !always_update {
+    } else if check_local_playlist_status() && !always_update && !never_update {
         let file_path = get_file_path();
         let m3u_content = read_from_file(&file_path)?;
         let channels = parse_channels(&m3u_content, favorites);
@@ -102,7 +103,7 @@ mod tests {
     #[test]
     fn test_fetch_channels() {
         let m3u_url = "https://iptv-org.github.io/iptv/index.m3u";
-        let result = fetch_channels(m3u_url, false, vec![].as_ref());
+        let result = fetch_channels(m3u_url, false, false, vec![].as_ref());
         if let Ok(channels) = &result {
             println!("channels len: {}", channels.len());
         }

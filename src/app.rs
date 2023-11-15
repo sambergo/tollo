@@ -154,10 +154,13 @@ impl App {
     pub fn quit(&mut self) {
         self.running = false;
     }
-    pub fn get_channels(&mut self, always_update: bool) {
-        if let Ok(fetched_channels) =
-            fetch_channels(&self.settings.m3u_url, always_update, &self.favorites.items)
-        {
+    pub fn get_channels(&mut self, always_update: bool, never_update: bool) {
+        if let Ok(fetched_channels) = fetch_channels(
+            &self.settings.m3u_url,
+            always_update,
+            never_update,
+            &self.favorites.items,
+        ) {
             self.all_channels = fetched_channels
         };
         self.channel_state.items = self.all_channels.clone();
