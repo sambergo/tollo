@@ -72,15 +72,15 @@ pub fn check_is_m3u_filepath(argument: &str) -> bool {
 /// Read from file if its fresh enough, otherwise fetch from url
 pub fn fetch_channels(
     m3u_url: &str,
-    always_update: bool,
-    never_update: bool,
+    always_reload: bool,
+    never_reload: bool,
     favorites: &[Channel],
 ) -> Result<Vec<Channel>, Box<dyn Error>> {
     if check_is_m3u_filepath(m3u_url) {
         let m3u_content = read_from_file(m3u_url)?;
         let channels = parse_channels(&m3u_content, favorites);
         Ok(channels)
-    } else if check_local_playlist_status() && !always_update && !never_update {
+    } else if never_reload || (check_local_playlist_status() && !always_reload) {
         let file_path = get_file_path();
         let m3u_content = read_from_file(&file_path)?;
         let channels = parse_channels(&m3u_content, favorites);

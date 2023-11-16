@@ -154,11 +154,11 @@ impl App {
     pub fn quit(&mut self) {
         self.running = false;
     }
-    pub fn get_channels(&mut self, always_update: bool, never_update: bool) {
+    pub fn get_channels(&mut self, always_reload: bool, never_reload: bool) {
         if let Ok(fetched_channels) = fetch_channels(
             &self.settings.m3u_url,
-            always_update,
-            never_update,
+            always_reload,
+            never_reload,
             &self.favorites.items,
         ) {
             self.all_channels = fetched_channels
