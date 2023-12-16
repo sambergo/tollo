@@ -66,7 +66,7 @@ pub fn get_favorites(
     db: &Result<Connection, rusqlite::Error>,
 ) -> Result<Vec<Channel>, rusqlite::Error> {
     if let Ok(db) = db {
-        let mut stmt = db.prepare("SELECT * FROM favorites")?;
+        let mut stmt = db.prepare("SELECT * FROM favorites ORDER BY name ASC")?;
         let favorites_iter = stmt.query_map([], |row| {
             Ok(Channel {
                 name: row.get(0)?,
