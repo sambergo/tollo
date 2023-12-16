@@ -1,7 +1,7 @@
 extern crate rusqlite;
 use std::env;
 
-use crate::app::Channel;
+use crate::app::{Channel, SavedFilter};
 use rusqlite::{params, Connection, Result};
 
 #[allow(dead_code)]
@@ -20,7 +20,46 @@ pub fn connect_db() -> Result<Connection, rusqlite::Error> {
         )",
         (),
     )?;
+
+    db.execute(
+        "CREATE TABLE IF NOT EXISTS filters (
+            key INTEGER PRIMARY KEY,
+            filter TEXT
+        )",
+        (),
+    )?;
+
     Ok(db)
+}
+
+pub fn get_saved_filters(
+    db: &Result<Connection, rusqlite::Error>,
+) -> Result<Vec<SavedFilter>, rusqlite::Error> {
+    if let Ok(db) = db {
+        let mut stmt = db.prepare("SELECT * FROM filters")?;
+        let saved_filters = stmt.query_map([], |row| {
+            Ok(SavedFilter {
+                key: row.get(0)?,
+                filter: row.get(1)?,
+            })
+        })?;
+        let result: Vec<SavedFilter> = saved_filters.filter_map(|ss| ss.ok()).collect();
+        Ok(result)
+    } else {
+        Err(rusqlite::Error::InvalidQuery)
+    }
+}
+
+pub fn add_saved_filter(db: &Result<Connection, rusqlite::Error>, filter: SavedFilter) -> bool {
+    if let Ok(db) = db {
+        let result = db.execute(
+            "INSERT OR REPLACE INTO filters (key, filter) values (?1, ?2)",
+            (&filter.key, &filter.filter),
+        );
+        result.is_ok()
+    } else {
+        false
+    }
 }
 
 pub fn get_favorites(
@@ -110,5 +149,31 @@ mod tests {
         let (db, newfav) = setup();
         let delete_ok = delete_favorite(&db, &newfav);
         assert!(delete_ok);
+    }
+
+    #[test]
+    fn test_get_saved_filters() {
+        let (db, _) = setup();
+        let ss = get_saved_filters(&db);
+        println!("{:#?}", ss);
+        assert!(ss.is_ok());
+    }
+
+    #[test]
+    fn test_add_saved_filter() {
+        let (db, _) = setup();
+        let saved_filter = SavedFilter {
+            key: 13,
+            filter: "valioliiga".to_owned(),
+        };
+        let add_ok = add_saved_filter(&db, saved_filter);
+        assert!(add_ok);
+
+        let (db, _) = setup();
+        let saved_filters = get_saved_filters(&db).unwrap();
+        let filter_found = saved_filters
+            .iter()
+            .any(|ss| ss.key == 13 && ss.filter == "valioliiga");
+        assert!(filter_found);
     }
 }

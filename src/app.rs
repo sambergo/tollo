@@ -11,7 +11,9 @@ use strsim::levenshtein;
 use ratatui::widgets::ListState;
 
 use crate::{
-    appdata::db::{add_favorite, delete_favorite, get_favorites},
+    appdata::db::{
+        add_favorite, add_saved_filter, delete_favorite, get_favorites, get_saved_filters,
+    },
     m3u::fetch_channels::fetch_channels,
 };
 
@@ -104,6 +106,12 @@ pub struct LastKeyPress {
     pub time: Instant,
 }
 
+#[derive(Clone, Debug)]
+pub struct SavedFilter {
+    pub key: u32,
+    pub filter: String,
+}
+
 pub struct App {
     pub mode: Mode,
     pub running: bool,
@@ -118,6 +126,7 @@ pub struct App {
     pub last_key_press: Option<LastKeyPress>,
     pub db: Result<Connection, rusqlite::Error>,
     pub show_favorites: bool,
+    pub saved_filters: Vec<SavedFilter>,
 }
 
 #[allow(dead_code)]
@@ -148,6 +157,7 @@ impl App {
             last_key_press: None,
             db,
             show_favorites: false,
+            saved_filters: vec![],
         }
     }
     pub fn tick(&self) {}
@@ -168,11 +178,19 @@ impl App {
             self.channel_state.first()
         }
     }
+
     pub fn get_favorites(&mut self) {
         if let Ok(favs) = get_favorites(&self.db) {
             self.favorites.items = favs
         }
     }
+
+    pub fn get_saved_filters(&mut self) {
+        if let Ok(saved_filters) = get_saved_filters(&self.db) {
+            self.saved_filters = saved_filters
+        }
+    }
+
     pub fn toggle_favorite(&mut self) {
         if let Some(i) = self.channel_state.state.selected() {
             if let Some(item) = self.channel_state.items.get_mut(i) {
@@ -198,6 +216,21 @@ impl App {
         let mut words = self.filter.split_whitespace().collect::<Vec<&str>>();
         words.pop();
         self.filter = words.join(" ");
+    }
+    pub fn new_saved_filter(&mut self, key: u32) {
+        let saved_filter: SavedFilter = SavedFilter {
+            key,
+            filter: self.filter.clone(),
+        };
+        add_saved_filter(&self.db, saved_filter);
+        self.get_saved_filters();
+    }
+
+    pub fn use_saved_filter(&mut self, key: u32) {
+        if let Some(filter) = self.saved_filters.iter().find(|ss| ss.key == key) {
+            self.filter = filter.filter.clone();
+            self.handle_search();
+        }
     }
     pub fn handle_search(&mut self) {
         let matcher = SkimMatcherV2::default();
