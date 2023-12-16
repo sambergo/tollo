@@ -133,7 +133,7 @@ pub struct App {
 impl App {
     pub fn new(settings: Settings, db: Result<Connection, rusqlite::Error>) -> App {
         App {
-            mode: Mode::Search,
+            mode: Mode::Normal,
             running: true,
             mpv_started: false,
             all_channels: Vec::new(),
