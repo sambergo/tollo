@@ -204,6 +204,7 @@ impl App {
                     add_favorite(&self.db, item);
                 } else {
                     delete_favorite(&self.db, item);
+                    self.favorites.items.retain(|fav| fav.url != item.url);
                     self.handle_search();
                 }
             }
@@ -235,11 +236,7 @@ impl App {
     pub fn handle_search(&mut self) {
         let matcher = SkimMatcherV2::default();
         let channels = if self.show_favorites {
-            self.all_channels
-                .iter()
-                .filter(|channel| channel.favorite)
-                .cloned()
-                .collect()
+            self.favorites.items.clone()
         } else {
             self.all_channels.clone()
         };
