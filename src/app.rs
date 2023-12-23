@@ -202,6 +202,7 @@ impl App {
                 }
                 if item.favorite {
                     add_favorite(&self.db, item);
+                    self.get_favorites();
                 } else {
                     delete_favorite(&self.db, item);
                     self.favorites.items.retain(|fav| fav.url != item.url);
