@@ -179,63 +179,63 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                         }
                     }
                     KeyCode::Char('1') => {
-                        if key.modifiers.contains(event::KeyModifiers::CONTROL) {
+                        if key.modifiers.contains(event::KeyModifiers::ALT) {
                             app.new_saved_filter(1);
                         } else {
                             app.use_saved_filter(1);
                         }
                     }
                     KeyCode::Char('2') => {
-                        if key.modifiers.contains(event::KeyModifiers::CONTROL) {
+                        if key.modifiers.contains(event::KeyModifiers::ALT) {
                             app.new_saved_filter(2);
                         } else {
                             app.use_saved_filter(2);
                         }
                     }
                     KeyCode::Char('3') => {
-                        if key.modifiers.contains(event::KeyModifiers::CONTROL) {
+                        if key.modifiers.contains(event::KeyModifiers::ALT) {
                             app.new_saved_filter(3);
                         } else {
                             app.use_saved_filter(3);
                         }
                     }
                     KeyCode::Char('4') => {
-                        if key.modifiers.contains(event::KeyModifiers::CONTROL) {
+                        if key.modifiers.contains(event::KeyModifiers::ALT) {
                             app.new_saved_filter(4);
                         } else {
                             app.use_saved_filter(4);
                         }
                     }
                     KeyCode::Char('5') => {
-                        if key.modifiers.contains(event::KeyModifiers::CONTROL) {
+                        if key.modifiers.contains(event::KeyModifiers::ALT) {
                             app.new_saved_filter(5);
                         } else {
                             app.use_saved_filter(5);
                         }
                     }
                     KeyCode::Char('6') => {
-                        if key.modifiers.contains(event::KeyModifiers::CONTROL) {
+                        if key.modifiers.contains(event::KeyModifiers::ALT) {
                             app.new_saved_filter(6);
                         } else {
                             app.use_saved_filter(6);
                         }
                     }
                     KeyCode::Char('7') => {
-                        if key.modifiers.contains(event::KeyModifiers::CONTROL) {
+                        if key.modifiers.contains(event::KeyModifiers::ALT) {
                             app.new_saved_filter(7);
                         } else {
                             app.use_saved_filter(7);
                         }
                     }
                     KeyCode::Char('8') => {
-                        if key.modifiers.contains(event::KeyModifiers::CONTROL) {
+                        if key.modifiers.contains(event::KeyModifiers::ALT) {
                             app.new_saved_filter(8);
                         } else {
                             app.use_saved_filter(8);
                         }
                     }
                     KeyCode::Char('9') => {
-                        if key.modifiers.contains(event::KeyModifiers::CONTROL) {
+                        if key.modifiers.contains(event::KeyModifiers::ALT) {
                             app.new_saved_filter(9);
                         } else {
                             app.use_saved_filter(9);
