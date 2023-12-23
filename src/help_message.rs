@@ -26,6 +26,7 @@ Note: To set a default URL, please add it to the `~/.config/tollo/tollo.toml` co
 | `Ctrl+f` or `gf`        | Show favorites            |
 | `Shift+f` or `cf`       | Add / rm favorites        |
 | `Shift+r` or `gr`       | Reload playlist           |
+| `Shift+s`               | Sort channels             |
 | `gg`                    | Select the first channel  |
 | `G`                     | Select the last channel   |
 | `Alt+[1-9]`             | Save filter               |

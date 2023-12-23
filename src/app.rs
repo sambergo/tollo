@@ -286,4 +286,9 @@ impl App {
     pub fn clear_filter(&mut self) {
         self.filter = String::new();
     }
+
+    pub fn sort_currently_filtered_channels(&mut self) {
+        // Sort the items in channel_state based on the channel name
+        self.channel_state.items.sort_by(|a, b| a.name.cmp(&b.name));
+    }
 }

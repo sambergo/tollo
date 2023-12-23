@@ -171,6 +171,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                             app.get_channels(true, false);
                         }
                     }
+                    KeyCode::Char('S') => app.sort_currently_filtered_channels(),
                     KeyCode::Char('c') => {
                         if check_last_keypress_interval(&app.last_key_press, key.code, 'c', 'c') {
                             app.clear_filter();

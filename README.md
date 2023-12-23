@@ -57,6 +57,7 @@ m3u_url = "https://iptv-org.github.io/iptv/index.m3u"
 | `Ctrl+f` or `gf`        | Show favorites            |
 | `Shift+f` or `cf`       | Add / rm favorites        |
 | `Shift+r` or `gr`       | Reload playlist           |
+| `Shift+s`               | Sort channels             |
 | `gg`                    | Select the first channel  |
 | `G`                     | Select the last channel   |
 | `Alt+[1-9]`             | Save filter               |
