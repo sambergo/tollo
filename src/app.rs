@@ -232,6 +232,7 @@ impl App {
         if let Some(filter) = self.saved_filters.iter().find(|ss| ss.key == key) {
             self.filter = filter.filter.clone();
             self.handle_search();
+            self.sort_currently_filtered_channels();
         }
     }
     pub fn handle_search(&mut self) {
