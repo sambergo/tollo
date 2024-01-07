@@ -290,6 +290,10 @@ impl App {
 
     pub fn sort_currently_filtered_channels(&mut self) {
         // Sort the items in channel_state based on the channel name
-        self.channel_state.items.sort_by(|a, b| a.name.cmp(&b.name));
+        if self.show_favorites {
+            self.favorites.items.sort_by(|a, b| a.name.cmp(&b.name));
+        } else {
+            self.channel_state.items.sort_by(|a, b| a.name.cmp(&b.name));
+        }
     }
 }
