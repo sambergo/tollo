@@ -29,8 +29,8 @@ Note: To set a default URL, please add it to the `~/.config/tollo/tollo.toml` co
 | `Shift+s`               | Sort channels             |
 | `gg`                    | Select the first channel  |
 | `G`                     | Select the last channel   |
-| `Alt+[1-9]`             | Save filter               |
-| `[1-9]`                 | Use saved filter          |
+| `Alt+[0-9]`             | Save filter               |
+| `[0-9]`                 | Use saved filter          |
 |                         |                           |
 | Search mode             |                           |
 | `Enter`                 | Play the selected channel |

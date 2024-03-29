@@ -242,6 +242,13 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                             app.use_saved_filter(9);
                         }
                     }
+                    KeyCode::Char('0') => {
+                        if key.modifiers.contains(event::KeyModifiers::ALT) {
+                            app.new_saved_filter(0);
+                        } else {
+                            app.use_saved_filter(0);
+                        }
+                    }
                     // TODO
                     // KeyCode::Char('y') => {
                     //     if check_last_keypress_interval(&app.last_key_press, key.code, 'y', 'y') {

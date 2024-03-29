@@ -60,8 +60,8 @@ m3u_url = "https://iptv-org.github.io/iptv/index.m3u"
 | `Shift+s`               | Sort channels             |
 | `gg`                    | Select the first channel  |
 | `G`                     | Select the last channel   |
-| `Alt+[1-9]`             | Save filter               |
-| `[1-9]`                 | Use saved filter          |
+| `Alt+[0-9]`             | Save filter               |
+| `[0-9]`                 | Use saved filter          |
 |                         |                           |
 | Search mode             |                           |
 | `Enter`                 | Play the selected channel |
