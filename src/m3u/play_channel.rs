@@ -20,6 +20,7 @@ pub fn play_channel(app: &mut App, mpv_player_ref: Arc<Mutex<MpvPlayer>>) {
         app.mpv_started = true;
         app.mode = Mode::Playing;
         let channel_name = channel.name.clone();
+        let player_command = app.settings.player.clone();
         let mut args: Vec<String> = app.settings.args.clone();
         args.push(channel.url.clone());
         // let cmd = format!(
@@ -33,7 +34,7 @@ pub fn play_channel(app: &mut App, mpv_player_ref: Arc<Mutex<MpvPlayer>>) {
             mpv.running = true;
             mpv.channel = Some(channel_name);
             // change mpv.channel to channel.name
-            let mut mpv_process = Command::new("mpv")
+            let mut mpv_process = Command::new(player_command)
                 .args(&args)
                 .stdout(Stdio::null())
                 .stderr(Stdio::null())
