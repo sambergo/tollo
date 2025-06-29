@@ -17,6 +17,11 @@ fn get_channels() -> Vec<Channel> {
 }
 
 #[tauri::command]
+fn get_groups() -> Vec<String> {
+    m3u_parser::get_groups()
+}
+
+#[tauri::command]
 fn play_channel(url: String) {
     Command::new("mpv")
         .arg(url)
@@ -73,6 +78,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             get_channels,
+            get_groups,
             play_channel,
             add_favorite,
             remove_favorite,

@@ -13,6 +13,8 @@ interface Channel {
 function App() {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [favorites, setFavorites] = useState<Channel[]>([]);
+  const [groups, setGroups] = useState<string[]>([]);
+  const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
@@ -28,9 +30,15 @@ function App() {
     setFavorites(fetchedFavorites);
   }
 
+  async function fetchGroups() {
+    const fetchedGroups = await invoke<string[]>("get_groups");
+    setGroups(fetchedGroups);
+  }
+
   useEffect(() => {
     fetchChannels();
     fetchFavorites();
+    fetchGroups();
   }, []);
 
   useEffect(() => {
@@ -83,25 +91,53 @@ function App() {
     fetchFavorites();
   };
 
+  const filteredChannels = selectedGroup
+    ? channels.filter((channel) => channel.group_title === selectedGroup)
+    : channels;
+
   return (
     <div className="container">
-      <div className="channel-list">
-        <h2>Favorites</h2>
-        <ul>
-          {favorites.map((channel) => (
+      <div className="sidebar">
+        <div className="channel-list">
+          <h2>Favorites</h2>
+          <ul>
+            {favorites.map((channel) => (
+              <li
+                key={channel.name}
+                className={selectedChannel?.name === channel.name ? "selected" : ""}
+                onClick={() => setSelectedChannel(channel)}
+              >
+                <img src={channel.logo} alt={channel.name} />
+                <span>{channel.name}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="group-list">
+          <h2>Groups</h2>
+          <ul>
             <li
-              key={channel.name}
-              className={selectedChannel?.name === channel.name ? "selected" : ""}
-              onClick={() => setSelectedChannel(channel)}
+              className={selectedGroup === null ? "selected" : ""}
+              onClick={() => setSelectedGroup(null)}
             >
-              <img src={channel.logo} alt={channel.name} />
-              <span>{channel.name}</span>
+              All
             </li>
-          ))}
-        </ul>
+            {groups.map((group) => (
+              <li
+                key={group}
+                className={selectedGroup === group ? "selected" : ""}
+                onClick={() => setSelectedGroup(group)}
+              >
+                {group}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+      <div className="channel-list">
         <h2>Channels</h2>
         <ul>
-          {channels.map((channel) => (
+          {filteredChannels.map((channel) => (
             <li
               key={channel.name}
               className={selectedChannel?.name === channel.name ? "selected" : ""}

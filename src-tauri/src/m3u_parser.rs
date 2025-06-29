@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Channel {
     pub name: String,
     pub logo: String,
@@ -53,4 +54,13 @@ pub fn get_channels() -> Vec<Channel> {
     }
 
     channels
+}
+
+pub fn get_groups() -> Vec<String> {
+    let channels = get_channels();
+    let mut groups = HashSet::new();
+    for channel in channels {
+        groups.insert(channel.group_title);
+    }
+    groups.into_iter().collect()
 }
