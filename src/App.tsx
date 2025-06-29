@@ -14,6 +14,7 @@ function App() {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const hlsRef = useRef<Hls | null>(null);
 
   useEffect(() => {
     async function fetchChannels() {
@@ -25,10 +26,15 @@ function App() {
   }, []);
 
   useEffect(() => {
+    if (hlsRef.current) {
+      hlsRef.current.destroy();
+    }
+
     if (selectedChannel && videoRef.current) {
       const video = videoRef.current;
       if (Hls.isSupported()) {
         const hls = new Hls();
+        hlsRef.current = hls;
         hls.loadSource(selectedChannel.url);
         hls.attachMedia(video);
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
@@ -45,6 +51,13 @@ function App() {
 
   const handlePlayInMpv = () => {
     if (selectedChannel) {
+      if (videoRef.current) {
+        videoRef.current.pause();
+        videoRef.current.src = "";
+      }
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+      }
       invoke("play_channel", { url: selectedChannel.url });
     }
   };
