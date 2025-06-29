@@ -39,6 +39,13 @@
   margin-right: 1rem;
 }
 
+.channel-list button {
+  margin-left: auto;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
 .video-player {
   flex: 1;
   display: flex;

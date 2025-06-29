@@ -12,17 +12,25 @@ interface Channel {
 
 function App() {
   const [channels, setChannels] = useState<Channel[]>([]);
+  const [favorites, setFavorites] = useState<Channel[]>([]);
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
 
+  async function fetchChannels() {
+    const fetchedChannels = await invoke<Channel[]>("get_channels");
+    setChannels(fetchedChannels);
+    setSelectedChannel(fetchedChannels[0]);
+  }
+
+  async function fetchFavorites() {
+    const fetchedFavorites = await invoke<Channel[]>("get_favorites");
+    setFavorites(fetchedFavorites);
+  }
+
   useEffect(() => {
-    async function fetchChannels() {
-      const fetchedChannels = await invoke<Channel[]>("get_channels");
-      setChannels(fetchedChannels);
-      setSelectedChannel(fetchedChannels[0]);
-    }
     fetchChannels();
+    fetchFavorites();
   }, []);
 
   useEffect(() => {
@@ -62,9 +70,35 @@ function App() {
     }
   };
 
+  const isFavorite = (channel: Channel) => {
+    return favorites.some((fav) => fav.name === channel.name);
+  };
+
+  const handleToggleFavorite = async (channel: Channel) => {
+    if (isFavorite(channel)) {
+      await invoke("remove_favorite", { name: channel.name });
+    } else {
+      await invoke("add_favorite", { channel });
+    }
+    fetchFavorites();
+  };
+
   return (
     <div className="container">
       <div className="channel-list">
+        <h2>Favorites</h2>
+        <ul>
+          {favorites.map((channel) => (
+            <li
+              key={channel.name}
+              className={selectedChannel?.name === channel.name ? "selected" : ""}
+              onClick={() => setSelectedChannel(channel)}
+            >
+              <img src={channel.logo} alt={channel.name} />
+              <span>{channel.name}</span>
+            </li>
+          ))}
+        </ul>
         <h2>Channels</h2>
         <ul>
           {channels.map((channel) => (
@@ -75,6 +109,9 @@ function App() {
             >
               <img src={channel.logo} alt={channel.name} />
               <span>{channel.name}</span>
+              <button onClick={() => handleToggleFavorite(channel)}>
+                {isFavorite(channel) ? "Unfavorite" : "Favorite"}
+              </button>
             </li>
           ))}
         </ul>
