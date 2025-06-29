@@ -10,12 +10,15 @@ interface Channel {
   group_title: string;
 }
 
+type Tab = "channels" | "favorites" | "groups";
+
 function App() {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [favorites, setFavorites] = useState<Channel[]>([]);
   const [groups, setGroups] = useState<string[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
+  const [activeTab, setActiveTab] = useState<Tab>("channels");
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
 
@@ -91,15 +94,37 @@ function App() {
     fetchFavorites();
   };
 
+  const handleSelectGroup = (group: string | null) => {
+    setSelectedGroup(group);
+    setActiveTab("channels");
+  };
+
   const filteredChannels = selectedGroup
     ? channels.filter((channel) => channel.group_title === selectedGroup)
     : channels;
 
-  return (
-    <div className="container">
-      <div className="sidebar">
-        <div className="channel-list">
-          <h2>Favorites</h2>
+  const renderContent = () => {
+    switch (activeTab) {
+      case "channels":
+        return (
+          <ul>
+            {filteredChannels.map((channel) => (
+              <li
+                key={channel.name}
+                className={selectedChannel?.name === channel.name ? "selected" : ""}
+                onClick={() => setSelectedChannel(channel)}
+              >
+                <img src={channel.logo} alt={channel.name} />
+                <span>{channel.name}</span>
+                <button onClick={() => handleToggleFavorite(channel)}>
+                  {isFavorite(channel) ? "Unfavorite" : "Favorite"}
+                </button>
+              </li>
+            ))}
+          </ul>
+        );
+      case "favorites":
+        return (
           <ul>
             {favorites.map((channel) => (
               <li
@@ -112,13 +137,13 @@ function App() {
               </li>
             ))}
           </ul>
-        </div>
-        <div className="group-list">
-          <h2>Groups</h2>
+        );
+      case "groups":
+        return (
           <ul>
             <li
               className={selectedGroup === null ? "selected" : ""}
-              onClick={() => setSelectedGroup(null)}
+              onClick={() => handleSelectGroup(null)}
             >
               All
             </li>
@@ -126,31 +151,27 @@ function App() {
               <li
                 key={group}
                 className={selectedGroup === group ? "selected" : ""}
-                onClick={() => setSelectedGroup(group)}
+                onClick={() => handleSelectGroup(group)}
               >
                 {group}
               </li>
             ))}
           </ul>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="container">
+      <div className="sidebar">
+        <div className="navbar">
+          <button onClick={() => setActiveTab("channels")}>Channels</button>
+          <button onClick={() => setActiveTab("favorites")}>Favorites</button>
+          <button onClick={() => setActiveTab("groups")}>Groups</button>
         </div>
-      </div>
-      <div className="channel-list">
-        <h2>Channels</h2>
-        <ul>
-          {filteredChannels.map((channel) => (
-            <li
-              key={channel.name}
-              className={selectedChannel?.name === channel.name ? "selected" : ""}
-              onClick={() => setSelectedChannel(channel)}
-            >
-              <img src={channel.logo} alt={channel.name} />
-              <span>{channel.name}</span>
-              <button onClick={() => handleToggleFavorite(channel)}>
-                {isFavorite(channel) ? "Unfavorite" : "Favorite"}
-              </button>
-            </li>
-          ))}
-        </ul>
+        <div className="content">{renderContent()}</div>
       </div>
       <div className="video-player">
         {selectedChannel && (

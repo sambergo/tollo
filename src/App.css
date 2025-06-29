@@ -5,52 +5,61 @@
 }
 
 .sidebar {
-  width: 200px;
+  width: 300px;
   border-right: 1px solid #ccc;
   display: flex;
   flex-direction: column;
 }
 
-.channel-list,
-.group-list {
+.navbar {
+  display: flex;
+  justify-content: space-around;
+  padding: 0.5rem;
+  border-bottom: 1px solid #ccc;
+}
+
+.navbar button {
+  flex: 1;
+  padding: 0.5rem;
+  font-size: 1rem;
+  cursor: pointer;
+  background-color: transparent;
+  border: none;
+}
+
+.navbar button.active {
+  background-color: #eee;
+}
+
+.content {
   flex: 1;
   overflow-y: auto;
 }
 
-.channel-list h2,
-.group-list h2 {
-  margin: 0;
-  padding: 1rem;
-  border-bottom: 1px solid #ccc;
-}
-
-.channel-list ul,
-.group-list ul {
+.content ul {
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
-.channel-list li,
-.group-list li {
+.content li {
   display: flex;
   align-items: center;
   padding: 1rem;
   cursor: pointer;
 }
 
-.channel-list li.selected,
-.group-list li.selected {
+.content li.selected {
   background-color: #eee;
 }
 
-.channel-list img {
+.content img {
   width: 40px;
   height: 40px;
   margin-right: 1rem;
 }
 
-.channel-list button {
+.content button {
   margin-left: auto;
   padding: 0.25rem 0.5rem;
   font-size: 0.8rem;
