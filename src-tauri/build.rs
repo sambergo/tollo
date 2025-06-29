@@ -1,3 +1,3 @@
 fn main() {
-    tauri_build::build()
+    println!("cargo:rerun-if-changed=data/fin.m3u");
 }

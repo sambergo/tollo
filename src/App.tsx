@@ -1,50 +1,84 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
+import { useState, useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import Hls from "hls.js";
 import "./App.css";
 
-function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
+interface Channel {
+  name: string;
+  logo: string;
+  url: string;
+  group_title: string;
+}
 
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke("greet", { name }));
-  }
+function App() {
+  const [channels, setChannels] = useState<Channel[]>([]);
+  const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    async function fetchChannels() {
+      const fetchedChannels = await invoke<Channel[]>("get_channels");
+      setChannels(fetchedChannels);
+      setSelectedChannel(fetchedChannels[0]);
+    }
+    fetchChannels();
+  }, []);
+
+  useEffect(() => {
+    if (selectedChannel && videoRef.current) {
+      const video = videoRef.current;
+      if (Hls.isSupported()) {
+        const hls = new Hls();
+        hls.loadSource(selectedChannel.url);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          video.play();
+        });
+      } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+        video.src = selectedChannel.url;
+        video.addEventListener("loadedmetadata", () => {
+          video.play();
+        });
+      }
+    }
+  }, [selectedChannel]);
+
+  const handlePlayInMpv = () => {
+    if (selectedChannel) {
+      invoke("play_channel", { url: selectedChannel.url });
+    }
+  };
 
   return (
-    <main className="container">
-      <h1>Welcome to Tauri + React</h1>
-
-      <div className="row">
-        <a href="https://vitejs.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://reactjs.org" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <div className="container">
+      <div className="channel-list">
+        <h2>Channels</h2>
+        <ul>
+          {channels.map((channel) => (
+            <li
+              key={channel.name}
+              className={selectedChannel?.name === channel.name ? "selected" : ""}
+              onClick={() => setSelectedChannel(channel)}
+            >
+              <img src={channel.logo} alt={channel.name} />
+              <span>{channel.name}</span>
+            </li>
+          ))}
+        </ul>
       </div>
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
-
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
-      >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
-        />
-        <button type="submit">Greet</button>
-      </form>
-      <p>{greetMsg}</p>
-    </main>
+      <div className="video-player">
+        {selectedChannel && (
+          <>
+            <video ref={videoRef} controls></video>
+            <div className="video-info">
+              <h3>{selectedChannel.name}</h3>
+              <p>{selectedChannel.group_title}</p>
+              <button onClick={handlePlayInMpv}>Play in MPV</button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
   );
 }
 
