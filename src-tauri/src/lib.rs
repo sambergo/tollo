@@ -6,9 +6,63 @@ use m3u_parser::Channel;
 use rusqlite::Connection;
 use std::sync::Mutex;
 use tauri::State;
+use serde::{Serialize, Deserialize};
 
 struct DbState {
     db: Mutex<Connection>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct ChannelList {
+    id: i32,
+    name: String,
+    source: String,
+    is_default: bool,
+}
+
+#[tauri::command]
+fn get_channel_lists(state: State<DbState>) -> Result<Vec<ChannelList>, String> {
+    let db = state.db.lock().unwrap();
+    let mut stmt = db.prepare("SELECT id, name, source, is_default FROM channel_lists").map_err(|e| e.to_string())?;
+    let list_iter = stmt.query_map([], |row| {
+        Ok(ChannelList {
+            id: row.get(0)?,
+            name: row.get(1)?,
+            source: row.get(2)?,
+            is_default: row.get(3)?,
+        })
+    }).map_err(|e| e.to_string())?;
+
+    let mut lists = Vec::new();
+    for list in list_iter {
+        lists.push(list.map_err(|e| e.to_string())?);
+    }
+    Ok(lists)
+}
+
+#[tauri::command]
+fn add_channel_list(state: State<DbState>, name: String, source: String) -> Result<(), String> {
+    let db = state.db.lock().unwrap();
+    db.execute(
+        "INSERT INTO channel_lists (name, source) VALUES (?1, ?2)",
+        &[&name, &source],
+    ).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+fn set_default_channel_list(state: State<DbState>, id: i32) -> Result<(), String> {
+    let mut db = state.db.lock().unwrap();
+    let tx = db.transaction().map_err(|e| e.to_string())?;
+    tx.execute("UPDATE channel_lists SET is_default = 0", [])
+        .map_err(|e| e.to_string())?;
+    tx.execute(
+        "UPDATE channel_lists SET is_default = 1 WHERE id = ?1",
+        &[&id],
+    )
+    .map_err(|e| e.to_string())?;
+    tx.commit().map_err(|e| e.to_string())?;
+    Ok(())
 }
 
 #[tauri::command]
@@ -182,7 +236,7 @@ fn set_player_command(state: State<DbState>, command: String) -> Result<(), Stri
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let mut db_connection = database::initialize_database().expect("Failed to initialize database");
-    let channels = m3u_parser::get_channels();
+    let channels = m3u_parser::get_channels(&db_connection);
     database::populate_channels(&mut db_connection, &channels).expect("Failed to populate channels");
 
     tauri::Builder::default()
@@ -200,7 +254,10 @@ pub fn run() {
             get_favorites,
             get_history,
             get_player_command,
-            set_player_command
+            set_player_command,
+            get_channel_lists,
+            add_channel_list,
+            set_default_channel_list
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

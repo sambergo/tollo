@@ -64,6 +64,30 @@ pub fn initialize_database() -> Result<Connection> {
         [],
     )?;
 
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS channel_lists (
+            id INTEGER PRIMARY KEY,
+            name TEXT NOT NULL UNIQUE,
+            source TEXT NOT NULL,
+            is_default BOOLEAN NOT NULL DEFAULT 0,
+            CONSTRAINT is_default_check CHECK (is_default IN (0, 1))
+        )",
+        [],
+    )?;
+
+    conn.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_one_default_list ON channel_lists (is_default) WHERE is_default = 1",
+        [],
+    )?;
+
+    let list_count: i64 = conn.query_row("SELECT COUNT(*) FROM channel_lists", [], |row| row.get(0))?;
+    if list_count == 0 {
+        conn.execute(
+            "INSERT INTO channel_lists (name, source, is_default) VALUES (?1, ?2, ?3)",
+            &["Default", "fin.m3u", "1"],
+        )?;
+    }
+
     Ok(conn)
 }
 

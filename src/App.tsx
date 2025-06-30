@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import Hls from "hls.js";
+import Settings from "./components/Settings";
 import "./App.css";
 
 interface Channel {
@@ -21,7 +22,6 @@ function App() {
   const [groups, setGroups] = useState<string[]>([]);
   const [history, setHistory] = useState<Channel[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [playerCommand, setPlayerCommand] = useState("");
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("channels");
@@ -50,11 +50,6 @@ function App() {
     setHistory(fetchedHistory);
   }
 
-  async function fetchPlayerCommand() {
-    const fetchedCommand = await invoke<string>("get_player_command");
-    setPlayerCommand(fetchedCommand);
-  }
-
   async function searchChannels(query: string) {
     if (query === "") {
       fetchChannels();
@@ -69,7 +64,6 @@ function App() {
     fetchFavorites();
     fetchGroups();
     fetchHistory();
-    fetchPlayerCommand();
   }, []);
 
   useEffect(() => {
@@ -131,10 +125,6 @@ function App() {
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
     searchChannels(e.target.value);
-  };
-
-  const handleSaveSettings = async () => {
-    await invoke("set_player_command", { command: playerCommand });
   };
 
   const filteredChannels = selectedGroup
@@ -281,17 +271,7 @@ function App() {
           </ul>
         );
       case "settings":
-        return (
-          <div className="settings">
-            <label>Player Command</label>
-            <input
-              type="text"
-              value={playerCommand}
-              onChange={(e) => setPlayerCommand(e.target.value)}
-            />
-            <button onClick={handleSaveSettings}>Save</button>
-          </div>
-        );
+        return <Settings />;
       default:
         return null;
     }
