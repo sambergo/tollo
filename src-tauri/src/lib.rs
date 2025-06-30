@@ -18,18 +18,22 @@ struct ChannelList {
     name: String,
     source: String,
     is_default: bool,
+    filepath: Option<String>,
+    last_fetched: Option<i64>,
 }
 
 #[tauri::command]
 fn get_channel_lists(state: State<DbState>) -> Result<Vec<ChannelList>, String> {
     let db = state.db.lock().unwrap();
-    let mut stmt = db.prepare("SELECT id, name, source, is_default FROM channel_lists").map_err(|e| e.to_string())?;
+    let mut stmt = db.prepare("SELECT id, name, source, is_default, filepath, last_fetched FROM channel_lists").map_err(|e| e.to_string())?;
     let list_iter = stmt.query_map([], |row| {
         Ok(ChannelList {
             id: row.get(0)?,
             name: row.get(1)?,
             source: row.get(2)?,
             is_default: row.get(3)?,
+            filepath: row.get(4)?,
+            last_fetched: row.get(5)?,
         })
     }).map_err(|e| e.to_string())?;
 
@@ -67,38 +71,14 @@ fn set_default_channel_list(state: State<DbState>, id: i32) -> Result<(), String
 
 #[tauri::command]
 fn get_channels(state: State<DbState>) -> Result<Vec<Channel>, String> {
-    let db = state.db.lock().unwrap();
-    let mut stmt = db.prepare("SELECT name, logo, url, group_title, tvg_id, resolution, extra_info FROM channels").map_err(|e| e.to_string())?;
-    let channel_iter = stmt.query_map([], |row| {
-        Ok(Channel {
-            name: row.get(0)?,
-            logo: row.get(1)?,
-            url: row.get(2)?,
-            group_title: row.get(3)?,
-            tvg_id: row.get(4)?,
-            resolution: row.get(5)?,
-            extra_info: row.get(6)?,
-        })
-    }).map_err(|e| e.to_string())?;
-
-    let mut channels = Vec::new();
-    for channel in channel_iter {
-        channels.push(channel.map_err(|e| e.to_string())?);
-    }
-    Ok(channels)
+    let mut db = state.db.lock().unwrap();
+    Ok(m3u_parser::get_channels(&mut db))
 }
 
 #[tauri::command]
 fn get_groups(state: State<DbState>) -> Result<Vec<String>, String> {
-    let db = state.db.lock().unwrap();
-    let mut stmt = db.prepare("SELECT DISTINCT group_title FROM channels").map_err(|e| e.to_string())?;
-    let group_iter = stmt.query_map([], |row| row.get(0)).map_err(|e| e.to_string())?;
-
-    let mut groups = Vec::new();
-    for group in group_iter {
-        groups.push(group.map_err(|e| e.to_string())?);
-    }
-    Ok(groups)
+    let mut db = state.db.lock().unwrap();
+    Ok(m3u_parser::get_groups(&mut db))
 }
 
 #[tauri::command]
@@ -233,10 +213,30 @@ fn set_player_command(state: State<DbState>, command: String) -> Result<(), Stri
     Ok(())
 }
 
+#[tauri::command]
+fn get_cache_duration(state: State<DbState>) -> Result<i64, String> {
+    let db = state.db.lock().unwrap();
+    db.query_row(
+        "SELECT cache_duration_hours FROM settings WHERE id = 1",
+        [],
+        |row| row.get(0),
+    ).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn set_cache_duration(state: State<DbState>, hours: i64) -> Result<(), String> {
+    let db = state.db.lock().unwrap();
+    db.execute(
+        "UPDATE settings SET cache_duration_hours = ?1 WHERE id = 1",
+        &[&hours],
+    ).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let mut db_connection = database::initialize_database().expect("Failed to initialize database");
-    let channels = m3u_parser::get_channels(&db_connection);
+    let channels = m3u_parser::get_channels(&mut db_connection);
     database::populate_channels(&mut db_connection, &channels).expect("Failed to populate channels");
 
     tauri::Builder::default()
@@ -257,7 +257,9 @@ pub fn run() {
             set_player_command,
             get_channel_lists,
             add_channel_list,
-            set_default_channel_list
+            set_default_channel_list,
+            get_cache_duration,
+            set_cache_duration
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

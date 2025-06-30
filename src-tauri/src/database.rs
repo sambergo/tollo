@@ -59,7 +59,8 @@ pub fn initialize_database() -> Result<Connection> {
     conn.execute(
         "CREATE TABLE IF NOT EXISTS settings (
             id INTEGER PRIMARY KEY,
-            player_command TEXT NOT NULL
+            player_command TEXT NOT NULL,
+            cache_duration_hours INTEGER NOT NULL DEFAULT 24
         )",
         [],
     )?;
@@ -69,6 +70,8 @@ pub fn initialize_database() -> Result<Connection> {
             id INTEGER PRIMARY KEY,
             name TEXT NOT NULL UNIQUE,
             source TEXT NOT NULL,
+            filepath TEXT,
+            last_fetched INTEGER,
             is_default BOOLEAN NOT NULL DEFAULT 0,
             CONSTRAINT is_default_check CHECK (is_default IN (0, 1))
         )",

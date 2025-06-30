@@ -14,6 +14,7 @@ function Settings() {
   const [newListName, setNewListName] = useState("");
   const [newListSource, setNewListSource] = useState("");
   const [defaultChannelList, setDefaultChannelList] = useState<number | null>(null);
+  const [cacheDuration, setCacheDuration] = useState(24);
 
   async function fetchPlayerCommand() {
     const fetchedCommand = await invoke<string>("get_player_command");
@@ -29,9 +30,15 @@ function Settings() {
     }
   }
 
+  async function fetchCacheDuration() {
+    const duration = await invoke<number>("get_cache_duration");
+    setCacheDuration(duration);
+  }
+
   useEffect(() => {
     fetchPlayerCommand();
     fetchChannelLists();
+    fetchCacheDuration();
   }, []);
 
   const handleSaveSettings = async () => {
@@ -39,6 +46,7 @@ function Settings() {
     if (defaultChannelList !== null) {
       await invoke("set_default_channel_list", { id: defaultChannelList });
     }
+    await invoke("set_cache_duration", { hours: cacheDuration });
   };
 
   const handleAddChannelList = async () => {
@@ -62,6 +70,15 @@ function Settings() {
           type="text"
           value={playerCommand}
           onChange={(e) => setPlayerCommand(e.target.value)}
+        />
+      </div>
+      <hr />
+      <div>
+        <label>Cache Duration (hours)</label>
+        <input
+          type="number"
+          value={cacheDuration}
+          onChange={(e) => setCacheDuration(parseInt(e.target.value))}
         />
       </div>
       <hr />

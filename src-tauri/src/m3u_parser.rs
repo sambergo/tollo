@@ -4,6 +4,8 @@ use regex::Regex;
 use rusqlite::Connection;
 use std::fs;
 use reqwest;
+use chrono::{Utc, Duration};
+use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Channel {
@@ -49,24 +51,58 @@ fn parse_m3u_content(m3u_content: &str) -> Vec<Channel> {
     channels
 }
 
-pub fn get_channels(conn: &Connection) -> Vec<Channel> {
-    let source: String = conn.query_row(
-        "SELECT source FROM channel_lists WHERE is_default = 1",
-        [],
-        |row| row.get(0),
-    ).unwrap_or_else(|_| "https://iptv-org.github.io/iptv/countries/fi.m3u".to_string());
+pub fn get_channels(conn: &mut Connection) -> Vec<Channel> {
+    let mut stmt = conn.prepare("SELECT id, source, filepath, last_fetched FROM channel_lists WHERE is_default = 1").unwrap();
+    let mut rows = stmt.query([]).unwrap();
 
-    let m3u_content = if source.starts_with("http") {
-        reqwest::blocking::get(&source).unwrap().text().unwrap()
-    } else {
-        let data_dir = dirs::data_dir().unwrap().join("gui-tollo");
-        fs::read_to_string(data_dir.join(source)).unwrap_or_else(|_| "".to_string())
-    };
+    if let Some(row) = rows.next().unwrap() {
+        let id: i32 = row.get(0).unwrap();
+        let source: String = row.get(1).unwrap();
+        let filepath: Option<String> = row.get(2).unwrap();
+        let last_fetched: Option<i64> = row.get(3).unwrap();
 
-    parse_m3u_content(&m3u_content)
+        let cache_duration_hours: i64 = conn.query_row(
+            "SELECT cache_duration_hours FROM settings WHERE id = 1",
+            [],
+            |row| row.get(0),
+        ).unwrap_or(24);
+
+        let now = Utc::now().timestamp();
+
+        if let (Some(fp), Some(lf)) = (filepath, last_fetched) {
+            if now - lf < cache_duration_hours * 3600 {
+                let data_dir = dirs::data_dir().unwrap().join("gui-tollo");
+                if let Ok(content) = fs::read_to_string(data_dir.join(fp)) {
+                    return parse_m3u_content(&content);
+                }
+            }
+        }
+
+        if source.starts_with("http") {
+            if let Ok(content) = reqwest::blocking::get(&source).and_then(|resp| resp.text()) {
+                let data_dir = dirs::data_dir().unwrap().join("gui-tollo");
+                let filename = format!("{}.m3u", Uuid::new_v4());
+                let new_filepath = data_dir.join(&filename);
+                if fs::write(&new_filepath, &content).is_ok() {
+                    conn.execute(
+                        "UPDATE channel_lists SET filepath = ?1, last_fetched = ?2 WHERE id = ?3",
+                        &[&filename as &dyn rusqlite::ToSql, &now as &dyn rusqlite::ToSql, &id as &dyn rusqlite::ToSql],
+                    ).unwrap();
+                    return parse_m3u_content(&content);
+                }
+            }
+        } else {
+            let data_dir = dirs::data_dir().unwrap().join("gui-tollo");
+            if let Ok(content) = fs::read_to_string(data_dir.join(&source)) {
+                return parse_m3u_content(&content);
+            }
+        }
+    }
+
+    vec![]
 }
 
-pub fn get_groups(conn: &Connection) -> Vec<String> {
+pub fn get_groups(conn: &mut Connection) -> Vec<String> {
     let channels = get_channels(conn);
     let mut groups = HashSet::new();
     for channel in channels {
@@ -74,3 +110,4 @@ pub fn get_groups(conn: &Connection) -> Vec<String> {
     }
     groups.into_iter().collect()
 }
+

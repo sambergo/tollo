@@ -501,8 +501,10 @@ checksum = "c469d952047f47f91b68d1cba3f10d63c11d73e4636f24f08daf0278abf01c4d"
 dependencies = [
  "android-tzdata",
  "iana-time-zone",
+ "js-sys",
  "num-traits",
  "serde",
+ "wasm-bindgen",
  "windows-link",
 ]
 
@@ -1480,6 +1482,7 @@ dependencies = [
 name = "gui-tollo"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "dirs 5.0.1",
  "regex",
  "reqwest",
@@ -1489,6 +1492,7 @@ dependencies = [
  "tauri",
  "tauri-build",
  "tauri-plugin-opener",
+ "uuid",
 ]
 
 [[package]]
