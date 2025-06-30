@@ -9,6 +9,7 @@ import Settings from "./components/Settings";
 import { useChannelListName } from "./hooks/useChannelListName";
 import { useKeyboardNavigation } from "./hooks/useKeyboardNavigation";
 import { useChannelSearch } from "./hooks/useChannelSearch";
+import { useSavedFilters, type SavedFilter } from "./hooks/useSavedFilters";
 import type { Channel } from "./components/ChannelList";
 import "./App.css";
 
@@ -39,6 +40,7 @@ function App() {
   const hlsRef = useRef<Hls | null>(null);
   const channelListName = useChannelListName(selectedChannelListId);
   const { searchQuery, setSearchQuery, debouncedSearchQuery, isSearching, searchChannels } = useChannelSearch(selectedChannelListId);
+  const { savedFilters, saveFilter, deleteFilter } = useSavedFilters(selectedChannelListId);
 
   // Load default channel list on app startup
   useEffect(() => {
@@ -373,6 +375,32 @@ function App() {
     }
   })();
 
+  // Saved filter handlers
+  const handleSaveFilter = async (slotNumber: number, searchQuery: string, selectedGroup: string | null, name: string): Promise<boolean> => {
+    const success = await saveFilter(slotNumber, searchQuery, selectedGroup, name);
+    if (success) {
+      // Show some feedback to user (you could add a toast here)
+      console.log(`Saved filter to slot ${slotNumber}: ${name}`);
+    }
+    return success;
+  };
+
+  const handleApplyFilter = (filter: SavedFilter) => {
+    // Apply the search query
+    setSearchQuery(filter.search_query);
+    
+    // Apply the group selection
+    setSelectedGroup(filter.selected_group);
+    
+    // Switch to channels tab to see the results
+    setActiveTab("channels");
+    setFocusedIndex(0);
+  };
+
+  const handleDeleteFilter = async (slotNumber: number) => {
+    await deleteFilter(slotNumber);
+  };
+
   useKeyboardNavigation({
     activeTab,
     channels,
@@ -383,19 +411,26 @@ function App() {
     selectedChannel,
     focusedIndex,
     listItems,
+    searchQuery,
     setFocusedIndex,
     setSelectedChannel,
     setActiveTab,
     handleSelectGroup,
     handleToggleFavorite,
-    handlePlayInMpv
+    handlePlayInMpv,
+    savedFilters,
+    onSaveFilter: handleSaveFilter,
+    onApplyFilter: handleApplyFilter
   });
 
   return (
     <div className="container">
       <NavigationSidebar 
         activeTab={activeTab} 
-        onTabChange={setActiveTab} 
+        onTabChange={setActiveTab}
+        savedFilters={savedFilters}
+        onApplyFilter={handleApplyFilter}
+        onDeleteFilter={handleDeleteFilter}
       />
 
       <div className="main-content">

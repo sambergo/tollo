@@ -605,6 +605,24 @@ fn enable_all_groups(state: State<DbState>, channel_list_id: i64, groups: Vec<St
     database::enable_all_groups(&mut db, channel_list_id, groups).map_err(|e| e.to_string())
 }
 
+#[tauri::command]
+fn save_filter(state: State<DbState>, channel_list_id: i64, slot_number: i32, search_query: String, selected_group: Option<String>, name: String) -> Result<(), String> {
+    let db = state.db.lock().unwrap();
+    database::save_filter(&db, channel_list_id, slot_number, search_query, selected_group, name).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn get_saved_filters(state: State<DbState>, channel_list_id: i64) -> Result<Vec<database::SavedFilter>, String> {
+    let db = state.db.lock().unwrap();
+    database::get_saved_filters(&db, channel_list_id).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn delete_saved_filter(state: State<DbState>, channel_list_id: i64, slot_number: i32) -> Result<(), String> {
+    let db = state.db.lock().unwrap();
+    database::delete_saved_filter(&db, channel_list_id, slot_number).map_err(|e| e.to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let mut db_connection = database::initialize_database().expect("Failed to initialize database");
@@ -654,7 +672,10 @@ pub fn run() {
             get_enabled_groups,
             update_group_selection,
             sync_channel_list_groups,
-            enable_all_groups
+            enable_all_groups,
+            save_filter,
+            get_saved_filters,
+            delete_saved_filter
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

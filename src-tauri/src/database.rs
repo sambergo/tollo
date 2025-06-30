@@ -94,6 +94,20 @@ pub fn initialize_database() -> Result<Connection> {
         [],
     )?;
 
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS saved_filters (
+            channel_list_id INTEGER NOT NULL,
+            slot_number INTEGER NOT NULL CHECK (slot_number >= 0 AND slot_number <= 9),
+            search_query TEXT NOT NULL DEFAULT '',
+            selected_group TEXT,
+            name TEXT NOT NULL DEFAULT '',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (channel_list_id, slot_number),
+            FOREIGN KEY (channel_list_id) REFERENCES channel_lists(id) ON DELETE CASCADE
+        )",
+        [],
+    )?;
+
     let list_count: i64 = conn.query_row("SELECT COUNT(*) FROM channel_lists", [], |row| row.get(0))?;
     if list_count == 0 {
         conn.execute(
@@ -205,5 +219,47 @@ pub fn enable_all_groups(conn: &mut Connection, channel_list_id: i64, groups: Ve
     }
     
     tx.commit()?;
+    Ok(())
+}
+
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct SavedFilter {
+    pub slot_number: i32,
+    pub search_query: String,
+    pub selected_group: Option<String>,
+    pub name: String,
+}
+
+pub fn save_filter(conn: &Connection, channel_list_id: i64, slot_number: i32, search_query: String, selected_group: Option<String>, name: String) -> Result<()> {
+    conn.execute(
+        "INSERT OR REPLACE INTO saved_filters (channel_list_id, slot_number, search_query, selected_group, name) VALUES (?1, ?2, ?3, ?4, ?5)",
+        (channel_list_id, slot_number, search_query, selected_group, name),
+    )?;
+    Ok(())
+}
+
+pub fn get_saved_filters(conn: &Connection, channel_list_id: i64) -> Result<Vec<SavedFilter>> {
+    let mut stmt = conn.prepare("SELECT slot_number, search_query, selected_group, name FROM saved_filters WHERE channel_list_id = ?1 ORDER BY slot_number")?;
+    let filter_iter = stmt.query_map([channel_list_id], |row| {
+        Ok(SavedFilter {
+            slot_number: row.get(0)?,
+            search_query: row.get(1)?,
+            selected_group: row.get(2)?,
+            name: row.get(3)?,
+        })
+    })?;
+
+    let mut filters = Vec::new();
+    for filter in filter_iter {
+        filters.push(filter?);
+    }
+    Ok(filters)
+}
+
+pub fn delete_saved_filter(conn: &Connection, channel_list_id: i64, slot_number: i32) -> Result<()> {
+    conn.execute(
+        "DELETE FROM saved_filters WHERE channel_list_id = ?1 AND slot_number = ?2",
+        (channel_list_id, slot_number),
+    )?;
     Ok(())
 }

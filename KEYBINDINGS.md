@@ -9,6 +9,13 @@ This document outlines the keyboard shortcuts available in the application.
 | `h` or `ArrowLeft` | Switch to the previous tab |
 | `l` or `ArrowRight` | Switch to the next tab |
 
+## Saved Filters
+
+| Key(s) | Action |
+| --- | --- |
+| `0-9` | Apply saved filter from slot (0-9) |
+| `Alt+0-9` | Save current search and group filter to slot (0-9) |
+
 ## Lists (Channels, Favorites, Groups, History)
 
 | Key(s) | Action |

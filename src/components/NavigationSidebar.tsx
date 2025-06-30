@@ -1,13 +1,24 @@
 import { TvIcon, HeartIcon, UsersIcon, HistoryIcon, SettingsIcon } from "./Icons";
+import SavedFilters from "./SavedFilters";
+import type { SavedFilter } from "../hooks/useSavedFilters";
 
 type Tab = "channels" | "favorites" | "groups" | "history" | "settings";
 
 interface NavigationSidebarProps {
   activeTab: Tab;
   onTabChange: (tab: Tab) => void;
+  savedFilters: SavedFilter[];
+  onApplyFilter: (filter: SavedFilter) => void;
+  onDeleteFilter: (slotNumber: number) => void;
 }
 
-export default function NavigationSidebar({ activeTab, onTabChange }: NavigationSidebarProps) {
+export default function NavigationSidebar({ 
+  activeTab, 
+  onTabChange, 
+  savedFilters, 
+  onApplyFilter, 
+  onDeleteFilter 
+}: NavigationSidebarProps) {
   return (
     <div className="nav-sidebar">
       <div className="app-header">
@@ -52,6 +63,11 @@ export default function NavigationSidebar({ activeTab, onTabChange }: Navigation
             Settings
           </button>
         </nav>
+        <SavedFilters 
+          savedFilters={savedFilters}
+          onApplyFilter={onApplyFilter}
+          onDeleteFilter={onDeleteFilter}
+        />
       </div>
     </div>
   );
