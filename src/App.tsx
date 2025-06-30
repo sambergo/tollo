@@ -10,12 +10,13 @@ interface Channel {
   group_title: string;
 }
 
-type Tab = "channels" | "favorites" | "groups";
+type Tab = "channels" | "favorites" | "groups" | "history";
 
 function App() {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [favorites, setFavorites] = useState<Channel[]>([]);
   const [groups, setGroups] = useState<string[]>([]);
+  const [history, setHistory] = useState<Channel[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("channels");
@@ -38,10 +39,16 @@ function App() {
     setGroups(fetchedGroups);
   }
 
+  async function fetchHistory() {
+    const fetchedHistory = await invoke<Channel[]>("get_history");
+    setHistory(fetchedHistory);
+  }
+
   useEffect(() => {
     fetchChannels();
     fetchFavorites();
     fetchGroups();
+    fetchHistory();
   }, []);
 
   useEffect(() => {
@@ -77,7 +84,8 @@ function App() {
       if (hlsRef.current) {
         hlsRef.current.destroy();
       }
-      invoke("play_channel", { url: selectedChannel.url });
+      invoke("play_channel", { channel: selectedChannel });
+      fetchHistory();
     }
   };
 
@@ -158,6 +166,21 @@ function App() {
             ))}
           </ul>
         );
+      case "history":
+        return (
+          <ul>
+            {history.map((channel) => (
+              <li
+                key={channel.name}
+                className={selectedChannel?.name === channel.name ? "selected" : ""}
+                onClick={() => setSelectedChannel(channel)}
+              >
+                <img src={channel.logo} alt={channel.name} />
+                <span>{channel.name}</span>
+              </li>
+            ))}
+          </ul>
+        );
       default:
         return null;
     }
@@ -170,6 +193,7 @@ function App() {
           <button onClick={() => setActiveTab("channels")}>Channels</button>
           <button onClick={() => setActiveTab("favorites")}>Favorites</button>
           <button onClick={() => setActiveTab("groups")}>Groups</button>
+          <button onClick={() => setActiveTab("history")}>History</button>
         </div>
         <div className="content">{renderContent()}</div>
       </div>

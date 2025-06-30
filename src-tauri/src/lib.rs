@@ -22,9 +22,15 @@ fn get_groups() -> Vec<String> {
 }
 
 #[tauri::command]
-fn play_channel(url: String) {
+fn play_channel(state: State<DbState>, channel: Channel) {
+    let db = state.db.lock().unwrap();
+    db.execute(
+        "INSERT OR REPLACE INTO history (name, logo, url, group_title, timestamp) VALUES (?1, ?2, ?3, ?4, CURRENT_TIMESTAMP)",
+        &[&channel.name, &channel.logo, &channel.url, &channel.group_title],
+    ).unwrap();
+
     Command::new("mpv")
-        .arg(url)
+        .arg(channel.url)
         .spawn()
         .expect("Failed to launch mpv");
 }
@@ -67,6 +73,26 @@ fn get_favorites(state: State<DbState>) -> Result<Vec<Channel>, String> {
     Ok(channels)
 }
 
+#[tauri::command]
+fn get_history(state: State<DbState>) -> Result<Vec<Channel>, String> {
+    let db = state.db.lock().unwrap();
+    let mut stmt = db.prepare("SELECT name, logo, url, group_title FROM history ORDER BY timestamp DESC LIMIT 20").map_err(|e| e.to_string())?;
+    let channel_iter = stmt.query_map([], |row| {
+        Ok(Channel {
+            name: row.get(0)?,
+            logo: row.get(1)?,
+            url: row.get(2)?,
+            group_title: row.get(3)?,
+        })
+    }).map_err(|e| e.to_string())?;
+
+    let mut channels = Vec::new();
+    for channel in channel_iter {
+        channels.push(channel.map_err(|e| e.to_string())?);
+    }
+    Ok(channels)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let db_connection = database::initialize_database().expect("Failed to initialize database");
@@ -82,7 +108,8 @@ pub fn run() {
             play_channel,
             add_favorite,
             remove_favorite,
-            get_favorites
+            get_favorites,
+            get_history
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

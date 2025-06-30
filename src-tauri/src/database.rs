@@ -1,6 +1,5 @@
 use rusqlite::{Connection, Result};
 use std::fs;
-use std::path::PathBuf;
 
 pub fn initialize_database() -> Result<Connection> {
     let data_dir = dirs::data_dir().unwrap().join("gui-tollo");
@@ -15,6 +14,18 @@ pub fn initialize_database() -> Result<Connection> {
             logo TEXT NOT NULL,
             url TEXT NOT NULL,
             group_title TEXT NOT NULL
+        )",
+        [],
+    )?;
+
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS history (
+            id INTEGER PRIMARY KEY,
+            name TEXT NOT NULL UNIQUE,
+            logo TEXT NOT NULL,
+            url TEXT NOT NULL,
+            group_title TEXT NOT NULL,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
         )",
         [],
     )?;
