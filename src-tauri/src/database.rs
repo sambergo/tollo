@@ -14,7 +14,10 @@ pub fn initialize_database() -> Result<Connection> {
             name TEXT NOT NULL UNIQUE,
             logo TEXT NOT NULL,
             url TEXT NOT NULL,
-            group_title TEXT NOT NULL
+            group_title TEXT NOT NULL,
+            tvg_id TEXT NOT NULL,
+            resolution TEXT NOT NULL,
+            extra_info TEXT NOT NULL
         )",
         [],
     )?;
@@ -26,6 +29,9 @@ pub fn initialize_database() -> Result<Connection> {
             logo TEXT NOT NULL,
             url TEXT NOT NULL,
             group_title TEXT NOT NULL,
+            tvg_id TEXT NOT NULL,
+            resolution TEXT NOT NULL,
+            extra_info TEXT NOT NULL,
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
         )",
         [],
@@ -37,7 +43,10 @@ pub fn initialize_database() -> Result<Connection> {
             name TEXT NOT NULL UNIQUE,
             logo TEXT NOT NULL,
             url TEXT NOT NULL,
-            group_title TEXT NOT NULL
+            group_title TEXT NOT NULL,
+            tvg_id TEXT NOT NULL,
+            resolution TEXT NOT NULL,
+            extra_info TEXT NOT NULL
         )",
         [],
     )?;
@@ -53,9 +62,17 @@ pub fn initialize_database() -> Result<Connection> {
 pub fn populate_channels(conn: &mut Connection, channels: &[Channel]) -> Result<()> {
     let tx = conn.transaction()?;
     {
-        let mut stmt = tx.prepare("INSERT OR IGNORE INTO channels (name, logo, url, group_title) VALUES (?1, ?2, ?3, ?4)")?;
+        let mut stmt = tx.prepare("INSERT OR IGNORE INTO channels (name, logo, url, group_title, tvg_id, resolution, extra_info) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)")?;
         for channel in channels {
-            stmt.execute(&[&channel.name, &channel.logo, &channel.url, &channel.group_title])?;
+            stmt.execute(&[
+                &channel.name,
+                &channel.logo,
+                &channel.url,
+                &channel.group_title,
+                &channel.tvg_id,
+                &channel.resolution,
+                &channel.extra_info,
+            ])?;
         }
     }
     tx.commit()?;

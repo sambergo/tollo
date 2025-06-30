@@ -14,13 +14,16 @@ struct DbState {
 #[tauri::command]
 fn get_channels(state: State<DbState>) -> Result<Vec<Channel>, String> {
     let db = state.db.lock().unwrap();
-    let mut stmt = db.prepare("SELECT name, logo, url, group_title FROM channels").map_err(|e| e.to_string())?;
+    let mut stmt = db.prepare("SELECT name, logo, url, group_title, tvg_id, resolution, extra_info FROM channels").map_err(|e| e.to_string())?;
     let channel_iter = stmt.query_map([], |row| {
         Ok(Channel {
             name: row.get(0)?,
             logo: row.get(1)?,
             url: row.get(2)?,
             group_title: row.get(3)?,
+            tvg_id: row.get(4)?,
+            resolution: row.get(5)?,
+            extra_info: row.get(6)?,
         })
     }).map_err(|e| e.to_string())?;
 
@@ -47,13 +50,16 @@ fn get_groups(state: State<DbState>) -> Result<Vec<String>, String> {
 #[tauri::command]
 fn search_channels(state: State<DbState>, query: String) -> Result<Vec<Channel>, String> {
     let db = state.db.lock().unwrap();
-    let mut stmt = db.prepare("SELECT c.name, c.logo, c.url, c.group_title FROM channels c JOIN channels_fts fts ON c.id = fts.rowid WHERE fts.name MATCH ?").map_err(|e| e.to_string())?;
+    let mut stmt = db.prepare("SELECT c.name, c.logo, c.url, c.group_title, c.tvg_id, c.resolution, c.extra_info FROM channels c JOIN channels_fts fts ON c.id = fts.rowid WHERE fts.name MATCH ?").map_err(|e| e.to_string())?;
     let channel_iter = stmt.query_map([query], |row| {
         Ok(Channel {
             name: row.get(0)?,
             logo: row.get(1)?,
             url: row.get(2)?,
             group_title: row.get(3)?,
+            tvg_id: row.get(4)?,
+            resolution: row.get(5)?,
+            extra_info: row.get(6)?,
         })
     }).map_err(|e| e.to_string())?;
 
@@ -68,8 +74,8 @@ fn search_channels(state: State<DbState>, query: String) -> Result<Vec<Channel>,
 fn play_channel(state: State<DbState>, channel: Channel) {
     let db = state.db.lock().unwrap();
     db.execute(
-        "INSERT OR REPLACE INTO history (name, logo, url, group_title, timestamp) VALUES (?1, ?2, ?3, ?4, CURRENT_TIMESTAMP)",
-        &[&channel.name, &channel.logo, &channel.url, &channel.group_title],
+        "INSERT OR REPLACE INTO history (name, logo, url, group_title, tvg_id, resolution, extra_info, timestamp) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, CURRENT_TIMESTAMP)",
+        &[&channel.name, &channel.logo, &channel.url, &channel.group_title, &channel.tvg_id, &channel.resolution, &channel.extra_info],
     ).unwrap();
 
     Command::new("mpv")
@@ -82,8 +88,8 @@ fn play_channel(state: State<DbState>, channel: Channel) {
 fn add_favorite(state: State<DbState>, channel: Channel) -> Result<(), String> {
     let db = state.db.lock().unwrap();
     db.execute(
-        "INSERT INTO favorites (name, logo, url, group_title) VALUES (?1, ?2, ?3, ?4)",
-        &[&channel.name, &channel.logo, &channel.url, &channel.group_title],
+        "INSERT INTO favorites (name, logo, url, group_title, tvg_id, resolution, extra_info) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+        &[&channel.name, &channel.logo, &channel.url, &channel.group_title, &channel.tvg_id, &channel.resolution, &channel.extra_info],
     ).map_err(|e| e.to_string())?;
     Ok(())
 }
@@ -99,13 +105,16 @@ fn remove_favorite(state: State<DbState>, name: String) -> Result<(), String> {
 #[tauri::command]
 fn get_favorites(state: State<DbState>) -> Result<Vec<Channel>, String> {
     let db = state.db.lock().unwrap();
-    let mut stmt = db.prepare("SELECT name, logo, url, group_title FROM favorites").map_err(|e| e.to_string())?;
+    let mut stmt = db.prepare("SELECT name, logo, url, group_title, tvg_id, resolution, extra_info FROM favorites").map_err(|e| e.to_string())?;
     let channel_iter = stmt.query_map([], |row| {
         Ok(Channel {
             name: row.get(0)?,
             logo: row.get(1)?,
             url: row.get(2)?,
             group_title: row.get(3)?,
+            tvg_id: row.get(4)?,
+            resolution: row.get(5)?,
+            extra_info: row.get(6)?,
         })
     }).map_err(|e| e.to_string())?;
 
@@ -119,13 +128,16 @@ fn get_favorites(state: State<DbState>) -> Result<Vec<Channel>, String> {
 #[tauri::command]
 fn get_history(state: State<DbState>) -> Result<Vec<Channel>, String> {
     let db = state.db.lock().unwrap();
-    let mut stmt = db.prepare("SELECT name, logo, url, group_title FROM history ORDER BY timestamp DESC LIMIT 20").map_err(|e| e.to_string())?;
+    let mut stmt = db.prepare("SELECT name, logo, url, group_title, tvg_id, resolution, extra_info FROM history ORDER BY timestamp DESC LIMIT 20").map_err(|e| e.to_string())?;
     let channel_iter = stmt.query_map([], |row| {
         Ok(Channel {
             name: row.get(0)?,
             logo: row.get(1)?,
             url: row.get(2)?,
             group_title: row.get(3)?,
+            tvg_id: row.get(4)?,
+            resolution: row.get(5)?,
+            extra_info: row.get(6)?,
         })
     }).map_err(|e| e.to_string())?;
 

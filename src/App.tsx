@@ -8,6 +8,9 @@ interface Channel {
   logo: string;
   url: string;
   group_title: string;
+  tvg_id: string;
+  resolution: string;
+  extra_info: string;
 }
 
 type Tab = "channels" | "favorites" | "groups" | "history";
@@ -288,7 +291,18 @@ function App() {
             <video ref={videoRef} controls></video>
             <div className="video-info">
               <h3>{selectedChannel.name}</h3>
-              <p>{selectedChannel.group_title}</p>
+              <p>
+                <strong>Group:</strong> {selectedChannel.group_title}
+              </p>
+              <p>
+                <strong>TVG ID:</strong> {selectedChannel.tvg_id}
+              </p>
+              <p>
+                <strong>Resolution:</strong> {selectedChannel.resolution}
+              </p>
+              <p>
+                <strong>Extra Info:</strong> {selectedChannel.extra_info}
+              </p>
               <button onClick={() => handlePlayInMpv(selectedChannel)}>Play in MPV</button>
             </div>
           </>
