@@ -21,6 +21,7 @@ function App() {
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("channels");
+  const [focusedIndex, setFocusedIndex] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
 
@@ -85,8 +86,8 @@ function App() {
     }
   }, [selectedChannel]);
 
-  const handlePlayInMpv = () => {
-    if (selectedChannel) {
+  const handlePlayInMpv = (channel: Channel) => {
+    if (channel) {
       if (videoRef.current) {
         videoRef.current.pause();
         videoRef.current.src = "";
@@ -94,7 +95,7 @@ function App() {
       if (hlsRef.current) {
         hlsRef.current.destroy();
       }
-      invoke("play_channel", { channel: selectedChannel });
+      invoke("play_channel", { channel });
       fetchHistory();
     }
   };
@@ -126,6 +127,67 @@ function App() {
     ? channels.filter((channel) => channel.group_title === selectedGroup)
     : channels;
 
+  const listItems = (() => {
+    switch (activeTab) {
+      case "channels":
+        return filteredChannels;
+      case "favorites":
+        return favorites;
+      case "groups":
+        return groups;
+      case "history":
+        return history;
+      default:
+        return [];
+    }
+  })();
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement) {
+        return;
+      }
+
+      if (e.key === "j" || e.key === "ArrowDown") {
+        setFocusedIndex((prev) => Math.min(prev + 1, listItems.length - 1));
+      } else if (e.key === "k" || e.key === "ArrowUp") {
+        setFocusedIndex((prev) => Math.max(prev - 1, 0));
+      } else if (e.key === "Enter") {
+        if (activeTab === "channels" || activeTab === "favorites" || activeTab === "history") {
+          setSelectedChannel(listItems[focusedIndex] as Channel);
+        } else if (activeTab === "groups") {
+          handleSelectGroup(listItems[focusedIndex] as string);
+        }
+      } else if (e.key === "l" || e.key === "ArrowRight") {
+        const tabs: Tab[] = ["channels", "favorites", "groups", "history"];
+        const currentIndex = tabs.indexOf(activeTab);
+        const nextIndex = (currentIndex + 1) % tabs.length;
+        setActiveTab(tabs[nextIndex]);
+        setFocusedIndex(0);
+      } else if (e.key === "h" || e.key === "ArrowLeft") {
+        const tabs: Tab[] = ["channels", "favorites", "groups", "history"];
+        const currentIndex = tabs.indexOf(activeTab);
+        const prevIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+        setActiveTab(tabs[prevIndex]);
+        setFocusedIndex(0);
+      } else if (e.key === "f") {
+        if (activeTab === "channels") {
+          handleToggleFavorite(listItems[focusedIndex] as Channel);
+        }
+      } else if (e.key === "p") {
+        if (activeTab === "channels" || activeTab === "favorites" || activeTab === "history") {
+          handlePlayInMpv(listItems[focusedIndex] as Channel);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [activeTab, channels, favorites, groups, history, selectedGroup, selectedChannel, focusedIndex, listItems]);
+
   const renderContent = () => {
     switch (activeTab) {
       case "channels":
@@ -138,10 +200,10 @@ function App() {
               onChange={handleSearch}
             />
             <ul>
-              {filteredChannels.map((channel) => (
+              {filteredChannels.map((channel, index) => (
                 <li
                   key={channel.name}
-                  className={selectedChannel?.name === channel.name ? "selected" : ""}
+                  className={`${selectedChannel?.name === channel.name ? "selected" : ""} ${focusedIndex === index ? "focused" : ""}`}
                   onClick={() => setSelectedChannel(channel)}
                 >
                   <img src={channel.logo} alt={channel.name} />
@@ -157,10 +219,10 @@ function App() {
       case "favorites":
         return (
           <ul>
-            {favorites.map((channel) => (
+            {favorites.map((channel, index) => (
               <li
                 key={channel.name}
-                className={selectedChannel?.name === channel.name ? "selected" : ""}
+                className={`${selectedChannel?.name === channel.name ? "selected" : ""} ${focusedIndex === index ? "focused" : ""}`}
                 onClick={() => setSelectedChannel(channel)}
               >
                 <img src={channel.logo} alt={channel.name} />
@@ -173,15 +235,15 @@ function App() {
         return (
           <ul>
             <li
-              className={selectedGroup === null ? "selected" : ""}
+              className={`${selectedGroup === null ? "selected" : ""} ${focusedIndex === 0 ? "focused" : ""}`}
               onClick={() => handleSelectGroup(null)}
             >
               All
             </li>
-            {groups.map((group) => (
+            {groups.map((group, index) => (
               <li
                 key={group}
-                className={selectedGroup === group ? "selected" : ""}
+                className={`${selectedGroup === group ? "selected" : ""} ${focusedIndex === index + 1 ? "focused" : ""}`}
                 onClick={() => handleSelectGroup(group)}
               >
                 {group}
@@ -192,10 +254,10 @@ function App() {
       case "history":
         return (
           <ul>
-            {history.map((channel) => (
+            {history.map((channel, index) => (
               <li
                 key={channel.name}
-                className={selectedChannel?.name === channel.name ? "selected" : ""}
+                className={`${selectedChannel?.name === channel.name ? "selected" : ""} ${focusedIndex === index ? "focused" : ""}`}
                 onClick={() => setSelectedChannel(channel)}
               >
                 <img src={channel.logo} alt={channel.name} />
@@ -227,7 +289,7 @@ function App() {
             <div className="video-info">
               <h3>{selectedChannel.name}</h3>
               <p>{selectedChannel.group_title}</p>
-              <button onClick={handlePlayInMpv}>Play in MPV</button>
+              <button onClick={() => handlePlayInMpv(selectedChannel)}>Play in MPV</button>
             </div>
           </>
         )}
