@@ -44,27 +44,6 @@ export default function SavedFilters({ savedFilters, onApplyFilter }: SavedFilte
     <div className="saved-filters">
       <div className="saved-filters-header">
         <h3 className="saved-filters-title">Saved Filters</h3>
-        {totalPages > 1 && (
-          <div className="saved-filters-nav">
-            <button
-              className="nav-arrow"
-              onClick={goToPrevPage}
-              title="Previous page"
-            >
-              ‹
-            </button>
-            <span className="page-indicator">
-              {currentPage + 1}/{totalPages}
-            </span>
-            <button
-              className="nav-arrow"
-              onClick={goToNextPage}
-              title="Next page"
-            >
-              ›
-            </button>
-          </div>
-        )}
       </div>
       <div className="saved-filters-list">
         {currentFilters.map((filter) => (
@@ -87,6 +66,27 @@ export default function SavedFilters({ savedFilters, onApplyFilter }: SavedFilte
           </div>
         ))}
       </div>
+      {totalPages > 1 && (
+        <div className="saved-filters-nav">
+          <button
+            className="nav-arrow"
+            onClick={goToPrevPage}
+            title="Previous page"
+          >
+            ‹
+          </button>
+          <span className="page-indicator">
+            {currentPage + 1}/{totalPages}
+          </span>
+          <button
+            className="nav-arrow"
+            onClick={goToNextPage}
+            title="Next page"
+          >
+            ›
+          </button>
+        </div>
+      )}
       <div className="saved-filters-help">
         <p>Press number keys (0-9) to apply</p>
         <p>Press Alt+number to save current filter</p>
