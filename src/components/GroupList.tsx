@@ -31,7 +31,13 @@ export default function GroupList({
   onUnselectAllGroups
 }: GroupListProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Filter groups based on search term
+  const filteredGroups = groups.filter(group =>
+    group.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -49,8 +55,40 @@ export default function GroupList({
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [dropdownOpen]);
+
+  const handleClearSearch = () => {
+    setSearchTerm("");
+  };
+
   return (
     <div className="group-list-container">
+      {/* Search Input */}
+      <div className="search-container">
+        <div className="search-input-wrapper">
+          <input
+            type="text"
+            className="search-input"
+            placeholder="Search groups..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          {searchTerm && (
+            <button
+              className="clear-search-btn"
+              onClick={handleClearSearch}
+              type="button"
+            >
+              ×
+            </button>
+          )}
+        </div>
+        {searchTerm && (
+          <div className="search-results-count">
+            Showing {filteredGroups.length} of {groups.length} groups
+          </div>
+        )}
+      </div>
+
       {/* Mode Toggle Buttons */}
       <div className="group-mode-controls">
         <button 
@@ -112,7 +150,7 @@ export default function GroupList({
           </li>
         )}
 
-        {groups.map((group, index) => {
+        {filteredGroups.map((group, index) => {
           const isSelected = selectedGroup === group;
           const adjustedIndex = (groupDisplayMode === GroupDisplayMode.EnabledGroups) ? index : index + 1;
           const isFocused = focusedIndex === adjustedIndex;

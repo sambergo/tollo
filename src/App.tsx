@@ -140,7 +140,10 @@ function App() {
 
     if (selectedChannel && videoRef.current) {
       const video = videoRef.current;
-      if (Hls.isSupported()) {
+      const isHlsUrl = selectedChannel.url.includes('.m3u8') || selectedChannel.url.includes('m3u8');
+      
+      if (isHlsUrl && Hls.isSupported()) {
+        // Use HLS.js for .m3u8 streams when supported
         const hls = new Hls();
         hlsRef.current = hls;
         hls.loadSource(selectedChannel.url);
@@ -148,10 +151,22 @@ function App() {
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
           video.play();
         });
-      } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+      } else if (isHlsUrl && video.canPlayType("application/vnd.apple.mpegurl")) {
+        // Native HLS support (Safari)
         video.src = selectedChannel.url;
         video.addEventListener("loadedmetadata", () => {
           video.play();
+        });
+      } else {
+        // Fallback for direct video streams (MP4, WebM, etc.) and other protocols
+        video.src = selectedChannel.url;
+        video.addEventListener("loadedmetadata", () => {
+          video.play();
+        });
+        
+        // Handle load errors gracefully
+        video.addEventListener("error", (e) => {
+          console.warn(`Video load error for ${selectedChannel.name}:`, e);
         });
       }
     }
