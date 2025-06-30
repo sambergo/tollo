@@ -1,108 +1,22 @@
 import { useState, useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import Hls from "hls.js";
+import NavigationSidebar, { type Tab } from "./components/NavigationSidebar";
+import MainContent from "./components/MainContent";
+import VideoPlayer from "./components/VideoPlayer";
+import ChannelDetails from "./components/ChannelDetails";
 import Settings from "./components/Settings";
-import CachedImage from "./components/CachedImage";
+import { useChannelListName } from "./hooks/useChannelListName";
+import { useKeyboardNavigation } from "./hooks/useKeyboardNavigation";
+import { useChannelSearch } from "./hooks/useChannelSearch";
+import type { Channel } from "./components/ChannelList";
 import "./App.css";
-
-interface Channel {
-  name: string;
-  logo: string;
-  url: string;
-  group_title: string;
-  tvg_id: string;
-  resolution: string;
-  extra_info: string;
-}
-
-type Tab = "channels" | "favorites" | "groups" | "history" | "settings";
-
-function useChannelListName(selectedChannelListId: number | null) {
-  const [channelListName, setChannelListName] = useState<string>("");
-
-  useEffect(() => {
-    async function fetchChannelLists() {
-      const lists = await invoke<any[]>("get_channel_lists");
-      const found = lists.find((l) => l.id === selectedChannelListId);
-      setChannelListName(found ? found.name : "");
-    }
-    if (selectedChannelListId !== null) {
-      fetchChannelLists();
-    } else {
-      setChannelListName("");
-    }
-  }, [selectedChannelListId]);
-
-  return channelListName;
-}
-
-// Icon components (using SVG for better styling)
-const TvIcon = () => (
-  <svg className="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
-    <line x1="8" y1="21" x2="16" y2="21"/>
-    <line x1="12" y1="17" x2="12" y2="21"/>
-  </svg>
-);
-
-const HeartIcon = () => (
-  <svg className="nav-icon" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-    <path d="M12 21s-6.2-5.05-8.2-7.05A5.5 5.5 0 0 1 12 5.5a5.5 5.5 0 0 1 8.2 8.45C18.2 15.95 12 21 12 21z"/>
-  </svg>
-);
-
-const UsersIcon = () => (
-  <svg className="nav-icon" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-    <circle cx="12" cy="8" r="4"/>
-    <path d="M2 20c0-3.31 3.58-6 8-6s8 2.69 8 6"/>
-  </svg>
-);
-
-const HistoryIcon = () => (
-  <svg className="nav-icon" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-    <path d="M3 12a9 9 0 1 1 9 9"/>
-    <polyline points="3 12 7 16 11 12"/>
-    <line x1="12" y1="7" x2="12" y2="12"/>
-  </svg>
-);
-
-const SettingsIcon = () => (
-  <svg className="nav-icon" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-    <circle cx="12" cy="12" r="3"/>
-    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-  </svg>
-);
-
-const PlayIcon = () => (
-  <svg className="video-placeholder-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <polygon points="5,3 19,12 5,21"/>
-  </svg>
-);
-
-const SignalIcon = () => (
-  <svg className="meta-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path d="2 20h.01"/>
-    <path d="7 20v-4"/>
-    <path d="12 20v-8"/>
-    <path d="17 20V8"/>
-    <path d="22 4v16"/>
-  </svg>
-);
-
-const StarIcon = () => (
-  <svg className="meta-icon rating-star" fill="currentColor" stroke="currentColor" viewBox="0 0 24 24">
-    <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/>
-  </svg>
-);
 
 function App() {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [favorites, setFavorites] = useState<Channel[]>([]);
   const [groups, setGroups] = useState<string[]>([]);
   const [history, setHistory] = useState<Channel[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("channels");
@@ -111,15 +25,7 @@ function App() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
   const channelListName = useChannelListName(selectedChannelListId);
-
-  // Debounce search query
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery);
-    }, 400);
-
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
+  const { searchQuery, setSearchQuery, debouncedSearchQuery, isSearching, searchChannels } = useChannelSearch(selectedChannelListId);
 
   async function fetchChannels(id: number | null = null) {
     const fetchedChannels = await invoke<Channel[]>("get_channels", { id });
@@ -142,29 +48,13 @@ function App() {
     setHistory(fetchedHistory);
   }
 
-  async function searchChannels(query: string) {
-    if (query === "" || query.length < 3) {
-      fetchChannels(selectedChannelListId);
-    } else {
-      setIsSearching(true);
-      try {
-        const searchedChannels = await invoke<Channel[]>("search_channels", { 
-          query, 
-          id: selectedChannelListId 
-        });
-        setChannels(searchedChannels);
-      } catch (error) {
-        console.error("Search failed:", error);
-        fetchChannels(selectedChannelListId);
-      } finally {
-        setIsSearching(false);
-      }
-    }
-  }
-
   // Trigger search when debounced query changes
   useEffect(() => {
-    searchChannels(debouncedSearchQuery);
+    const performSearch = async () => {
+      const searchedChannels = await searchChannels(debouncedSearchQuery);
+      setChannels(searchedChannels);
+    };
+    performSearch();
   }, [debouncedSearchQuery, selectedChannelListId]);
 
   useEffect(() => {
@@ -258,379 +148,76 @@ function App() {
     }
   })();
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement) {
-        return;
-      }
-
-      if (e.key === "j" || e.key === "ArrowDown") {
-        setFocusedIndex((prev) => Math.min(prev + 1, listItems.length - 1));
-      } else if (e.key === "k" || e.key === "ArrowUp") {
-        setFocusedIndex((prev) => Math.max(prev - 1, 0));
-      } else if (e.key === "Enter") {
-        if (activeTab === "channels" || activeTab === "favorites" || activeTab === "history") {
-          setSelectedChannel(listItems[focusedIndex] as Channel);
-        } else if (activeTab === "groups") {
-          handleSelectGroup(listItems[focusedIndex] as string);
-        }
-      } else if (e.key === "l" || e.key === "ArrowRight") {
-        const tabs: Tab[] = ["channels", "favorites", "groups", "history", "settings"];
-        const currentIndex = tabs.indexOf(activeTab);
-        const nextIndex = (currentIndex + 1) % tabs.length;
-        setActiveTab(tabs[nextIndex]);
-        setFocusedIndex(0);
-      } else if (e.key === "h" || e.key === "ArrowLeft") {
-        const tabs: Tab[] = ["channels", "favorites", "groups", "history", "settings"];
-        const currentIndex = tabs.indexOf(activeTab);
-        const prevIndex = (currentIndex - 1 + tabs.length) % tabs.length;
-        setActiveTab(tabs[prevIndex]);
-        setFocusedIndex(0);
-      } else if (e.key === "f") {
-        if (activeTab === "channels") {
-          handleToggleFavorite(listItems[focusedIndex] as Channel);
-        }
-      } else if (e.key === "p") {
-        if (activeTab === "channels" || activeTab === "favorites" || activeTab === "history") {
-          handlePlayInMpv(listItems[focusedIndex] as Channel);
-        }
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [activeTab, channels, favorites, groups, history, selectedGroup, selectedChannel, focusedIndex, listItems]);
-
-  const renderChannelList = (channelsList: Channel[]) => (
-    <ul className="channel-list">
-      {channelsList.map((channel, index) => (
-        <li
-          key={channel.name}
-          className={`channel-item ${selectedChannel?.name === channel.name ? "selected" : ""} ${focusedIndex === index ? "focused" : ""}`}
-          onClick={() => setSelectedChannel(channel)}
-        >
-          <div className="channel-content">
-            <div className="channel-logo-container">
-              <CachedImage 
-                src={channel.logo} 
-                alt={channel.name} 
-                className="channel-logo"
-              />
-              <div className="channel-status"></div>
-            </div>
-            <div className="channel-info">
-              <div className="channel-header">
-                <span className="channel-number">{index + 1}</span>
-                <span className="channel-name">{channel.name}</span>
-              </div>
-              <div className="channel-badges">
-                <span className="badge badge-category">{channel.group_title}</span>
-                <span className="badge badge-quality">{channel.resolution || "HD"}</span>
-              </div>
-              <div className="channel-group">{channel.extra_info}</div>
-            </div>
-            <div className="channel-actions">
-              <button 
-                className={`action-button ${isFavorite(channel) ? "favorite" : ""}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleToggleFavorite(channel);
-                }}
-              >
-                {isFavorite(channel) ? "★" : "☆"}
-              </button>
-            </div>
-          </div>
-        </li>
-      ))}
-    </ul>
-  );
-
-  const renderGroupList = () => (
-    <ul className="group-list">
-      <li
-        className={`group-item ${selectedGroup === null ? "selected" : ""} ${focusedIndex === 0 ? "focused" : ""}`}
-        onClick={() => handleSelectGroup(null)}
-      >
-        All Groups
-      </li>
-      {groups.map((group, index) => (
-        <li
-          key={group}
-          className={`group-item ${selectedGroup === group ? "selected" : ""} ${focusedIndex === index + 1 ? "focused" : ""}`}
-          onClick={() => handleSelectGroup(group)}
-        >
-          {group}
-        </li>
-      ))}
-    </ul>
-  );
-
-  const renderContent = () => {
-    switch (activeTab) {
-      case "channels":
-        return (
-          <>
-            {channelListName && (
-              <div className="channel-list-info">
-                <strong>Channel List:</strong> {channelListName}
-              </div>
-            )}
-            <div className="search-container">
-              <input
-                type="text"
-                className="search-input"
-                placeholder="Search channels (min 3 characters)..."
-                value={searchQuery}
-                onChange={handleSearch}
-              />
-            </div>
-            {searchQuery.length > 0 && searchQuery.length < 3 && (
-              <div className="search-status">
-                Type at least 3 characters to search...
-              </div>
-            )}
-            {isSearching && (
-              <div className="search-status">
-                Searching...
-              </div>
-            )}
-            <div className="content-list">
-              {renderChannelList(filteredChannels)}
-            </div>
-          </>
-        );
-      case "favorites":
-        return (
-          <div className="content-list">
-            {renderChannelList(favorites)}
-          </div>
-        );
-      case "groups":
-        return (
-          <div className="content-list">
-            {renderGroupList()}
-          </div>
-        );
-      case "history":
-        return (
-          <div className="content-list">
-            {renderChannelList(history)}
-          </div>
-        );
-      case "settings":
-        return (
-          <div className="settings-container">
-            <Settings onSelectList={handleSelectChannelList} />
-          </div>
-        );
-      default:
-        return null;
-    }
-  };
-
-  const getTabTitle = () => {
-    switch (activeTab) {
-      case "channels":
-        return "Channels";
-      case "favorites":
-        return "Favorites";
-      case "groups":
-        return "Groups";
-      case "history":
-        return "History";
-      case "settings":
-        return "Settings";
-      default:
-        return "IPTV Player";
-    }
-  };
-
-  const getTabSubtitle = () => {
-    switch (activeTab) {
-      case "channels":
-        return `${filteredChannels.length} channels available`;
-      case "favorites":
-        return `${favorites.length} favorite channels`;
-      case "groups":
-        return `${groups.length} groups available`;
-      case "history":
-        return `${history.length} recently watched`;
-      case "settings":
-        return "Application settings";
-      default:
-        return "";
-    }
-  };
+  useKeyboardNavigation({
+    activeTab,
+    channels,
+    favorites,
+    groups,
+    history,
+    selectedGroup,
+    selectedChannel,
+    focusedIndex,
+    listItems,
+    setFocusedIndex,
+    setSelectedChannel,
+    setActiveTab,
+    handleSelectGroup,
+    handleToggleFavorite,
+    handlePlayInMpv
+  });
 
   return (
     <div className="container">
-      {/* Navigation Sidebar */}
-      <div className="nav-sidebar">
-        <div className="app-header">
-          <div className="app-logo">
-            <div className="app-logo-icon">TV</div>
-            <h1 className="app-title">IPTV Pro</h1>
-          </div>
-          <nav className="nav-menu">
-            <button 
-              className={`nav-button ${activeTab === "channels" ? "active" : ""}`}
-              onClick={() => setActiveTab("channels")}
-            >
-              <TvIcon />
-              Channels
-            </button>
-            <button 
-              className={`nav-button ${activeTab === "favorites" ? "active" : ""}`}
-              onClick={() => setActiveTab("favorites")}
-            >
-              <HeartIcon />
-              Favorites
-            </button>
-            <button 
-              className={`nav-button ${activeTab === "groups" ? "active" : ""}`}
-              onClick={() => setActiveTab("groups")}
-            >
-              <UsersIcon />
-              Groups
-            </button>
-            <button 
-              className={`nav-button ${activeTab === "history" ? "active" : ""}`}
-              onClick={() => setActiveTab("history")}
-            >
-              <HistoryIcon />
-              History
-            </button>
-            <button 
-              className={`nav-button ${activeTab === "settings" ? "active" : ""}`}
-              onClick={() => setActiveTab("settings")}
-            >
-              <SettingsIcon />
-              Settings
-            </button>
-          </nav>
-        </div>
-      </div>
+      <NavigationSidebar 
+        activeTab={activeTab} 
+        onTabChange={setActiveTab} 
+      />
 
-      {/* Main Content Area */}
       <div className="main-content">
         {activeTab === "settings" ? (
-          /* Settings take full width */
           <div className="settings-full-width">
             <div className="section-header">
-              <h2 className="section-title">{getTabTitle()}</h2>
-              <p className="section-subtitle">{getTabSubtitle()}</p>
+              <h2 className="section-title">Settings</h2>
+              <p className="section-subtitle">Application settings</p>
             </div>
-            {renderContent()}
+            <div className="settings-container">
+              <Settings onSelectList={handleSelectChannelList} />
+            </div>
           </div>
         ) : (
           <>
-            {/* Channels List */}
-            <div className="channels-section">
-              <div className="section-header">
-                <h2 className="section-title">{getTabTitle()}</h2>
-                <p className="section-subtitle">{getTabSubtitle()}</p>
-              </div>
-              {renderContent()}
-            </div>
+                         <MainContent
+               activeTab={activeTab}
+               channelListName={channelListName}
+               searchQuery={searchQuery}
+               isSearching={isSearching}
+               filteredChannels={filteredChannels}
+               favorites={favorites}
+               groups={groups}
+               history={history}
+               selectedGroup={selectedGroup}
+               selectedChannel={selectedChannel}
+               focusedIndex={focusedIndex}
+               onSearch={handleSearch}
+               onSelectChannel={setSelectedChannel}
+               onToggleFavorite={handleToggleFavorite}
+               onSelectGroup={handleSelectGroup}
+             />
 
-            {/* Video Player and Information Area */}
             <div className="video-section">
-              {/* Video Preview */}
-              <div className="video-preview">
-                <div className="video-container">
-                  {selectedChannel ? (
-                    <>
-                      <video ref={videoRef} className="video-player" controls />
-                      <div className="video-controls">
-                        <div className="video-status">
-                          <div className="status-dot"></div>
-                          <span className="status-text">Live</span>
-                        </div>
-                        <div className="quality-badge">
-                          {selectedChannel.resolution || "HD"}
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="video-placeholder">
-                      <PlayIcon />
-                      <div className="video-placeholder-text">Preview Window</div>
-                      <div className="video-placeholder-channel">Select a channel to start watching</div>
-                    </div>
-                  )}
-                </div>
-              </div>
+              <VideoPlayer 
+                ref={videoRef}
+                selectedChannel={selectedChannel} 
+              />
 
-              {/* Channel Information */}
               {selectedChannel && (
-                <div className="channel-details">
-                  <div className="channel-details-content">
-                    <div className="channel-main-info">
-                      <CachedImage 
-                        src={selectedChannel.logo} 
-                        alt={selectedChannel.name}
-                        className="channel-details-logo"
-                      />
-                      <div className="channel-meta">
-                        <div className="channel-title-row">
-                          <h1 className="channel-details-title">{selectedChannel.name}</h1>
-                          <span className="channel-number-badge">CH {channels.indexOf(selectedChannel) + 1}</span>
-                        </div>
-                        <div className="channel-meta-row">
-                          <div className="meta-item">
-                            <SignalIcon />
-                            {selectedChannel.resolution || "HD"}
-                          </div>
-                          <div className="meta-item">
-                            <StarIcon />
-                            4.5
-                          </div>
-                          <span className="badge badge-category">{selectedChannel.group_title}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="separator"></div>
-
-                    <div className="actions-section">
-                      <button 
-                        className="primary-button"
-                        onClick={() => handlePlayInMpv(selectedChannel)}
-                      >
-                        Play in MPV
-                      </button>
-                      <button 
-                        className="secondary-button"
-                        onClick={() => handleToggleFavorite(selectedChannel)}
-                      >
-                        {isFavorite(selectedChannel) ? "Remove from Favorites" : "Add to Favorites"}
-                      </button>
-                    </div>
-
-                    <div className="details-grid">
-                      <div className="detail-item">
-                        <div className="detail-label">Group</div>
-                        <div className="detail-value">{selectedChannel.group_title}</div>
-                      </div>
-                      <div className="detail-item">
-                        <div className="detail-label">TVG ID</div>
-                        <div className="detail-value">{selectedChannel.tvg_id || "N/A"}</div>
-                      </div>
-                      <div className="detail-item">
-                        <div className="detail-label">Resolution</div>
-                        <div className="detail-value">{selectedChannel.resolution || "HD"}</div>
-                      </div>
-                      <div className="detail-item">
-                        <div className="detail-label">Extra Info</div>
-                        <div className="detail-value">{selectedChannel.extra_info || "No additional information"}</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <ChannelDetails
+                  selectedChannel={selectedChannel}
+                  channels={channels}
+                  isFavorite={isFavorite(selectedChannel)}
+                  onPlayInMpv={handlePlayInMpv}
+                  onToggleFavorite={handleToggleFavorite}
+                />
               )}
             </div>
           </>
