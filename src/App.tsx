@@ -42,6 +42,8 @@ function App() {
   const [groups, setGroups] = useState<string[]>([]);
   const [history, setHistory] = useState<Channel[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("channels");
@@ -50,6 +52,15 @@ function App() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
   const channelListName = useChannelListName(selectedChannelListId);
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 400); // 400ms debounce delay
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   async function fetchChannels(id: number | null = null) {
     const fetchedChannels = await invoke<Channel[]>("get_channels", { id });
@@ -73,16 +84,31 @@ function App() {
   }
 
   async function searchChannels(query: string) {
-    if (query === "") {
+    if (query === "" || query.length < 3) {
+      // For empty query or less than 3 characters, show all channels
       fetchChannels(selectedChannelListId);
     } else {
-      const searchedChannels = await invoke<Channel[]>("search_channels", { 
-        query, 
-        id: selectedChannelListId 
-      });
-      setChannels(searchedChannels);
+      setIsSearching(true);
+      try {
+        const searchedChannels = await invoke<Channel[]>("search_channels", { 
+          query, 
+          id: selectedChannelListId 
+        });
+        setChannels(searchedChannels);
+      } catch (error) {
+        console.error("Search failed:", error);
+        // Fallback to showing all channels
+        fetchChannels(selectedChannelListId);
+      } finally {
+        setIsSearching(false);
+      }
     }
   }
+
+  // Trigger search when debounced query changes
+  useEffect(() => {
+    searchChannels(debouncedSearchQuery);
+  }, [debouncedSearchQuery, selectedChannelListId]);
 
   useEffect(() => {
     fetchChannels(selectedChannelListId);
@@ -149,7 +175,7 @@ function App() {
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
-    searchChannels(e.target.value);
+    // Search will be triggered automatically by debounced effect
   };
 
   const handleSelectChannelList = (id: number) => {
@@ -234,10 +260,20 @@ function App() {
             )}
             <input
               type="text"
-              placeholder="Search channels..."
+              placeholder="Search channels (min 3 characters)..."
               value={searchQuery}
               onChange={handleSearch}
             />
+            {searchQuery.length > 0 && searchQuery.length < 3 && (
+              <div style={{ padding: '0.5rem', color: '#666', fontSize: '0.9rem' }}>
+                Type at least 3 characters to search...
+              </div>
+            )}
+            {isSearching && (
+              <div style={{ padding: '0.5rem', color: '#666', fontSize: '0.9rem' }}>
+                Searching...
+              </div>
+            )}
             <ul>
               {filteredChannels.map((channel, index) => (
                 <li

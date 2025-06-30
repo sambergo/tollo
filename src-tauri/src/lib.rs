@@ -3,6 +3,7 @@ mod database;
 mod image_cache;
 
 use std::process::Command;
+use std::time::SystemTime;
 use m3u_parser::Channel;
 use rusqlite::Connection;
 use std::sync::Mutex;
@@ -18,6 +19,17 @@ struct DbState {
 
 struct ImageCacheState {
     cache: Mutex<ImageCache>,
+}
+
+#[derive(Debug, Clone)]
+struct ChannelCache {
+    channel_list_id: Option<i32>,
+    channels: Vec<Channel>,
+    last_updated: SystemTime,
+}
+
+struct ChannelCacheState {
+    cache: Mutex<Option<ChannelCache>>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -78,22 +90,70 @@ fn set_default_channel_list(state: State<DbState>, id: i32) -> Result<(), String
 }
 
 #[tauri::command]
-fn get_channels(state: State<DbState>, id: Option<i32>) -> Result<Vec<Channel>, String> {
-    let mut db = state.db.lock().unwrap();
-    Ok(m3u_parser::get_channels(&mut db, id))
+fn get_channels(
+    db_state: State<DbState>, 
+    cache_state: State<ChannelCacheState>, 
+    id: Option<i32>
+) -> Result<Vec<Channel>, String> {
+    get_cached_channels(db_state, cache_state, id)
 }
 
 #[tauri::command]
-fn get_groups(state: State<DbState>, id: Option<i32>) -> Result<Vec<String>, String> {
-    let mut db = state.db.lock().unwrap();
-    Ok(m3u_parser::get_groups(&mut db, id))
+fn get_groups(
+    db_state: State<DbState>, 
+    cache_state: State<ChannelCacheState>, 
+    id: Option<i32>
+) -> Result<Vec<String>, String> {
+    // Get channels from cache
+    let channels = get_cached_channels(db_state, cache_state, id)?;
+    
+    // Extract unique groups from cached channels
+    let mut groups = std::collections::HashSet::new();
+    for channel in channels {
+        groups.insert(channel.group_title);
+    }
+    Ok(groups.into_iter().collect())
 }
 
 #[tauri::command]
-fn search_channels(state: State<DbState>, query: String, id: Option<i32>) -> Result<Vec<Channel>, String> {
-    let mut db = state.db.lock().unwrap();
-    // Get all channels from the specified (or default) channel list
+fn get_cached_channels(
+    db_state: State<DbState>, 
+    cache_state: State<ChannelCacheState>, 
+    id: Option<i32>
+) -> Result<Vec<Channel>, String> {
+    let mut cache = cache_state.cache.lock().unwrap();
+    
+    // Check if we have valid cache
+    if let Some(ref cached) = *cache {
+        if cached.channel_list_id == id {
+            // Cache hit - return cached channels
+            return Ok(cached.channels.clone());
+        }
+    }
+    
+    // Cache miss - load channels and update cache
+    let mut db = db_state.db.lock().unwrap();
     let channels = m3u_parser::get_channels(&mut db, id);
+    
+    // Update cache
+    *cache = Some(ChannelCache {
+        channel_list_id: id,
+        channels: channels.clone(),
+        last_updated: SystemTime::now(),
+    });
+    
+    Ok(channels)
+}
+
+#[tauri::command]
+fn search_channels(
+    db_state: State<DbState>, 
+    cache_state: State<ChannelCacheState>, 
+    query: String, 
+    id: Option<i32>
+) -> Result<Vec<Channel>, String> {
+    // Get channels from cache
+    let channels = get_cached_channels(db_state, cache_state, id)?;
     
     // Perform case-insensitive search in memory
     let query_lower = query.to_lowercase();
@@ -106,6 +166,13 @@ fn search_channels(state: State<DbState>, query: String, id: Option<i32>) -> Res
         .collect();
     
     Ok(filtered_channels)
+}
+
+#[tauri::command]
+fn invalidate_channel_cache(cache_state: State<ChannelCacheState>) -> Result<(), String> {
+    let mut cache = cache_state.cache.lock().unwrap();
+    *cache = None;
+    Ok(())
 }
 
 #[tauri::command]
@@ -238,8 +305,12 @@ fn set_cache_duration(state: State<DbState>, hours: i64) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn refresh_channel_list(state: State<DbState>, id: i32) -> Result<(), String> {
-    let mut db = state.db.lock().unwrap();
+fn refresh_channel_list(
+    db_state: State<DbState>, 
+    cache_state: State<ChannelCacheState>, 
+    id: i32
+) -> Result<(), String> {
+    let mut db = db_state.db.lock().unwrap();
     let mut stmt = db.prepare("SELECT source FROM channel_lists WHERE id = ?1").map_err(|e| e.to_string())?;
     let mut rows = stmt.query(&[&id]).map_err(|e| e.to_string())?;
 
@@ -261,25 +332,46 @@ fn refresh_channel_list(state: State<DbState>, id: i32) -> Result<(), String> {
         }
     }
 
+    // Invalidate cache since channel list was refreshed
+    invalidate_channel_cache(cache_state)?;
+
     Ok(())
 }
 
 #[tauri::command]
-fn delete_channel_list(state: State<DbState>, id: i32) -> Result<(), String> {
-    let db = state.db.lock().unwrap();
+fn delete_channel_list(
+    db_state: State<DbState>, 
+    cache_state: State<ChannelCacheState>, 
+    id: i32
+) -> Result<(), String> {
+    let db = db_state.db.lock().unwrap();
     db.execute("DELETE FROM channel_lists WHERE id = ?1", &[&id])
         .map_err(|e| e.to_string())?;
+    
+    // Invalidate cache since channel list was deleted
+    invalidate_channel_cache(cache_state)?;
+    
     Ok(())
 }
 
 #[tauri::command]
-fn update_channel_list(state: State<DbState>, id: i32, name: String, source: String) -> Result<(), String> {
-    let db = state.db.lock().unwrap();
+fn update_channel_list(
+    db_state: State<DbState>, 
+    cache_state: State<ChannelCacheState>, 
+    id: i32, 
+    name: String, 
+    source: String
+) -> Result<(), String> {
+    let db = db_state.db.lock().unwrap();
     db.execute(
         "UPDATE channel_lists SET name = ?1, source = ?2 WHERE id = ?3",
         &[&name, &source, &id.to_string()],
     )
     .map_err(|e| e.to_string())?;
+    
+    // Invalidate cache since channel list was updated
+    invalidate_channel_cache(cache_state)?;
+    
     Ok(())
 }
 
@@ -311,6 +403,9 @@ pub fn run() {
         .manage(DbState {
             db: Mutex::new(db_connection),
         })
+        .manage(ChannelCacheState {
+            cache: Mutex::new(None),
+        })
         .setup(|app| {
             let image_cache = ImageCache::new(app.handle()).expect("Failed to initialize image cache");
             app.manage(ImageCacheState {
@@ -323,6 +418,8 @@ pub fn run() {
             get_channels,
             get_groups,
             search_channels,
+            get_cached_channels,
+            invalidate_channel_cache,
             play_channel,
             add_favorite,
             remove_favorite,
