@@ -55,16 +55,19 @@ export const useImageCache = (): ImageCacheHook => {
   };
 };
 
-// Helper hook for caching a single image URL
-export const useCachedImage = (originalUrl: string) => {
+// Helper hook for caching a single image URL with lazy loading
+export const useCachedImage = (originalUrl: string, shouldLoad: boolean = true) => {
   const [cachedUrl, setCachedUrl] = useState<string>(originalUrl);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasLoaded, setHasLoaded] = useState<boolean>(false);
   const { getCachedImageUrl } = useImageCache();
 
   useEffect(() => {
-    if (!originalUrl) {
-      setCachedUrl('');
+    if (!originalUrl || !shouldLoad || hasLoaded) {
+      if (!originalUrl) {
+        setCachedUrl('');
+      }
       return;
     }
 
@@ -75,16 +78,18 @@ export const useCachedImage = (originalUrl: string) => {
       try {
         const cached = await getCachedImageUrl(originalUrl);
         setCachedUrl(cached);
+        setHasLoaded(true);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load image');
         setCachedUrl(originalUrl); // Fallback to original URL
+        setHasLoaded(true);
       } finally {
         setLoading(false);
       }
     };
 
     loadCachedImage();
-  }, [originalUrl, getCachedImageUrl]);
+  }, [originalUrl, shouldLoad, hasLoaded, getCachedImageUrl]);
 
-  return { cachedUrl, loading, error };
+  return { cachedUrl, loading, error, hasLoaded };
 }; 
