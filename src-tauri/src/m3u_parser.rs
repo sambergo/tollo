@@ -54,7 +54,7 @@ pub fn get_channels(conn: &Connection) -> Vec<Channel> {
         "SELECT source FROM channel_lists WHERE is_default = 1",
         [],
         |row| row.get(0),
-    ).unwrap_or_else(|_| "fin.m3u".to_string());
+    ).unwrap_or_else(|_| "https://iptv-org.github.io/iptv/countries/fi.m3u".to_string());
 
     let m3u_content = if source.starts_with("http") {
         reqwest::blocking::get(&source).unwrap().text().unwrap()
