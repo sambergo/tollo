@@ -44,7 +44,6 @@ body {
 
 .app-header {
   padding: 1.5rem;
-  border-bottom: 1px solid var(--border-primary);
 }
 
 .app-logo {
@@ -1424,7 +1423,7 @@ body {
 
 /* Saved Filters */
 .saved-filters {
-  margin-top: 1rem;
+  margin-top: auto;
   padding: 0.75rem;
   border-top: 1px solid var(--border-primary);
 }

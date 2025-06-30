@@ -61,11 +61,11 @@ export default function NavigationSidebar({
             Settings
           </button>
         </nav>
-        <SavedFilters 
-          savedFilters={savedFilters}
-          onApplyFilter={onApplyFilter}
-        />
       </div>
+      <SavedFilters 
+        savedFilters={savedFilters}
+        onApplyFilter={onApplyFilter}
+      />
     </div>
   );
 }
