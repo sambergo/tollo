@@ -3,10 +3,9 @@ import type { SavedFilter } from "../hooks/useSavedFilters";
 interface SavedFiltersProps {
   savedFilters: SavedFilter[];
   onApplyFilter: (filter: SavedFilter) => void;
-  onDeleteFilter: (slotNumber: number) => void;
 }
 
-export default function SavedFilters({ savedFilters, onApplyFilter, onDeleteFilter }: SavedFiltersProps) {
+export default function SavedFilters({ savedFilters, onApplyFilter }: SavedFiltersProps) {
   if (savedFilters.length === 0) {
     return null;
   }
@@ -22,15 +21,15 @@ export default function SavedFilters({ savedFilters, onApplyFilter, onDeleteFilt
               onClick={() => onApplyFilter(filter)}
               title={`Press ${filter.slot_number} to apply this filter`}
             >
-              <span className="filter-key">{filter.slot_number}</span>
-              <span className="filter-name">{filter.name}</span>
-            </button>
-            <button
-              className="delete-filter-button"
-              onClick={() => onDeleteFilter(filter.slot_number)}
-              title="Delete this saved filter"
-            >
-              ×
+              <div className="filter-first-line">
+                <span className="filter-key">{filter.slot_number}</span>
+                {filter.search_query && (
+                  <span className="filter-query">{filter.search_query}</span>
+                )}
+              </div>
+              {filter.selected_group && (
+                <div className="filter-group">{filter.selected_group}</div>
+              )}
             </button>
           </div>
         ))}
