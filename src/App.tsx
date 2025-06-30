@@ -187,6 +187,42 @@ function App() {
     setSelectedGroup(null);
   };
 
+  const handleSelectAllGroups = async () => {
+    if (selectedChannelListId === null) return;
+    
+    // Enable all groups
+    for (const group of groups) {
+      if (!enabledGroups.has(group)) {
+        await invoke("update_group_selection", {
+          channelListId: selectedChannelListId,
+          groupName: group,
+          enabled: true
+        });
+      }
+    }
+    
+    // Update local state to include all groups
+    setEnabledGroups(new Set(groups));
+  };
+
+  const handleUnselectAllGroups = async () => {
+    if (selectedChannelListId === null) return;
+    
+    // Disable all groups
+    for (const group of groups) {
+      if (enabledGroups.has(group)) {
+        await invoke("update_group_selection", {
+          channelListId: selectedChannelListId,
+          groupName: group,
+          enabled: false
+        });
+      }
+    }
+    
+    // Update local state to empty set
+    setEnabledGroups(new Set());
+  };
+
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   };
@@ -288,6 +324,8 @@ function App() {
                onSelectGroup={handleSelectGroup}
                onToggleGroupEnabled={handleToggleGroupEnabled}
                onChangeDisplayMode={handleChangeDisplayMode}
+               onSelectAllGroups={handleSelectAllGroups}
+               onUnselectAllGroups={handleUnselectAllGroups}
              />
 
             <div className="video-section">

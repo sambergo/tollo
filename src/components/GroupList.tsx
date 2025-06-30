@@ -1,3 +1,5 @@
+import { useState, useEffect, useRef } from "react";
+
 enum GroupDisplayMode {
   EnabledGroups = 'enabled',
   AllGroups = 'all'
@@ -12,6 +14,8 @@ interface GroupListProps {
   onSelectGroup: (group: string | null) => void;
   onToggleGroupEnabled: (group: string) => void;
   onChangeDisplayMode: (mode: GroupDisplayMode) => void;
+  onSelectAllGroups: () => void;
+  onUnselectAllGroups: () => void;
 }
 
 export default function GroupList({ 
@@ -22,8 +26,29 @@ export default function GroupList({
   groupDisplayMode,
   onSelectGroup,
   onToggleGroupEnabled,
-  onChangeDisplayMode
+  onChangeDisplayMode,
+  onSelectAllGroups,
+  onUnselectAllGroups
 }: GroupListProps) {
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+
+    if (dropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [dropdownOpen]);
   return (
     <div className="group-list-container">
       {/* Mode Toggle Buttons */}
@@ -40,6 +65,40 @@ export default function GroupList({
         >
           All Groups
         </button>
+        
+        {/* Bulk Actions Dropdown - Only show in Enabled Groups mode */}
+        {groupDisplayMode === GroupDisplayMode.EnabledGroups && (
+          <div className="bulk-actions-dropdown" ref={dropdownRef}>
+            <button 
+              className="dropdown-toggle"
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+            >
+              ⋮
+            </button>
+            {dropdownOpen && (
+              <div className="dropdown-menu">
+                <button 
+                  className="dropdown-item"
+                  onClick={() => {
+                    onSelectAllGroups();
+                    setDropdownOpen(false);
+                  }}
+                >
+                  Select All
+                </button>
+                <button 
+                  className="dropdown-item"
+                  onClick={() => {
+                    onUnselectAllGroups();
+                    setDropdownOpen(false);
+                  }}
+                >
+                  Unselect All
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <ul className="group-list">

@@ -27,6 +27,8 @@ interface MainContentProps {
   onSelectGroup: (group: string | null) => void;
   onToggleGroupEnabled: (group: string) => void;
   onChangeDisplayMode: (mode: GroupDisplayMode) => void;
+  onSelectAllGroups: () => void;
+  onUnselectAllGroups: () => void;
 }
 
 export default function MainContent({
@@ -48,7 +50,9 @@ export default function MainContent({
   onToggleFavorite,
   onSelectGroup,
   onToggleGroupEnabled,
-  onChangeDisplayMode
+  onChangeDisplayMode,
+  onSelectAllGroups,
+  onUnselectAllGroups
 }: MainContentProps) {
   const getTabTitle = () => {
     switch (activeTab) {
@@ -146,6 +150,8 @@ export default function MainContent({
               onSelectGroup={onSelectGroup}
               onToggleGroupEnabled={onToggleGroupEnabled}
               onChangeDisplayMode={onChangeDisplayMode}
+              onSelectAllGroups={onSelectAllGroups}
+              onUnselectAllGroups={onUnselectAllGroups}
             />
           </div>
         );
