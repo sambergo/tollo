@@ -71,6 +71,7 @@ function App() {
   async function fetchEnabledGroups(channelListId: number) {
     const fetchedEnabledGroups = await invoke<string[]>("get_enabled_groups", { channelListId });
     setEnabledGroups(new Set(fetchedEnabledGroups));
+    return fetchedEnabledGroups;
   }
 
   async function syncGroupsForChannelList(channelListId: number, allGroups: string[]) {
@@ -107,7 +108,21 @@ function App() {
         await syncGroupsForChannelList(selectedChannelListId, fetchedGroups);
         
         // Load enabled groups for this channel list
-        await fetchEnabledGroups(selectedChannelListId);
+        const currentEnabledGroups = await fetchEnabledGroups(selectedChannelListId);
+        
+        // Auto-enable all groups if none are enabled (new or empty list)  
+        if (currentEnabledGroups.length === 0 && fetchedGroups.length > 0) {
+          console.log(`Auto-enabling all ${fetchedGroups.length} groups for new channel list`);
+          for (const group of fetchedGroups) {
+            await invoke("update_group_selection", {
+              channelListId: selectedChannelListId,
+              groupName: group,
+              enabled: true
+            });
+          }
+          // Refresh enabled groups to get the updated list
+          await fetchEnabledGroups(selectedChannelListId);
+        }
         
         // Reset UI state for new channel list
         setGroupDisplayMode(GroupDisplayMode.EnabledGroups);

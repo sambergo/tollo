@@ -23,9 +23,14 @@ fn parse_m3u_content(m3u_content: &str) -> Vec<Channel> {
     let re_resolution = Regex::new(r"(\d+p)").unwrap();
     let re_extra_info = Regex::new(r"\[(.*?)\]").unwrap();
     let mut lines = m3u_content.lines().peekable();
+    
+    println!("Starting M3U parsing, total lines: {}", m3u_content.lines().count());
+    let mut extinf_count = 0;
+    let mut parsed_channels = 0;
 
     while let Some(line) = lines.next() {
         if line.starts_with("#EXTINF") {
+            extinf_count += 1;
             let name = line.split(',').nth(1).unwrap_or_default().trim().to_string();
             let logo = line.split("tvg-logo=\"").nth(1).unwrap_or_default().split('"').next().unwrap_or_default().to_string();
             let group_title = line.split("group-title=\"").nth(1).unwrap_or_default().split('"').next().unwrap_or_default().to_string();
@@ -44,10 +49,23 @@ fn parse_m3u_content(m3u_content: &str) -> Vec<Channel> {
                         resolution,
                         extra_info,
                     });
+                    parsed_channels += 1;
+                } else {
+                    // Only warn for unexpected non-URL lines (but skip common M3U options)
+                    if !url_line.starts_with("#EXTVLCOPT") && !url_line.starts_with("#KODIPROP") {
+                        println!("Warning: Expected URL line but got: {}", url_line);
+                    }
                 }
+            }
+            
+            // Log progress only for very large files
+            if extinf_count % 10000 == 0 && extinf_count > 0 {
+                println!("Processed {} EXTINF lines, parsed {} channels so far", extinf_count, parsed_channels);
             }
         }
     }
+    
+    println!("M3U parsing complete: {} EXTINF lines found, {} channels parsed", extinf_count, parsed_channels);
     channels
 }
 

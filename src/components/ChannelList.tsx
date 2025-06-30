@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import CachedImage from "./CachedImage";
 
 export interface Channel {
@@ -21,6 +22,8 @@ interface ChannelListProps {
   onClearGroupFilter?: () => void;
 }
 
+const CHANNELS_PER_PAGE = 200; // Reasonable number for performance
+
 export default function ChannelList({ 
   channels, 
   selectedChannel, 
@@ -31,8 +34,43 @@ export default function ChannelList({
   onToggleFavorite,
   onClearGroupFilter
 }: ChannelListProps) {
+  const [currentPage, setCurrentPage] = useState(1);
+  
+  // Reset to first page when channels change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [channels.length, selectedGroup]);
+
+  const totalPages = Math.ceil(channels.length / CHANNELS_PER_PAGE);
+  const startIndex = (currentPage - 1) * CHANNELS_PER_PAGE;
+  const endIndex = startIndex + CHANNELS_PER_PAGE;
+  const currentChannels = channels.slice(startIndex, endIndex);
+  
   const isFavorite = (channel: Channel) => {
     return favorites.some((fav) => fav.name === channel.name);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    
+    // Adjust startPage if we're near the end
+    if (endPage - startPage < maxVisiblePages - 1) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    
+    return pages;
   };
 
   return (
@@ -59,48 +97,108 @@ export default function ChannelList({
         </div>
       )}
 
+      {/* Pagination Info */}
+      <div className="pagination-info">
+        <span className="channel-count">
+          Showing {startIndex + 1}-{Math.min(endIndex, channels.length)} of {channels.length} channels
+          {totalPages > 1 && ` (Page ${currentPage} of ${totalPages})`}
+        </span>
+      </div>
+
       <ul className="channel-list">
-        {channels.map((channel, index) => (
-          <li
-            key={channel.name}
-            className={`channel-item ${selectedChannel?.name === channel.name ? "selected" : ""} ${focusedIndex === index ? "focused" : ""}`}
-            onClick={() => onSelectChannel(channel)}
-          >
-            <div className="channel-content">
-              <div className="channel-logo-container">
-                <CachedImage 
-                  src={channel.logo} 
-                  alt={channel.name} 
-                  className="channel-logo"
-                />
-                <div className="channel-status"></div>
-              </div>
-              <div className="channel-info">
-                <div className="channel-header">
-                  <span className="channel-number">{index + 1}</span>
-                  <span className="channel-name">{channel.name}</span>
+        {currentChannels.map((channel, index) => {
+          const globalIndex = startIndex + index;
+          return (
+            <li
+              key={`${channel.name}-${globalIndex}`}
+              className={`channel-item ${selectedChannel?.name === channel.name ? "selected" : ""} ${focusedIndex === globalIndex ? "focused" : ""}`}
+              onClick={() => onSelectChannel(channel)}
+            >
+              <div className="channel-content">
+                <div className="channel-logo-container">
+                  <CachedImage 
+                    src={channel.logo} 
+                    alt={channel.name} 
+                    className="channel-logo"
+                  />
+                  <div className="channel-status"></div>
                 </div>
-                <div className="channel-badges">
-                  <span className="badge badge-category">{channel.group_title}</span>
-                  <span className="badge badge-quality">{channel.resolution || "HD"}</span>
+                <div className="channel-info">
+                  <div className="channel-header">
+                    <span className="channel-number">{globalIndex + 1}</span>
+                    <span className="channel-name">{channel.name}</span>
+                  </div>
+                  <div className="channel-badges">
+                    <span className="badge badge-category">{channel.group_title}</span>
+                    <span className="badge badge-quality">{channel.resolution || "HD"}</span>
+                  </div>
+                  <div className="channel-group">{channel.extra_info}</div>
                 </div>
-                <div className="channel-group">{channel.extra_info}</div>
+                <div className="channel-actions">
+                  <button 
+                    className={`action-button ${isFavorite(channel) ? "favorite" : ""}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleFavorite(channel);
+                    }}
+                  >
+                    {isFavorite(channel) ? "★" : "☆"}
+                  </button>
+                </div>
               </div>
-              <div className="channel-actions">
-                <button 
-                  className={`action-button ${isFavorite(channel) ? "favorite" : ""}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onToggleFavorite(channel);
-                  }}
-                >
-                  {isFavorite(channel) ? "★" : "☆"}
-                </button>
-              </div>
-            </div>
-          </li>
-        ))}
+            </li>
+          );
+        })}
       </ul>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="pagination-controls">
+          <button 
+            className="pagination-btn"
+            onClick={() => handlePageChange(1)}
+            disabled={currentPage === 1}
+            title="First page"
+          >
+            ««
+          </button>
+          <button 
+            className="pagination-btn"
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            title="Previous page"
+          >
+            ‹
+          </button>
+          
+          {getPageNumbers().map(page => (
+            <button
+              key={page}
+              className={`pagination-btn ${page === currentPage ? 'active' : ''}`}
+              onClick={() => handlePageChange(page)}
+            >
+              {page}
+            </button>
+          ))}
+          
+          <button 
+            className="pagination-btn"
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            title="Next page"
+          >
+            ›
+          </button>
+          <button 
+            className="pagination-btn"
+            onClick={() => handlePageChange(totalPages)}
+            disabled={currentPage === totalPages}
+            title="Last page"
+          >
+            »»
+          </button>
+        </div>
+      )}
     </div>
   );
 } 

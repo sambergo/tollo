@@ -132,8 +132,10 @@ fn get_cached_channels(
     }
     
     // Cache miss - load channels and update cache
+    println!("Loading channels from M3U parser for list {:?}", id);
     let mut db = db_state.db.lock().unwrap();
     let channels = m3u_parser::get_channels(&mut db, id);
+    println!("Loaded {} channels for list {:?}", channels.len(), id);
     
     // Store original channels in cache for future use
     *cache = Some(ChannelCache {
