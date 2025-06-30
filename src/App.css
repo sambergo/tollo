@@ -121,7 +121,7 @@ body {
 
 /* Channels List */
 .channels-section {
-  width: 384px;
+  width: 600px;
   background: var(--bg-secondary);
   border-right: 1px solid var(--border-primary);
   display: flex;
@@ -1238,7 +1238,7 @@ body {
 /* Responsive design */
 @media (max-width: 1024px) {
   .channels-section {
-    width: 320px;
+    width: 420px;
   }
 }
 
@@ -1246,11 +1246,9 @@ body {
   .nav-sidebar {
     width: 200px;
   }
-  
   .channels-section {
-    width: 280px;
+    width: 240px;
   }
-  
   .details-grid {
     grid-template-columns: 1fr;
   }
