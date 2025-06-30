@@ -17,6 +17,25 @@ interface Channel {
 
 type Tab = "channels" | "favorites" | "groups" | "history" | "settings";
 
+function useChannelListName(selectedChannelListId: number | null) {
+  const [channelListName, setChannelListName] = useState<string>("");
+
+  useEffect(() => {
+    async function fetchChannelLists() {
+      const lists = await invoke<any[]>("get_channel_lists");
+      const found = lists.find((l) => l.id === selectedChannelListId);
+      setChannelListName(found ? found.name : "");
+    }
+    if (selectedChannelListId !== null) {
+      fetchChannelLists();
+    } else {
+      setChannelListName("");
+    }
+  }, [selectedChannelListId]);
+
+  return channelListName;
+}
+
 function App() {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [favorites, setFavorites] = useState<Channel[]>([]);
@@ -30,6 +49,7 @@ function App() {
   const [selectedChannelListId, setSelectedChannelListId] = useState<number | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
+  const channelListName = useChannelListName(selectedChannelListId);
 
   async function fetchChannels(id: number | null = null) {
     const fetchedChannels = await invoke<Channel[]>("get_channels", { id });
@@ -204,6 +224,11 @@ function App() {
       case "channels":
         return (
           <>
+            {channelListName && (
+              <div className="channel-list-name">
+                <strong>Channel List:</strong> {channelListName}
+              </div>
+            )}
             <input
               type="text"
               placeholder="Search channels..."
