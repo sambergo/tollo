@@ -20,6 +20,7 @@ function Settings({ onSelectList }: SettingsProps) {
   const [newListSource, setNewListSource] = useState("");
   const [defaultChannelList, setDefaultChannelList] = useState<number | null>(null);
   const [cacheDuration, setCacheDuration] = useState(24);
+  const [editingList, setEditingList] = useState<ChannelList | null>(null);
 
   async function fetchPlayerCommand() {
     const fetchedCommand = await invoke<string>("get_player_command");
@@ -72,6 +73,27 @@ function Settings({ onSelectList }: SettingsProps) {
     fetchChannelLists();
   };
 
+  const handleDeleteChannelList = async (id: number) => {
+    await invoke("delete_channel_list", { id });
+    fetchChannelLists();
+  };
+
+  const handleUpdateChannelList = async () => {
+    if (editingList) {
+      await invoke("update_channel_list", {
+        id: editingList.id,
+        name: editingList.name,
+        source: editingList.source,
+      });
+      setEditingList(null);
+      fetchChannelLists();
+    }
+  };
+
+  const handleEditClick = (list: ChannelList) => {
+    setEditingList({ ...list });
+  };
+
   return (
     <div className="settings">
       <div>
@@ -97,20 +119,50 @@ function Settings({ onSelectList }: SettingsProps) {
         <ul>
           {channelLists.map((list) => (
             <li key={list.id}>
-              <span>{list.name} ({list.source})</span>
-              {list.last_fetched && (
-                <span>
-                  {" "}
-                  - Last fetched: {new Date(list.last_fetched * 1000).toLocaleString()}
-                </span>
+              {editingList && editingList.id === list.id ? (
+                <div>
+                  <input
+                    type="text"
+                    value={editingList.name}
+                    onChange={(e) =>
+                      setEditingList({ ...editingList, name: e.target.value })
+                    }
+                  />
+                  <input
+                    type="text"
+                    value={editingList.source}
+                    onChange={(e) =>
+                      setEditingList({ ...editingList, source: e.target.value })
+                    }
+                  />
+                  <button onClick={handleUpdateChannelList}>Save</button>
+                  <button onClick={() => setEditingList(null)}>Cancel</button>
+                </div>
+              ) : (
+                <div>
+                  <span>{list.name} ({list.source})</span>
+                  {list.last_fetched && (
+                    <span>
+                      {" "}
+                      - Last fetched:{" "}
+                      {new Date(list.last_fetched * 1000).toLocaleString()}
+                    </span>
+                  )}
+                  <button onClick={() => onSelectList(list.id)}>Select</button>
+                  <button onClick={() => handleSetDefault(list.id)}>
+                    {defaultChannelList === list.id
+                      ? "Default"
+                      : "Set as Default"}
+                  </button>
+                  <button onClick={() => handleRefreshChannelList(list.id)}>
+                    Refresh
+                  </button>
+                  <button onClick={() => handleEditClick(list)}>Edit</button>
+                  <button onClick={() => handleDeleteChannelList(list.id)}>
+                    Delete
+                  </button>
+                </div>
               )}
-              <button onClick={() => onSelectList(list.id)}>Select</button>
-              <button onClick={() => handleSetDefault(list.id)}>
-                {defaultChannelList === list.id ? "Default" : "Set as Default"}
-              </button>
-              <button onClick={() => handleRefreshChannelList(list.id)}>
-                Refresh
-              </button>
             </li>
           ))}
         </ul>

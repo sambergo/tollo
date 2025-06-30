@@ -262,6 +262,25 @@ fn refresh_channel_list(state: State<DbState>, id: i32) -> Result<(), String> {
     Ok(())
 }
 
+#[tauri::command]
+fn delete_channel_list(state: State<DbState>, id: i32) -> Result<(), String> {
+    let db = state.db.lock().unwrap();
+    db.execute("DELETE FROM channel_lists WHERE id = ?1", &[&id])
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+fn update_channel_list(state: State<DbState>, id: i32, name: String, source: String) -> Result<(), String> {
+    let db = state.db.lock().unwrap();
+    db.execute(
+        "UPDATE channel_lists SET name = ?1, source = ?2 WHERE id = ?3",
+        &[&name, &source, &id.to_string()],
+    )
+    .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let mut db_connection = database::initialize_database().expect("Failed to initialize database");
@@ -289,7 +308,9 @@ pub fn run() {
             set_default_channel_list,
             get_cache_duration,
             set_cache_duration,
-            refresh_channel_list
+            refresh_channel_list,
+            delete_channel_list,
+            update_channel_list
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
