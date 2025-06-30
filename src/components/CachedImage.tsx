@@ -56,11 +56,12 @@ const CachedImage: React.FC<CachedImageProps> = ({
           display: 'flex', 
           alignItems: 'center', 
           justifyContent: 'center',
-          backgroundColor: '#e0e0e0',
-          color: '#757575',
-          minWidth: '50px',
-          minHeight: '50px',
-          fontSize: '12px'
+          backgroundColor: '#27272a',
+          color: '#71717a',
+          minWidth: '40px',
+          minHeight: '40px',
+          fontSize: '10px',
+          borderRadius: '8px'
         }}
       >
         No Logo
@@ -79,11 +80,12 @@ const CachedImage: React.FC<CachedImageProps> = ({
           display: 'flex', 
           alignItems: 'center', 
           justifyContent: 'center',
-          backgroundColor: '#f5f5f5',
-          color: '#9e9e9e',
-          minWidth: '50px',
-          minHeight: '50px',
-          fontSize: '12px'
+          backgroundColor: '#27272a',
+          color: '#71717a',
+          minWidth: '40px',
+          minHeight: '40px',
+          fontSize: '16px',
+          borderRadius: '8px'
         }}
       >
         📷
@@ -102,11 +104,12 @@ const CachedImage: React.FC<CachedImageProps> = ({
           display: 'flex', 
           alignItems: 'center', 
           justifyContent: 'center',
-          backgroundColor: '#f0f0f0',
-          color: '#666',
-          minWidth: '50px',
-          minHeight: '50px',
-          fontSize: '12px'
+          backgroundColor: '#27272a',
+          color: '#a1a1aa',
+          minWidth: '40px',
+          minHeight: '40px',
+          fontSize: '10px',
+          borderRadius: '8px'
         }}
       >
         Loading...
@@ -125,11 +128,12 @@ const CachedImage: React.FC<CachedImageProps> = ({
           display: 'flex', 
           alignItems: 'center', 
           justifyContent: 'center',
-          backgroundColor: '#ffebee',
-          color: '#c62828',
-          minWidth: '50px',
-          minHeight: '50px',
-          fontSize: '12px'
+          backgroundColor: '#27272a',
+          color: '#ef4444',
+          minWidth: '40px',
+          minHeight: '40px',
+          fontSize: '10px',
+          borderRadius: '8px'
         }}
       >
         Error
@@ -148,11 +152,12 @@ const CachedImage: React.FC<CachedImageProps> = ({
           display: 'flex', 
           alignItems: 'center', 
           justifyContent: 'center',
-          backgroundColor: '#e0e0e0',
-          color: '#757575',
-          minWidth: '50px',
-          minHeight: '50px',
-          fontSize: '12px'
+          backgroundColor: '#27272a',
+          color: '#71717a',
+          minWidth: '40px',
+          minHeight: '40px',
+          fontSize: '10px',
+          borderRadius: '8px'
         }}
       >
         No Logo
