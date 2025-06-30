@@ -383,6 +383,70 @@ body {
   background: var(--bg-hover);
 }
 
+/* Group List Container with Mode Controls */
+.group-list-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.group-mode-controls {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border-primary);
+  background: var(--bg-secondary);
+}
+
+.mode-btn {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-secondary);
+  border-radius: 6px;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.mode-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.mode-btn.active {
+  background: var(--accent-blue);
+  color: white;
+  border-color: var(--accent-blue);
+}
+
+.group-item-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.group-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent-blue);
+  cursor: pointer;
+}
+
+.group-name {
+  flex: 1;
+  cursor: pointer;
+  padding: 0.25rem 0;
+}
+
+.group-name:hover {
+  color: var(--accent-blue);
+}
+
 /* Video Player Area */
 .video-section {
   flex: 1;

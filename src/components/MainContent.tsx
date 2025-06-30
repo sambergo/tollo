@@ -2,6 +2,11 @@ import ChannelList, { type Channel } from "./ChannelList";
 import GroupList from "./GroupList";
 import type { Tab } from "./NavigationSidebar";
 
+enum GroupDisplayMode {
+  EnabledGroups = 'enabled',
+  AllGroups = 'all'
+}
+
 interface MainContentProps {
   activeTab: Tab;
   channelListName: string;
@@ -14,10 +19,14 @@ interface MainContentProps {
   selectedGroup: string | null;
   selectedChannel: Channel | null;
   focusedIndex: number;
+  enabledGroups: Set<string>;
+  groupDisplayMode: GroupDisplayMode;
   onSearch: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onSelectChannel: (channel: Channel) => void;
   onToggleFavorite: (channel: Channel) => void;
   onSelectGroup: (group: string | null) => void;
+  onToggleGroupEnabled: (group: string) => void;
+  onChangeDisplayMode: (mode: GroupDisplayMode) => void;
 }
 
 export default function MainContent({
@@ -32,10 +41,14 @@ export default function MainContent({
   selectedGroup,
   selectedChannel,
   focusedIndex,
+  enabledGroups,
+  groupDisplayMode,
   onSearch,
   onSelectChannel,
   onToggleFavorite,
-  onSelectGroup
+  onSelectGroup,
+  onToggleGroupEnabled,
+  onChangeDisplayMode
 }: MainContentProps) {
   const getTabTitle = () => {
     switch (activeTab) {
@@ -128,7 +141,11 @@ export default function MainContent({
               groups={groups}
               selectedGroup={selectedGroup}
               focusedIndex={focusedIndex}
+              enabledGroups={enabledGroups}
+              groupDisplayMode={groupDisplayMode}
               onSelectGroup={onSelectGroup}
+              onToggleGroupEnabled={onToggleGroupEnabled}
+              onChangeDisplayMode={onChangeDisplayMode}
             />
           </div>
         );

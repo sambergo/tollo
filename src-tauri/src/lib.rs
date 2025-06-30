@@ -313,7 +313,7 @@ fn refresh_channel_list(
     cache_state: State<ChannelCacheState>, 
     id: i32
 ) -> Result<(), String> {
-    let mut db = db_state.db.lock().unwrap();
+    let db = db_state.db.lock().unwrap();
     let mut stmt = db.prepare("SELECT source FROM channel_lists WHERE id = ?1").map_err(|e| e.to_string())?;
     let mut rows = stmt.query(&[&id]).map_err(|e| e.to_string())?;
 
@@ -396,6 +396,24 @@ fn get_image_cache_size(state: State<ImageCacheState>) -> Result<u64, String> {
     cache.get_cache_size().map_err(|e| e.to_string())
 }
 
+#[tauri::command]
+fn get_enabled_groups(state: State<DbState>, channel_list_id: i64) -> Result<Vec<String>, String> {
+    let db = state.db.lock().unwrap();
+    database::get_enabled_groups(&db, channel_list_id).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn update_group_selection(state: State<DbState>, channel_list_id: i64, group_name: String, enabled: bool) -> Result<(), String> {
+    let db = state.db.lock().unwrap();
+    database::set_group_enabled(&db, channel_list_id, group_name, enabled).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn sync_channel_list_groups(state: State<DbState>, channel_list_id: i64, groups: Vec<String>) -> Result<(), String> {
+    let mut db = state.db.lock().unwrap();
+    database::sync_channel_list_groups(&mut db, channel_list_id, groups).map_err(|e| e.to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let mut db_connection = database::initialize_database().expect("Failed to initialize database");
@@ -440,7 +458,10 @@ pub fn run() {
             update_channel_list,
             get_cached_image,
             clear_image_cache,
-            get_image_cache_size
+            get_image_cache_size,
+            get_enabled_groups,
+            update_group_selection,
+            sync_channel_list_groups
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

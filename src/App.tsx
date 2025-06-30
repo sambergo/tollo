@@ -12,6 +12,11 @@ import { useChannelSearch } from "./hooks/useChannelSearch";
 import type { Channel } from "./components/ChannelList";
 import "./App.css";
 
+enum GroupDisplayMode {
+  EnabledGroups = 'enabled',
+  AllGroups = 'all'
+}
+
 function App() {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [favorites, setFavorites] = useState<Channel[]>([]);
@@ -22,6 +27,10 @@ function App() {
   const [activeTab, setActiveTab] = useState<Tab>("channels");
   const [focusedIndex, setFocusedIndex] = useState(0);
   const [selectedChannelListId, setSelectedChannelListId] = useState<number | null>(null);
+  
+  // Group selection state
+  const [groupDisplayMode, setGroupDisplayMode] = useState<GroupDisplayMode>(GroupDisplayMode.EnabledGroups);
+  const [enabledGroups, setEnabledGroups] = useState<Set<string>>(new Set());
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
   const channelListName = useChannelListName(selectedChannelListId);
@@ -43,6 +52,15 @@ function App() {
     setGroups(fetchedGroups);
   }
 
+  async function fetchEnabledGroups(channelListId: number) {
+    const fetchedEnabledGroups = await invoke<string[]>("get_enabled_groups", { channelListId });
+    setEnabledGroups(new Set(fetchedEnabledGroups));
+  }
+
+  async function syncGroupsForChannelList(channelListId: number, allGroups: string[]) {
+    await invoke("sync_channel_list_groups", { channelListId, groups: allGroups });
+  }
+
   async function fetchHistory() {
     const fetchedHistory = await invoke<Channel[]>("get_history");
     setHistory(fetchedHistory);
@@ -58,10 +76,30 @@ function App() {
   }, [debouncedSearchQuery, selectedChannelListId]);
 
   useEffect(() => {
-    fetchChannels(selectedChannelListId);
-    fetchFavorites();
-    fetchGroups(selectedChannelListId);
-    fetchHistory();
+    const loadChannelListData = async () => {
+      await fetchChannels(selectedChannelListId);
+      await fetchFavorites();
+      await fetchGroups(selectedChannelListId);
+      await fetchHistory();
+      
+      // Handle group selections for the new channel list
+      if (selectedChannelListId !== null) {
+        // Get all groups for this channel list
+        const fetchedGroups = await invoke<string[]>("get_groups", { id: selectedChannelListId });
+        
+        // Sync groups with database (adds new groups, removes deleted ones)
+        await syncGroupsForChannelList(selectedChannelListId, fetchedGroups);
+        
+        // Load enabled groups for this channel list
+        await fetchEnabledGroups(selectedChannelListId);
+        
+        // Reset UI state for new channel list
+        setGroupDisplayMode(GroupDisplayMode.EnabledGroups);
+        setSelectedGroup(null);
+      }
+    };
+    
+    loadChannelListData();
   }, [selectedChannelListId]);
 
   useEffect(() => {
@@ -120,6 +158,35 @@ function App() {
     setActiveTab("channels");
   };
 
+  const handleToggleGroupEnabled = async (groupName: string) => {
+    if (selectedChannelListId === null) return;
+    
+    const newEnabledState = !enabledGroups.has(groupName);
+    
+    // Update database for current channel list
+    await invoke("update_group_selection", {
+      channelListId: selectedChannelListId,
+      groupName,
+      enabled: newEnabledState
+    });
+    
+    // Update local state
+    const newEnabledGroups = new Set(enabledGroups);
+    if (newEnabledState) {
+      newEnabledGroups.add(groupName);
+    } else {
+      newEnabledGroups.delete(groupName);
+    }
+    setEnabledGroups(newEnabledGroups);
+  };
+
+  const handleChangeDisplayMode = (mode: GroupDisplayMode) => {
+    setGroupDisplayMode(mode);
+    
+    // Reset selection state when changing modes
+    setSelectedGroup(null);
+  };
+
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   };
@@ -129,9 +196,24 @@ function App() {
     setActiveTab("channels");
   };
 
-  const filteredChannels = selectedGroup
-    ? channels.filter((channel) => channel.group_title === selectedGroup)
-    : [...channels];
+  const filteredChannels = (() => {
+    let filtered = [...channels];
+    
+    // Apply group filtering based on current mode
+    if (groupDisplayMode === GroupDisplayMode.EnabledGroups) {
+      // Show only channels from enabled groups
+      filtered = filtered.filter(channel => enabledGroups.has(channel.group_title));
+    } else if (groupDisplayMode === GroupDisplayMode.AllGroups && selectedGroup) {
+      // Traditional single group selection from all groups
+      filtered = filtered.filter(channel => channel.group_title === selectedGroup);
+    }
+    // If AllGroups mode with no selection, show all channels
+    
+    return filtered;
+  })();
+
+  // Show all groups in the groups tab for both Enabled Groups and All Groups modes
+  const displayedGroups = groups;
 
   const listItems = (() => {
     switch (activeTab) {
@@ -140,7 +222,7 @@ function App() {
       case "favorites":
         return favorites;
       case "groups":
-        return groups;
+        return displayedGroups;
       case "history":
         return history;
       default:
@@ -193,15 +275,19 @@ function App() {
                isSearching={isSearching}
                filteredChannels={filteredChannels}
                favorites={favorites}
-               groups={groups}
+               groups={displayedGroups}
                history={history}
                selectedGroup={selectedGroup}
                selectedChannel={selectedChannel}
                focusedIndex={focusedIndex}
+               enabledGroups={enabledGroups}
+               groupDisplayMode={groupDisplayMode}
                onSearch={handleSearch}
                onSelectChannel={setSelectedChannel}
                onToggleFavorite={handleToggleFavorite}
                onSelectGroup={handleSelectGroup}
+               onToggleGroupEnabled={handleToggleGroupEnabled}
+               onChangeDisplayMode={handleChangeDisplayMode}
              />
 
             <div className="video-section">
