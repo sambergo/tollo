@@ -47,10 +47,30 @@ function App() {
         const channelLists = await invoke<{id: number, name: string, source: string, is_default: boolean, last_fetched: number | null}[]>("get_channel_lists");
         const defaultList = channelLists.find(list => list.is_default);
         if (defaultList && selectedChannelListId === null) {
-          setSelectedChannelListId(defaultList.id);
+          // Set loading state immediately for initial app load
+          setIsLoadingChannelList(true);
+          setSkipSearchEffect(true);
+          
+          // Clear current data to show loading state immediately
+          setChannels([]);
+          setGroups([]);
+          setSelectedGroup(null);
+          setFocusedIndex(0);
+          
+          // Make sure user is on channels tab to see the loading screen
+          setActiveTab("channels");
+          
+          // Give React a moment to render the loading screen before starting heavy operations
+          setTimeout(() => {
+            startTransition(() => {
+              setSelectedChannelListId(defaultList.id);
+            });
+          }, 50);
         }
       } catch (error) {
         console.error("Failed to load default channel list:", error);
+        setIsLoadingChannelList(false);
+        setSkipSearchEffect(false);
       }
     };
 
