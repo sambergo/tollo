@@ -104,13 +104,13 @@ fn get_groups(
     cache_state: State<ChannelCacheState>, 
     id: Option<i32>
 ) -> Result<Vec<String>, String> {
-    // Get channels from cache
-    let channels = get_cached_channels(db_state, cache_state, id)?;
+    // Get original channels from cache (this already returns a clone)
+    let original_channels = get_cached_channels(db_state, cache_state, id)?;
     
-    // Extract unique groups from cached channels
+    // Extract unique groups from cached channels without consuming the original
     let mut groups = std::collections::HashSet::new();
-    for channel in channels {
-        groups.insert(channel.group_title);
+    for channel in &original_channels {  // Use reference to avoid consuming
+        groups.insert(channel.group_title.clone());  // Clone the group title
     }
     Ok(groups.into_iter().collect())
 }
@@ -126,7 +126,7 @@ fn get_cached_channels(
     // Check if we have valid cache
     if let Some(ref cached) = *cache {
         if cached.channel_list_id == id {
-            // Cache hit - return cached channels
+            // Cache hit - return a clone of cached channels to keep original pristine
             return Ok(cached.channels.clone());
         }
     }
@@ -135,13 +135,14 @@ fn get_cached_channels(
     let mut db = db_state.db.lock().unwrap();
     let channels = m3u_parser::get_channels(&mut db, id);
     
-    // Update cache
+    // Store original channels in cache for future use
     *cache = Some(ChannelCache {
         channel_list_id: id,
-        channels: channels.clone(),
+        channels: channels.clone(),  // Store a copy in cache
         last_updated: SystemTime::now(),
     });
     
+    // Return a clone to keep the cached original untouched
     Ok(channels)
 }
 
@@ -152,17 +153,19 @@ fn search_channels(
     query: String, 
     id: Option<i32>
 ) -> Result<Vec<Channel>, String> {
-    // Get channels from cache
-    let channels = get_cached_channels(db_state, cache_state, id)?;
+    // Get original channels from cache (this already returns a clone)
+    let original_channels = get_cached_channels(db_state, cache_state, id)?;
     
-    // Perform case-insensitive search in memory
+    // Clone the original list and perform case-insensitive search
+    // This ensures the cached original list remains untouched
     let query_lower = query.to_lowercase();
-    let filtered_channels: Vec<Channel> = channels
-        .into_iter()
+    let filtered_channels: Vec<Channel> = original_channels
+        .iter()  // Use iter() instead of into_iter() to avoid consuming
         .filter(|channel| {
             channel.name.to_lowercase().contains(&query_lower) ||
             channel.group_title.to_lowercase().contains(&query_lower)
         })
+        .cloned()  // Clone each matching channel
         .collect();
     
     Ok(filtered_channels)

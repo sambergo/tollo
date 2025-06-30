@@ -85,19 +85,21 @@ function App() {
 
   async function searchChannels(query: string) {
     if (query === "" || query.length < 3) {
-      // For empty query or less than 3 characters, show all channels
+      // For empty query or less than 3 characters, restore original full channel list
+      // This fetches from cache and returns a clean copy
       fetchChannels(selectedChannelListId);
     } else {
       setIsSearching(true);
       try {
+        // Backend returns filtered copy from cached original list
         const searchedChannels = await invoke<Channel[]>("search_channels", { 
           query, 
           id: selectedChannelListId 
         });
-        setChannels(searchedChannels);
+        setChannels(searchedChannels);  // Set filtered results
       } catch (error) {
         console.error("Search failed:", error);
-        // Fallback to showing all channels
+        // Fallback to showing original full channel list
         fetchChannels(selectedChannelListId);
       } finally {
         setIsSearching(false);
@@ -183,9 +185,10 @@ function App() {
     setActiveTab("channels");
   };
 
+  // Always work with a filtered copy, keeping the original channels array intact
   const filteredChannels = selectedGroup
-    ? channels.filter((channel) => channel.group_title === selectedGroup)
-    : channels;
+    ? channels.filter((channel) => channel.group_title === selectedGroup)  // filter() returns new array
+    : [...channels];  // Spread to create a shallow copy even when showing all
 
   const listItems = (() => {
     switch (activeTab) {
