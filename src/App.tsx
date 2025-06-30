@@ -26,11 +26,12 @@ function App() {
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("channels");
   const [focusedIndex, setFocusedIndex] = useState(0);
+  const [selectedChannelListId, setSelectedChannelListId] = useState<number | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
 
-  async function fetchChannels() {
-    const fetchedChannels = await invoke<Channel[]>("get_channels");
+  async function fetchChannels(id: number | null = null) {
+    const fetchedChannels = await invoke<Channel[]>("get_channels", { id });
     setChannels(fetchedChannels);
     setSelectedChannel(fetchedChannels[0]);
   }
@@ -40,8 +41,8 @@ function App() {
     setFavorites(fetchedFavorites);
   }
 
-  async function fetchGroups() {
-    const fetchedGroups = await invoke<string[]>("get_groups");
+  async function fetchGroups(id: number | null = null) {
+    const fetchedGroups = await invoke<string[]>("get_groups", { id });
     setGroups(fetchedGroups);
   }
 
@@ -52,7 +53,7 @@ function App() {
 
   async function searchChannels(query: string) {
     if (query === "") {
-      fetchChannels();
+      fetchChannels(selectedChannelListId);
     } else {
       const searchedChannels = await invoke<Channel[]>("search_channels", { query });
       setChannels(searchedChannels);
@@ -60,11 +61,11 @@ function App() {
   }
 
   useEffect(() => {
-    fetchChannels();
+    fetchChannels(selectedChannelListId);
     fetchFavorites();
-    fetchGroups();
+    fetchGroups(selectedChannelListId);
     fetchHistory();
-  }, []);
+  }, [selectedChannelListId]);
 
   useEffect(() => {
     if (hlsRef.current) {
@@ -125,6 +126,11 @@ function App() {
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
     searchChannels(e.target.value);
+  };
+
+  const handleSelectChannelList = (id: number) => {
+    setSelectedChannelListId(id);
+    setActiveTab("channels");
   };
 
   const filteredChannels = selectedGroup
@@ -271,7 +277,7 @@ function App() {
           </ul>
         );
       case "settings":
-        return <Settings />;
+        return <Settings onSelectList={handleSelectChannelList} />;
       default:
         return null;
     }

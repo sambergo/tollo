@@ -9,7 +9,11 @@ interface ChannelList {
   last_fetched: number | null;
 }
 
-function Settings() {
+interface SettingsProps {
+  onSelectList: (id: number) => void;
+}
+
+function Settings({ onSelectList }: SettingsProps) {
   const [playerCommand, setPlayerCommand] = useState("");
   const [channelLists, setChannelLists] = useState<ChannelList[]>([]);
   const [newListName, setNewListName] = useState("");
@@ -100,6 +104,7 @@ function Settings() {
                   - Last fetched: {new Date(list.last_fetched * 1000).toLocaleString()}
                 </span>
               )}
+              <button onClick={() => onSelectList(list.id)}>Select</button>
               <button onClick={() => handleSetDefault(list.id)}>
                 {defaultChannelList === list.id ? "Default" : "Set as Default"}
               </button>

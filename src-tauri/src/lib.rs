@@ -72,15 +72,15 @@ fn set_default_channel_list(state: State<DbState>, id: i32) -> Result<(), String
 }
 
 #[tauri::command]
-fn get_channels(state: State<DbState>) -> Result<Vec<Channel>, String> {
+fn get_channels(state: State<DbState>, id: Option<i32>) -> Result<Vec<Channel>, String> {
     let mut db = state.db.lock().unwrap();
-    Ok(m3u_parser::get_channels(&mut db))
+    Ok(m3u_parser::get_channels(&mut db, id))
 }
 
 #[tauri::command]
-fn get_groups(state: State<DbState>) -> Result<Vec<String>, String> {
+fn get_groups(state: State<DbState>, id: Option<i32>) -> Result<Vec<String>, String> {
     let mut db = state.db.lock().unwrap();
-    Ok(m3u_parser::get_groups(&mut db))
+    Ok(m3u_parser::get_groups(&mut db, id))
 }
 
 #[tauri::command]
@@ -265,7 +265,7 @@ fn refresh_channel_list(state: State<DbState>, id: i32) -> Result<(), String> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let mut db_connection = database::initialize_database().expect("Failed to initialize database");
-    let channels = m3u_parser::get_channels(&mut db_connection);
+    let channels = m3u_parser::get_channels(&mut db_connection, None);
     database::populate_channels(&mut db_connection, &channels).expect("Failed to populate channels");
 
     tauri::Builder::default()

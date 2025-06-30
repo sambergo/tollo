@@ -51,8 +51,14 @@ fn parse_m3u_content(m3u_content: &str) -> Vec<Channel> {
     channels
 }
 
-pub fn get_channels(conn: &mut Connection) -> Vec<Channel> {
-    let mut stmt = conn.prepare("SELECT id, source, filepath, last_fetched FROM channel_lists WHERE is_default = 1").unwrap();
+pub fn get_channels(conn: &mut Connection, id: Option<i32>) -> Vec<Channel> {
+    let query = if let Some(list_id) = id {
+        format!("SELECT id, source, filepath, last_fetched FROM channel_lists WHERE id = {}", list_id)
+    } else {
+        "SELECT id, source, filepath, last_fetched FROM channel_lists WHERE is_default = 1".to_string()
+    };
+
+    let mut stmt = conn.prepare(&query).unwrap();
     let mut rows = stmt.query([]).unwrap();
 
     if let Some(row) = rows.next().unwrap() {
@@ -102,8 +108,8 @@ pub fn get_channels(conn: &mut Connection) -> Vec<Channel> {
     vec![]
 }
 
-pub fn get_groups(conn: &mut Connection) -> Vec<String> {
-    let channels = get_channels(conn);
+pub fn get_groups(conn: &mut Connection, id: Option<i32>) -> Vec<String> {
+    let channels = get_channels(conn, id);
     let mut groups = HashSet::new();
     for channel in channels {
         groups.insert(channel.group_title);
