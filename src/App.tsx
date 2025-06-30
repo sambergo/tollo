@@ -56,7 +56,6 @@ function App() {
   async function fetchChannels(id: number | null = null) {
     const fetchedChannels = await invoke<Channel[]>("get_channels", { id });
     setChannels(fetchedChannels);
-    setSelectedChannel(fetchedChannels[0]);
   }
 
   async function fetchFavorites() {

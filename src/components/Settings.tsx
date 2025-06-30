@@ -89,6 +89,12 @@ const StarIcon = ({ filled }: { filled: boolean }) => (
   </svg>
 );
 
+const LoadingIcon = () => (
+  <svg className="action-icon animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 12a9 9 0 11-6.219-8.56" stroke="currentColor" fill="none" />
+  </svg>
+);
+
 function Settings({ onSelectList }: SettingsProps) {
   const [playerCommand, setPlayerCommand] = useState("");
   const [channelLists, setChannelLists] = useState<ChannelList[]>([]);
@@ -98,6 +104,8 @@ function Settings({ onSelectList }: SettingsProps) {
   const [cacheDuration, setCacheDuration] = useState(24);
   const [editingList, setEditingList] = useState<ChannelList | null>(null);
   const [imageCacheSize, setImageCacheSize] = useState<number>(0);
+  const [loadingLists, setLoadingLists] = useState<Set<number>>(new Set());
+  const [isAddingList, setIsAddingList] = useState(false);
   const { clearCache, getCacheSize } = useImageCache();
 
   async function fetchPlayerCommand() {
@@ -141,10 +149,30 @@ function Settings({ onSelectList }: SettingsProps) {
 
   const handleAddChannelList = async () => {
     if (newListName && newListSource) {
-      await invoke("add_channel_list", { name: newListName, source: newListSource });
-      setNewListName("");
-      setNewListSource("");
-      fetchChannelLists();
+      setIsAddingList(true);
+      try {
+        // Use the new validate_and_add_channel_list function which does everything in one go
+        const listId = await invoke<number>("validate_and_add_channel_list", { 
+          name: newListName, 
+          source: newListSource 
+        });
+        
+        console.log("Successfully added and fetched channel list with ID:", listId);
+        
+        // Clear form
+        setNewListName("");
+        setNewListSource("");
+        
+        // Refresh the lists to show the new list
+        await fetchChannelLists();
+        
+      } catch (error) {
+        console.error("Failed to add channel list:", error);
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        alert(`Failed to add channel list "${newListName}".\n\nError: ${errorMsg}`);
+      } finally {
+        setIsAddingList(false);
+      }
     }
   };
 
@@ -153,9 +181,27 @@ function Settings({ onSelectList }: SettingsProps) {
     await invoke("set_default_channel_list", { id });
   };
 
-  const handleRefreshChannelList = async (id: number) => {
-    await invoke("refresh_channel_list", { id });
-    fetchChannelLists();
+  const handleRefreshChannelList = async (id: number, shouldRefetchList: boolean = true) => {
+    try {
+      setLoadingLists(prev => new Set([...prev, id]));
+      await invoke("refresh_channel_list", { id });
+      
+      if (shouldRefetchList) {
+        await fetchChannelLists();
+      }
+    } catch (error) {
+      console.error("Failed to refresh channel list:", error);
+      alert("Failed to refresh channel list: " + error);
+    } finally {
+      setLoadingLists(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(id);
+        return newSet;
+      });
+      
+      // Always refetch the lists after refresh completes to update last_fetched
+      await fetchChannelLists();
+    }
   };
 
   const handleDeleteChannelList = async (id: number) => {
@@ -226,9 +272,9 @@ function Settings({ onSelectList }: SettingsProps) {
               <button 
                 className="btn-primary"
                 onClick={handleAddChannelList}
-                disabled={!newListName || !newListSource}
+                disabled={!newListName || !newListSource || isAddingList}
               >
-                Add List
+                {isAddingList ? "Adding..." : "Add List"}
               </button>
             </div>
           </div>
@@ -273,9 +319,17 @@ function Settings({ onSelectList }: SettingsProps) {
                     <div className="list-details">
                       <div className="list-header">
                         <h4 className="list-name">{list.name}</h4>
-                        {defaultChannelList === list.id && (
-                          <span className="default-badge">Default</span>
-                        )}
+                        <div className="list-status">
+                          {loadingLists.has(list.id) && (
+                            <span className="loading-indicator">
+                              <LoadingIcon />
+                              <span className="loading-text">Fetching...</span>
+                            </span>
+                          )}
+                          {defaultChannelList === list.id && (
+                            <span className="default-badge">Default</span>
+                          )}
+                        </div>
                       </div>
                       <p className="list-source">{list.source}</p>
                       {list.last_fetched && (
@@ -283,18 +337,26 @@ function Settings({ onSelectList }: SettingsProps) {
                           Last updated: {new Date(list.last_fetched * 1000).toLocaleString()}
                         </p>
                       )}
+                      {loadingLists.has(list.id) && (
+                        <p className="list-meta loading-status">
+                          Downloading channel data...
+                        </p>
+                      )}
                     </div>
                     <div className="list-actions">
                       <button 
                         className="btn-primary btn-sm"
                         onClick={() => onSelectList(list.id)}
+                        disabled={loadingLists.has(list.id)}
+                        title={loadingLists.has(list.id) ? "Fetching channels..." : "Select this list"}
                       >
-                        Select
+                        {loadingLists.has(list.id) ? "Fetching..." : "Select"}
                       </button>
                       <button 
                         className={`btn-icon ${defaultChannelList === list.id ? 'active' : ''}`}
                         onClick={() => handleSetDefault(list.id)}
                         title={defaultChannelList === list.id ? "Default" : "Set as Default"}
+                        disabled={loadingLists.has(list.id)}
                       >
                         <StarIcon filled={defaultChannelList === list.id} />
                       </button>
@@ -302,6 +364,7 @@ function Settings({ onSelectList }: SettingsProps) {
                         className="btn-icon"
                         onClick={() => handleRefreshChannelList(list.id)}
                         title="Refresh"
+                        disabled={loadingLists.has(list.id)}
                       >
                         <RefreshIcon />
                       </button>
@@ -309,6 +372,7 @@ function Settings({ onSelectList }: SettingsProps) {
                         className="btn-icon"
                         onClick={() => handleEditClick(list)}
                         title="Edit"
+                        disabled={loadingLists.has(list.id)}
                       >
                         <EditIcon />
                       </button>
@@ -316,6 +380,7 @@ function Settings({ onSelectList }: SettingsProps) {
                         className="btn-icon btn-danger"
                         onClick={() => handleDeleteChannelList(list.id)}
                         title="Delete"
+                        disabled={loadingLists.has(list.id)}
                       >
                         <TrashIcon />
                       </button>
