@@ -7,6 +7,8 @@ use rusqlite::Connection;
 use std::sync::Mutex;
 use tauri::State;
 use serde::{Serialize, Deserialize};
+use std::fs;
+use reqwest;
 
 struct DbState {
     db: Mutex<Connection>,
@@ -233,6 +235,33 @@ fn set_cache_duration(state: State<DbState>, hours: i64) -> Result<(), String> {
     Ok(())
 }
 
+#[tauri::command]
+fn refresh_channel_list(state: State<DbState>, id: i32) -> Result<(), String> {
+    let mut db = state.db.lock().unwrap();
+    let mut stmt = db.prepare("SELECT source FROM channel_lists WHERE id = ?1").map_err(|e| e.to_string())?;
+    let mut rows = stmt.query(&[&id]).map_err(|e| e.to_string())?;
+
+    if let Some(row) = rows.next().map_err(|e| e.to_string())? {
+        let source: String = row.get(0).map_err(|e| e.to_string())?;
+        if source.starts_with("http") {
+            if let Ok(content) = reqwest::blocking::get(&source).and_then(|resp| resp.text()) {
+                let data_dir = dirs::data_dir().unwrap().join("gui-tollo");
+                let filename = format!("{}.m3u", uuid::Uuid::new_v4());
+                let new_filepath = data_dir.join(&filename);
+                if fs::write(&new_filepath, &content).is_ok() {
+                    let now = chrono::Utc::now().timestamp();
+                    db.execute(
+                        "UPDATE channel_lists SET filepath = ?1, last_fetched = ?2 WHERE id = ?3",
+                        &[&filename as &dyn rusqlite::ToSql, &now as &dyn rusqlite::ToSql, &id as &dyn rusqlite::ToSql],
+                    ).map_err(|e| e.to_string())?;
+                }
+            }
+        }
+    }
+
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let mut db_connection = database::initialize_database().expect("Failed to initialize database");
@@ -259,7 +288,8 @@ pub fn run() {
             add_channel_list,
             set_default_channel_list,
             get_cache_duration,
-            set_cache_duration
+            set_cache_duration,
+            refresh_channel_list
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

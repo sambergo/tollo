@@ -6,6 +6,7 @@ interface ChannelList {
   name: string;
   source: string; // url or file path
   is_default: boolean;
+  last_fetched: number | null;
 }
 
 function Settings() {
@@ -62,6 +63,11 @@ function Settings() {
     setDefaultChannelList(id);
   };
 
+  const handleRefreshChannelList = async (id: number) => {
+    await invoke("refresh_channel_list", { id });
+    fetchChannelLists();
+  };
+
   return (
     <div className="settings">
       <div>
@@ -88,8 +94,17 @@ function Settings() {
           {channelLists.map((list) => (
             <li key={list.id}>
               <span>{list.name} ({list.source})</span>
+              {list.last_fetched && (
+                <span>
+                  {" "}
+                  - Last fetched: {new Date(list.last_fetched * 1000).toLocaleString()}
+                </span>
+              )}
               <button onClick={() => handleSetDefault(list.id)}>
                 {defaultChannelList === list.id ? "Default" : "Set as Default"}
+              </button>
+              <button onClick={() => handleRefreshChannelList(list.id)}>
+                Refresh
               </button>
             </li>
           ))}
