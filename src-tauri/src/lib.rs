@@ -78,10 +78,21 @@ fn play_channel(state: State<DbState>, channel: Channel) {
         &[&channel.name, &channel.logo, &channel.url, &channel.group_title, &channel.tvg_id, &channel.resolution, &channel.extra_info],
     ).unwrap();
 
-    Command::new("mpv")
+    let player_command: String = db.query_row(
+        "SELECT player_command FROM settings WHERE id = 1",
+        [],
+        |row| row.get(0),
+    ).unwrap_or_else(|_| "mpv".to_string());
+
+    let mut command_parts = player_command.split_whitespace();
+    let command = command_parts.next().unwrap_or("mpv");
+    let args = command_parts.collect::<Vec<&str>>();
+
+    Command::new(command)
+        .args(args)
         .arg(channel.url)
         .spawn()
-        .expect("Failed to launch mpv");
+        .expect("Failed to launch video player");
 }
 
 #[tauri::command]
@@ -148,6 +159,26 @@ fn get_history(state: State<DbState>) -> Result<Vec<Channel>, String> {
     Ok(channels)
 }
 
+#[tauri::command]
+fn get_player_command(state: State<DbState>) -> Result<String, String> {
+    let db = state.db.lock().unwrap();
+    db.query_row(
+        "SELECT player_command FROM settings WHERE id = 1",
+        [],
+        |row| row.get(0),
+    ).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn set_player_command(state: State<DbState>, command: String) -> Result<(), String> {
+    let db = state.db.lock().unwrap();
+    db.execute(
+        "INSERT OR REPLACE INTO settings (id, player_command) VALUES (1, ?1)",
+        &[&command],
+    ).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let mut db_connection = database::initialize_database().expect("Failed to initialize database");
@@ -167,7 +198,9 @@ pub fn run() {
             add_favorite,
             remove_favorite,
             get_favorites,
-            get_history
+            get_history,
+            get_player_command,
+            set_player_command
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

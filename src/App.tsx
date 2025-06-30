@@ -13,7 +13,7 @@ interface Channel {
   extra_info: string;
 }
 
-type Tab = "channels" | "favorites" | "groups" | "history";
+type Tab = "channels" | "favorites" | "groups" | "history" | "settings";
 
 function App() {
   const [channels, setChannels] = useState<Channel[]>([]);
@@ -21,6 +21,7 @@ function App() {
   const [groups, setGroups] = useState<string[]>([]);
   const [history, setHistory] = useState<Channel[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [playerCommand, setPlayerCommand] = useState("");
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("channels");
@@ -49,6 +50,11 @@ function App() {
     setHistory(fetchedHistory);
   }
 
+  async function fetchPlayerCommand() {
+    const fetchedCommand = await invoke<string>("get_player_command");
+    setPlayerCommand(fetchedCommand);
+  }
+
   async function searchChannels(query: string) {
     if (query === "") {
       fetchChannels();
@@ -63,6 +69,7 @@ function App() {
     fetchFavorites();
     fetchGroups();
     fetchHistory();
+    fetchPlayerCommand();
   }, []);
 
   useEffect(() => {
@@ -126,6 +133,10 @@ function App() {
     searchChannels(e.target.value);
   };
 
+  const handleSaveSettings = async () => {
+    await invoke("set_player_command", { command: playerCommand });
+  };
+
   const filteredChannels = selectedGroup
     ? channels.filter((channel) => channel.group_title === selectedGroup)
     : channels;
@@ -162,13 +173,13 @@ function App() {
           handleSelectGroup(listItems[focusedIndex] as string);
         }
       } else if (e.key === "l" || e.key === "ArrowRight") {
-        const tabs: Tab[] = ["channels", "favorites", "groups", "history"];
+        const tabs: Tab[] = ["channels", "favorites", "groups", "history", "settings"];
         const currentIndex = tabs.indexOf(activeTab);
         const nextIndex = (currentIndex + 1) % tabs.length;
         setActiveTab(tabs[nextIndex]);
         setFocusedIndex(0);
       } else if (e.key === "h" || e.key === "ArrowLeft") {
-        const tabs: Tab[] = ["channels", "favorites", "groups", "history"];
+        const tabs: Tab[] = ["channels", "favorites", "groups", "history", "settings"];
         const currentIndex = tabs.indexOf(activeTab);
         const prevIndex = (currentIndex - 1 + tabs.length) % tabs.length;
         setActiveTab(tabs[prevIndex]);
@@ -269,6 +280,18 @@ function App() {
             ))}
           </ul>
         );
+      case "settings":
+        return (
+          <div className="settings">
+            <label>Player Command</label>
+            <input
+              type="text"
+              value={playerCommand}
+              onChange={(e) => setPlayerCommand(e.target.value)}
+            />
+            <button onClick={handleSaveSettings}>Save</button>
+          </div>
+        );
       default:
         return null;
     }
@@ -282,6 +305,7 @@ function App() {
           <button onClick={() => setActiveTab("favorites")}>Favorites</button>
           <button onClick={() => setActiveTab("groups")}>Groups</button>
           <button onClick={() => setActiveTab("history")}>History</button>
+          <button onClick={() => setActiveTab("settings")}>Settings</button>
         </div>
         <div className="content">{renderContent()}</div>
       </div>

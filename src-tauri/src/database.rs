@@ -56,6 +56,14 @@ pub fn initialize_database() -> Result<Connection> {
         [],
     )?;
 
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS settings (
+            id INTEGER PRIMARY KEY,
+            player_command TEXT NOT NULL
+        )",
+        [],
+    )?;
+
     Ok(conn)
 }
 
