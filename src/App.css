@@ -36,6 +36,14 @@
   overflow-y: auto;
 }
 
+.content input[type="text"] {
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: none;
+  border-bottom: 1px solid #ccc;
+}
+
 .content ul {
   list-style: none;
   margin: 0;

@@ -17,6 +17,7 @@ function App() {
   const [favorites, setFavorites] = useState<Channel[]>([]);
   const [groups, setGroups] = useState<string[]>([]);
   const [history, setHistory] = useState<Channel[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("channels");
@@ -42,6 +43,15 @@ function App() {
   async function fetchHistory() {
     const fetchedHistory = await invoke<Channel[]>("get_history");
     setHistory(fetchedHistory);
+  }
+
+  async function searchChannels(query: string) {
+    if (query === "") {
+      fetchChannels();
+    } else {
+      const searchedChannels = await invoke<Channel[]>("search_channels", { query });
+      setChannels(searchedChannels);
+    }
   }
 
   useEffect(() => {
@@ -107,6 +117,11 @@ function App() {
     setActiveTab("channels");
   };
 
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+    searchChannels(e.target.value);
+  };
+
   const filteredChannels = selectedGroup
     ? channels.filter((channel) => channel.group_title === selectedGroup)
     : channels;
@@ -115,21 +130,29 @@ function App() {
     switch (activeTab) {
       case "channels":
         return (
-          <ul>
-            {filteredChannels.map((channel) => (
-              <li
-                key={channel.name}
-                className={selectedChannel?.name === channel.name ? "selected" : ""}
-                onClick={() => setSelectedChannel(channel)}
-              >
-                <img src={channel.logo} alt={channel.name} />
-                <span>{channel.name}</span>
-                <button onClick={() => handleToggleFavorite(channel)}>
-                  {isFavorite(channel) ? "Unfavorite" : "Favorite"}
-                </button>
-              </li>
-            ))}
-          </ul>
+          <>
+            <input
+              type="text"
+              placeholder="Search channels..."
+              value={searchQuery}
+              onChange={handleSearch}
+            />
+            <ul>
+              {filteredChannels.map((channel) => (
+                <li
+                  key={channel.name}
+                  className={selectedChannel?.name === channel.name ? "selected" : ""}
+                  onClick={() => setSelectedChannel(channel)}
+                >
+                  <img src={channel.logo} alt={channel.name} />
+                  <span>{channel.name}</span>
+                  <button onClick={() => handleToggleFavorite(channel)}>
+                    {isFavorite(channel) ? "Unfavorite" : "Favorite"}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </>
         );
       case "favorites":
         return (

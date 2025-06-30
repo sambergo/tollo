@@ -12,13 +12,56 @@ struct DbState {
 }
 
 #[tauri::command]
-fn get_channels() -> Vec<Channel> {
-    m3u_parser::get_channels()
+fn get_channels(state: State<DbState>) -> Result<Vec<Channel>, String> {
+    let db = state.db.lock().unwrap();
+    let mut stmt = db.prepare("SELECT name, logo, url, group_title FROM channels").map_err(|e| e.to_string())?;
+    let channel_iter = stmt.query_map([], |row| {
+        Ok(Channel {
+            name: row.get(0)?,
+            logo: row.get(1)?,
+            url: row.get(2)?,
+            group_title: row.get(3)?,
+        })
+    }).map_err(|e| e.to_string())?;
+
+    let mut channels = Vec::new();
+    for channel in channel_iter {
+        channels.push(channel.map_err(|e| e.to_string())?);
+    }
+    Ok(channels)
 }
 
 #[tauri::command]
-fn get_groups() -> Vec<String> {
-    m3u_parser::get_groups()
+fn get_groups(state: State<DbState>) -> Result<Vec<String>, String> {
+    let db = state.db.lock().unwrap();
+    let mut stmt = db.prepare("SELECT DISTINCT group_title FROM channels").map_err(|e| e.to_string())?;
+    let group_iter = stmt.query_map([], |row| row.get(0)).map_err(|e| e.to_string())?;
+
+    let mut groups = Vec::new();
+    for group in group_iter {
+        groups.push(group.map_err(|e| e.to_string())?);
+    }
+    Ok(groups)
+}
+
+#[tauri::command]
+fn search_channels(state: State<DbState>, query: String) -> Result<Vec<Channel>, String> {
+    let db = state.db.lock().unwrap();
+    let mut stmt = db.prepare("SELECT c.name, c.logo, c.url, c.group_title FROM channels c JOIN channels_fts fts ON c.id = fts.rowid WHERE fts.name MATCH ?").map_err(|e| e.to_string())?;
+    let channel_iter = stmt.query_map([query], |row| {
+        Ok(Channel {
+            name: row.get(0)?,
+            logo: row.get(1)?,
+            url: row.get(2)?,
+            group_title: row.get(3)?,
+        })
+    }).map_err(|e| e.to_string())?;
+
+    let mut channels = Vec::new();
+    for channel in channel_iter {
+        channels.push(channel.map_err(|e| e.to_string())?);
+    }
+    Ok(channels)
 }
 
 #[tauri::command]
@@ -95,7 +138,9 @@ fn get_history(state: State<DbState>) -> Result<Vec<Channel>, String> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let db_connection = database::initialize_database().expect("Failed to initialize database");
+    let mut db_connection = database::initialize_database().expect("Failed to initialize database");
+    let channels = m3u_parser::get_channels();
+    database::populate_channels(&mut db_connection, &channels).expect("Failed to populate channels");
 
     tauri::Builder::default()
         .manage(DbState {
@@ -105,6 +150,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             get_channels,
             get_groups,
+            search_channels,
             play_channel,
             add_favorite,
             remove_favorite,
