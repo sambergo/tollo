@@ -389,8 +389,16 @@ function App() {
     // Apply the search query
     setSearchQuery(filter.search_query);
     
-    // Apply the group selection
+    // Apply the group selection and set appropriate display mode
     setSelectedGroup(filter.selected_group);
+    
+    // If the filter has a selected group, switch to AllGroups mode to make the group filter active
+    // If no group is selected, use EnabledGroups mode
+    if (filter.selected_group) {
+      setGroupDisplayMode(GroupDisplayMode.AllGroups);
+    } else {
+      setGroupDisplayMode(GroupDisplayMode.EnabledGroups);
+    }
     
     // Switch to channels tab to see the results
     setActiveTab("channels");
