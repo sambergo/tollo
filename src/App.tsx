@@ -519,111 +519,124 @@ function App() {
 
       {/* Main Content Area */}
       <div className="main-content">
-        {/* Channels List */}
-        <div className="channels-section">
-          <div className="section-header">
-            <h2 className="section-title">{getTabTitle()}</h2>
-            <p className="section-subtitle">{getTabSubtitle()}</p>
+        {activeTab === "settings" ? (
+          /* Settings take full width */
+          <div className="settings-full-width">
+            <div className="section-header">
+              <h2 className="section-title">{getTabTitle()}</h2>
+              <p className="section-subtitle">{getTabSubtitle()}</p>
+            </div>
+            {renderContent()}
           </div>
-          {renderContent()}
-        </div>
+        ) : (
+          <>
+            {/* Channels List */}
+            <div className="channels-section">
+              <div className="section-header">
+                <h2 className="section-title">{getTabTitle()}</h2>
+                <p className="section-subtitle">{getTabSubtitle()}</p>
+              </div>
+              {renderContent()}
+            </div>
 
-        {/* Video Player and Information Area */}
-        <div className="video-section">
-          {/* Video Preview */}
-          <div className="video-preview">
-            <div className="video-container">
-              {selectedChannel ? (
-                <>
-                  <video ref={videoRef} className="video-player" controls />
-                  <div className="video-controls">
-                    <div className="video-status">
-                      <div className="status-dot"></div>
-                      <span className="status-text">Live</span>
+            {/* Video Player and Information Area */}
+            <div className="video-section">
+              {/* Video Preview */}
+              <div className="video-preview">
+                <div className="video-container">
+                  {selectedChannel ? (
+                    <>
+                      <video ref={videoRef} className="video-player" controls />
+                      <div className="video-controls">
+                        <div className="video-status">
+                          <div className="status-dot"></div>
+                          <span className="status-text">Live</span>
+                        </div>
+                        <div className="quality-badge">
+                          {selectedChannel.resolution || "HD"}
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="video-placeholder">
+                      <PlayIcon />
+                      <div className="video-placeholder-text">Preview Window</div>
+                      <div className="video-placeholder-channel">Select a channel to start watching</div>
                     </div>
-                    <div className="quality-badge">
-                      {selectedChannel.resolution || "HD"}
+                  )}
+                </div>
+              </div>
+
+              {/* Channel Information */}
+              {selectedChannel && (
+                <div className="channel-details">
+                  <div className="channel-details-content">
+                    <div className="channel-main-info">
+                      <CachedImage 
+                        src={selectedChannel.logo} 
+                        alt={selectedChannel.name}
+                        className="channel-details-logo"
+                      />
+                      <div className="channel-meta">
+                        <div className="channel-title-row">
+                          <h1 className="channel-details-title">{selectedChannel.name}</h1>
+                          <span className="channel-number-badge">CH {channels.indexOf(selectedChannel) + 1}</span>
+                        </div>
+                        <div className="channel-meta-row">
+                          <div className="meta-item">
+                            <SignalIcon />
+                            {selectedChannel.resolution || "HD"}
+                          </div>
+                          <div className="meta-item">
+                            <StarIcon />
+                            4.5
+                          </div>
+                          <span className="badge badge-category">{selectedChannel.group_title}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="separator"></div>
+
+                    <div className="actions-section">
+                      <button 
+                        className="primary-button"
+                        onClick={() => handlePlayInMpv(selectedChannel)}
+                      >
+                        Play in MPV
+                      </button>
+                      <button 
+                        className="secondary-button"
+                        onClick={() => handleToggleFavorite(selectedChannel)}
+                      >
+                        {isFavorite(selectedChannel) ? "Remove from Favorites" : "Add to Favorites"}
+                      </button>
+                    </div>
+
+                    <div className="details-grid">
+                      <div className="detail-item">
+                        <div className="detail-label">Group</div>
+                        <div className="detail-value">{selectedChannel.group_title}</div>
+                      </div>
+                      <div className="detail-item">
+                        <div className="detail-label">TVG ID</div>
+                        <div className="detail-value">{selectedChannel.tvg_id || "N/A"}</div>
+                      </div>
+                      <div className="detail-item">
+                        <div className="detail-label">Resolution</div>
+                        <div className="detail-value">{selectedChannel.resolution || "HD"}</div>
+                      </div>
+                      <div className="detail-item">
+                        <div className="detail-label">Extra Info</div>
+                        <div className="detail-value">{selectedChannel.extra_info || "No additional information"}</div>
+                      </div>
                     </div>
                   </div>
-                </>
-              ) : (
-                <div className="video-placeholder">
-                  <PlayIcon />
-                  <div className="video-placeholder-text">Preview Window</div>
-                  <div className="video-placeholder-channel">Select a channel to start watching</div>
                 </div>
               )}
             </div>
-          </div>
-
-          {/* Channel Information */}
-          {selectedChannel && (
-            <div className="channel-details">
-              <div className="channel-details-content">
-                <div className="channel-main-info">
-                  <CachedImage 
-                    src={selectedChannel.logo} 
-                    alt={selectedChannel.name}
-                    className="channel-details-logo"
-                  />
-                  <div className="channel-meta">
-                    <div className="channel-title-row">
-                      <h1 className="channel-details-title">{selectedChannel.name}</h1>
-                      <span className="channel-number-badge">CH {channels.indexOf(selectedChannel) + 1}</span>
-                    </div>
-                    <div className="channel-meta-row">
-                      <div className="meta-item">
-                        <SignalIcon />
-                        {selectedChannel.resolution || "HD"}
-                      </div>
-                      <div className="meta-item">
-                        <StarIcon />
-                        4.5
-                      </div>
-                      <span className="badge badge-category">{selectedChannel.group_title}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="separator"></div>
-
-                <div className="actions-section">
-                  <button 
-                    className="primary-button"
-                    onClick={() => handlePlayInMpv(selectedChannel)}
-                  >
-                    Play in MPV
-                  </button>
-                  <button 
-                    className="secondary-button"
-                    onClick={() => handleToggleFavorite(selectedChannel)}
-                  >
-                    {isFavorite(selectedChannel) ? "Remove from Favorites" : "Add to Favorites"}
-                  </button>
-                </div>
-
-                <div className="details-grid">
-                  <div className="detail-item">
-                    <div className="detail-label">Group</div>
-                    <div className="detail-value">{selectedChannel.group_title}</div>
-                  </div>
-                  <div className="detail-item">
-                    <div className="detail-label">TVG ID</div>
-                    <div className="detail-value">{selectedChannel.tvg_id || "N/A"}</div>
-                  </div>
-                  <div className="detail-item">
-                    <div className="detail-label">Resolution</div>
-                    <div className="detail-value">{selectedChannel.resolution || "HD"}</div>
-                  </div>
-                  <div className="detail-item">
-                    <div className="detail-label">Extra Info</div>
-                    <div className="detail-value">{selectedChannel.extra_info || "No additional information"}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+          </>
+        )}
       </div>
     </div>
   );
