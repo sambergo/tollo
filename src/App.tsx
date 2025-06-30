@@ -36,6 +36,23 @@ function App() {
   const channelListName = useChannelListName(selectedChannelListId);
   const { searchQuery, setSearchQuery, debouncedSearchQuery, isSearching, searchChannels } = useChannelSearch(selectedChannelListId);
 
+  // Load default channel list on app startup
+  useEffect(() => {
+    const loadDefaultChannelList = async () => {
+      try {
+        const channelLists = await invoke<{id: number, name: string, source: string, is_default: boolean, last_fetched: number | null}[]>("get_channel_lists");
+        const defaultList = channelLists.find(list => list.is_default);
+        if (defaultList && selectedChannelListId === null) {
+          setSelectedChannelListId(defaultList.id);
+        }
+      } catch (error) {
+        console.error("Failed to load default channel list:", error);
+      }
+    };
+
+    loadDefaultChannelList();
+  }, []); // Only run once on mount
+
   async function fetchChannels(id: number | null = null) {
     const fetchedChannels = await invoke<Channel[]>("get_channels", { id });
     setChannels(fetchedChannels);
