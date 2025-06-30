@@ -21,6 +21,7 @@ interface MainContentProps {
   focusedIndex: number;
   enabledGroups: Set<string>;
   groupDisplayMode: GroupDisplayMode;
+  isLoadingChannelList: boolean;
   onSearch: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onSelectChannel: (channel: Channel) => void;
   onToggleFavorite: (channel: Channel) => void;
@@ -31,6 +32,19 @@ interface MainContentProps {
   onUnselectAllGroups: () => void;
   onClearGroupFilter: () => void;
 }
+
+// Loading indicator component
+const LoadingChannelList = () => (
+  <div className="loading-channel-list">
+    <div className="loading-content">
+      <div className="loading-spinner-large">
+        <div className="spinner-large"></div>
+      </div>
+      <h3>Loading Channel List</h3>
+      <p>Setting up channels and groups...</p>
+    </div>
+  </div>
+);
 
 export default function MainContent({
   activeTab,
@@ -46,6 +60,7 @@ export default function MainContent({
   focusedIndex,
   enabledGroups,
   groupDisplayMode,
+  isLoadingChannelList,
   onSearch,
   onSelectChannel,
   onToggleFavorite,
@@ -89,6 +104,10 @@ export default function MainContent({
   const renderContent = () => {
     switch (activeTab) {
       case "channels":
+        if (isLoadingChannelList) {
+          return <LoadingChannelList />;
+        }
+        
         return (
           <>
             {channelListName && (

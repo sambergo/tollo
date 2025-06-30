@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, startTransition } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import Hls from "hls.js";
 import NavigationSidebar, { type Tab } from "./components/NavigationSidebar";
@@ -31,6 +31,10 @@ function App() {
   // Group selection state
   const [groupDisplayMode, setGroupDisplayMode] = useState<GroupDisplayMode>(GroupDisplayMode.EnabledGroups);
   const [enabledGroups, setEnabledGroups] = useState<Set<string>>(new Set());
+  
+  // Loading state for channel list selection
+  const [isLoadingChannelList, setIsLoadingChannelList] = useState(false);
+  const [skipSearchEffect, setSkipSearchEffect] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
   const channelListName = useChannelListName(selectedChannelListId);
@@ -85,22 +89,33 @@ function App() {
 
   // Trigger search when debounced query changes
   useEffect(() => {
+    if (skipSearchEffect) return;
+    
     const performSearch = async () => {
       const searchedChannels = await searchChannels(debouncedSearchQuery);
       setChannels(searchedChannels);
     };
     performSearch();
-  }, [debouncedSearchQuery, selectedChannelListId]);
+  }, [debouncedSearchQuery, selectedChannelListId, skipSearchEffect]);
 
   useEffect(() => {
     const loadChannelListData = async () => {
-      await fetchChannels(selectedChannelListId);
-      await fetchFavorites();
-      await fetchGroups(selectedChannelListId);
-      await fetchHistory();
+      if (selectedChannelListId === null) {
+        setIsLoadingChannelList(false);
+        setSkipSearchEffect(false);
+        return;
+      }
       
-      // Handle group selections for the new channel list
-      if (selectedChannelListId !== null) {
+      // Skip search effect during channel list loading
+      setSkipSearchEffect(true);
+      
+      try {
+        await fetchChannels(selectedChannelListId);
+        await fetchFavorites();
+        await fetchGroups(selectedChannelListId);
+        await fetchHistory();
+        
+        // Handle group selections for the new channel list
         // Get all groups for this channel list
         const fetchedGroups = await invoke<string[]>("get_groups", { id: selectedChannelListId });
         
@@ -125,6 +140,11 @@ function App() {
         // Reset UI state for new channel list
         setGroupDisplayMode(GroupDisplayMode.EnabledGroups);
         setSelectedGroup(null);
+      } catch (error) {
+        console.error("Failed to load channel list data:", error);
+      } finally {
+        setIsLoadingChannelList(false);
+        setSkipSearchEffect(false);
       }
     };
     
@@ -278,8 +298,25 @@ function App() {
   };
 
   const handleSelectChannelList = (id: number) => {
-    setSelectedChannelListId(id);
+    // Set loading state immediately when user clicks Select
+    setIsLoadingChannelList(true);
+    setSkipSearchEffect(true);
+    
+    // Clear current data to show loading state immediately
+    setChannels([]);
+    setGroups([]);
+    setSelectedGroup(null);
+    setFocusedIndex(0);
+    
+    // Switch to channels tab immediately
     setActiveTab("channels");
+    
+    // Give React a proper moment to render the loading screen before starting heavy operations
+    setTimeout(() => {
+      startTransition(() => {
+        setSelectedChannelListId(id);
+      });
+    }, 50);
   };
 
   const filteredChannels = (() => {
@@ -368,6 +405,7 @@ function App() {
                focusedIndex={focusedIndex}
                enabledGroups={enabledGroups}
                groupDisplayMode={groupDisplayMode}
+               isLoadingChannelList={isLoadingChannelList}
                onSearch={handleSearch}
                onSelectChannel={setSelectedChannel}
                onToggleFavorite={handleToggleFavorite}
