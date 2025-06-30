@@ -714,6 +714,7 @@ body {
 .action-icon {
   width: 16px;
   height: 16px;
+  color: var(--text-primary);
 }
 
 /* Form Elements */
@@ -840,7 +841,7 @@ body {
 
 .btn-icon {
   background: var(--bg-tertiary);
-  color: var(--text-secondary);
+  color: var(--text-primary);
   border: 1px solid var(--border-secondary);
   padding: 0.5rem;
   border-radius: 6px;
@@ -853,7 +854,8 @@ body {
 
 .btn-icon:hover {
   background: var(--bg-hover);
-  color: var(--text-primary);
+  color: var(--accent-blue);
+  border-color: var(--accent-blue);
 }
 
 .btn-icon.active {
