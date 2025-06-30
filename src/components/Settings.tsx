@@ -131,11 +131,11 @@ function Settings({ onSelectList }: SettingsProps) {
     fetchImageCacheSize();
   }, []);
 
-  const handleSaveSettings = async () => {
+  const handleSavePlayerCommand = async () => {
     await invoke("set_player_command", { command: playerCommand });
-    if (defaultChannelList !== null) {
-      await invoke("set_default_channel_list", { id: defaultChannelList });
-    }
+  };
+
+  const handleSaveCacheDuration = async () => {
     await invoke("set_cache_duration", { hours: cacheDuration });
   };
 
@@ -148,8 +148,9 @@ function Settings({ onSelectList }: SettingsProps) {
     }
   };
 
-  const handleSetDefault = (id: number) => {
+  const handleSetDefault = async (id: number) => {
     setDefaultChannelList(id);
+    await invoke("set_default_channel_list", { id });
   };
 
   const handleRefreshChannelList = async (id: number) => {
@@ -336,13 +337,18 @@ function Settings({ onSelectList }: SettingsProps) {
         <div className="card-content">
           <div className="form-group">
             <label className="form-label">Player Command</label>
-            <input
-              type="text"
-              className="form-input"
-              value={playerCommand}
-              onChange={(e) => setPlayerCommand(e.target.value)}
-              placeholder="e.g., mpv"
-            />
+            <div className="form-row">
+              <input
+                type="text"
+                className="form-input"
+                value={playerCommand}
+                onChange={(e) => setPlayerCommand(e.target.value)}
+                placeholder="e.g., mpv"
+              />
+              <button className="btn-primary" onClick={handleSavePlayerCommand}>
+                Save
+              </button>
+            </div>
             <p className="form-help">Command to launch external video player</p>
           </div>
         </div>
@@ -357,14 +363,19 @@ function Settings({ onSelectList }: SettingsProps) {
         <div className="card-content">
           <div className="form-group">
             <label className="form-label">Cache Duration (hours)</label>
-            <input
-              type="number"
-              className="form-input"
-              value={cacheDuration}
-              onChange={(e) => setCacheDuration(parseInt(e.target.value))}
-              min="1"
-              max="168"
-            />
+            <div className="form-row">
+              <input
+                type="number"
+                className="form-input"
+                value={cacheDuration}
+                onChange={(e) => setCacheDuration(parseInt(e.target.value))}
+                min="1"
+                max="168"
+              />
+              <button className="btn-primary" onClick={handleSaveCacheDuration}>
+                Save
+              </button>
+            </div>
             <p className="form-help">How long to cache channel data before refreshing</p>
           </div>
         </div>
@@ -394,12 +405,6 @@ function Settings({ onSelectList }: SettingsProps) {
         </div>
       </div>
 
-      {/* Save Settings */}
-      <div className="settings-actions">
-        <button className="btn-primary btn-large" onClick={handleSaveSettings}>
-          Save All Settings
-        </button>
-      </div>
     </div>
   );
 }
