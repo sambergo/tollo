@@ -1,17 +1,23 @@
 mod m3u_parser;
 mod database;
+mod image_cache;
 
 use std::process::Command;
 use m3u_parser::Channel;
 use rusqlite::Connection;
 use std::sync::Mutex;
-use tauri::State;
+use tauri::{State, Manager};
 use serde::{Serialize, Deserialize};
 use std::fs;
 use reqwest;
+use image_cache::ImageCache;
 
 struct DbState {
     db: Mutex<Connection>,
+}
+
+struct ImageCacheState {
+    cache: Mutex<ImageCache>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -281,6 +287,24 @@ fn update_channel_list(state: State<DbState>, id: i32, name: String, source: Str
     Ok(())
 }
 
+#[tauri::command]
+fn get_cached_image(state: State<ImageCacheState>, url: String) -> Result<String, String> {
+    let cache = state.cache.lock().unwrap();
+    cache.get_cached_image_path(&url).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn clear_image_cache(state: State<ImageCacheState>) -> Result<(), String> {
+    let cache = state.cache.lock().unwrap();
+    cache.clear_cache().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn get_image_cache_size(state: State<ImageCacheState>) -> Result<u64, String> {
+    let cache = state.cache.lock().unwrap();
+    cache.get_cache_size().map_err(|e| e.to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let mut db_connection = database::initialize_database().expect("Failed to initialize database");
@@ -290,6 +314,13 @@ pub fn run() {
     tauri::Builder::default()
         .manage(DbState {
             db: Mutex::new(db_connection),
+        })
+        .setup(|app| {
+            let image_cache = ImageCache::new(app.handle()).expect("Failed to initialize image cache");
+            app.manage(ImageCacheState {
+                cache: Mutex::new(image_cache),
+            });
+            Ok(())
         })
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
@@ -310,7 +341,10 @@ pub fn run() {
             set_cache_duration,
             refresh_channel_list,
             delete_channel_list,
-            update_channel_list
+            update_channel_list,
+            get_cached_image,
+            clear_image_cache,
+            get_image_cache_size
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { useImageCache } from "../hooks/useImageCache";
 
 interface ChannelList {
   id: number;
@@ -21,6 +22,8 @@ function Settings({ onSelectList }: SettingsProps) {
   const [defaultChannelList, setDefaultChannelList] = useState<number | null>(null);
   const [cacheDuration, setCacheDuration] = useState(24);
   const [editingList, setEditingList] = useState<ChannelList | null>(null);
+  const [imageCacheSize, setImageCacheSize] = useState<number>(0);
+  const { clearCache, getCacheSize } = useImageCache();
 
   async function fetchPlayerCommand() {
     const fetchedCommand = await invoke<string>("get_player_command");
@@ -41,10 +44,16 @@ function Settings({ onSelectList }: SettingsProps) {
     setCacheDuration(duration);
   }
 
+  async function fetchImageCacheSize() {
+    const size = await getCacheSize();
+    setImageCacheSize(size);
+  }
+
   useEffect(() => {
     fetchPlayerCommand();
     fetchChannelLists();
     fetchCacheDuration();
+    fetchImageCacheSize();
   }, []);
 
   const handleSaveSettings = async () => {
@@ -92,6 +101,24 @@ function Settings({ onSelectList }: SettingsProps) {
 
   const handleEditClick = (list: ChannelList) => {
     setEditingList({ ...list });
+  };
+
+  const handleClearImageCache = async () => {
+    try {
+      await clearCache();
+      await fetchImageCacheSize(); // Refresh cache size
+      alert("Image cache cleared successfully!");
+    } catch (error) {
+      alert("Failed to clear image cache: " + error);
+    }
+  };
+
+  const formatBytes = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   return (
@@ -181,6 +208,13 @@ function Settings({ onSelectList }: SettingsProps) {
           />
           <button onClick={handleAddChannelList}>Add List</button>
         </div>
+      </div>
+      <hr />
+      <div>
+        <h3>Image Cache</h3>
+        <p>Cache Size: {formatBytes(imageCacheSize)}</p>
+        <button onClick={handleClearImageCache}>Clear Image Cache</button>
+        <button onClick={fetchImageCacheSize}>Refresh Cache Size</button>
       </div>
       <hr />
       <button onClick={handleSaveSettings}>Save Settings</button>

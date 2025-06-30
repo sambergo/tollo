@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import Hls from "hls.js";
 import Settings from "./components/Settings";
+import CachedImage from "./components/CachedImage";
 import "./App.css";
 
 interface Channel {
@@ -216,7 +217,7 @@ function App() {
                   className={`${selectedChannel?.name === channel.name ? "selected" : ""} ${focusedIndex === index ? "focused" : ""}`}
                   onClick={() => setSelectedChannel(channel)}
                 >
-                  <img src={channel.logo} alt={channel.name} />
+                  <CachedImage src={channel.logo} alt={channel.name} />
                   <span>{channel.name}</span>
                   <button onClick={() => handleToggleFavorite(channel)}>
                     {isFavorite(channel) ? "Unfavorite" : "Favorite"}
@@ -235,7 +236,7 @@ function App() {
                 className={`${selectedChannel?.name === channel.name ? "selected" : ""} ${focusedIndex === index ? "focused" : ""}`}
                 onClick={() => setSelectedChannel(channel)}
               >
-                <img src={channel.logo} alt={channel.name} />
+                <CachedImage src={channel.logo} alt={channel.name} />
                 <span>{channel.name}</span>
               </li>
             ))}
@@ -270,7 +271,7 @@ function App() {
                 className={`${selectedChannel?.name === channel.name ? "selected" : ""} ${focusedIndex === index ? "focused" : ""}`}
                 onClick={() => setSelectedChannel(channel)}
               >
-                <img src={channel.logo} alt={channel.name} />
+                <CachedImage src={channel.logo} alt={channel.name} />
                 <span>{channel.name}</span>
               </li>
             ))}
