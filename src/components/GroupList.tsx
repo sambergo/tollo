@@ -63,7 +63,7 @@ export default function GroupList({
           className={`mode-btn ${groupDisplayMode === GroupDisplayMode.AllGroups ? "active" : ""}`}
           onClick={() => onChangeDisplayMode(GroupDisplayMode.AllGroups)}
         >
-          All Groups
+          Select group
         </button>
         
         {/* Bulk Actions Dropdown - Only show in Enabled Groups mode */}
@@ -134,10 +134,18 @@ export default function GroupList({
                   />
                 )}
                 
-                {/* Group name (clickable in all modes) */}
+                {/* Group name - different click behavior based on mode */}
                 <span 
                   className="group-name"
-                  onClick={() => onSelectGroup(group)}
+                  onClick={() => {
+                    if (groupDisplayMode === GroupDisplayMode.EnabledGroups) {
+                      // In enabled groups mode, toggle the checkbox
+                      onToggleGroupEnabled(group);
+                    } else {
+                      // In all groups mode, select the group
+                      onSelectGroup(group);
+                    }
+                  }}
                 >
                   {group}
                 </span>
