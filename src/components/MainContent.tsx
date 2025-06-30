@@ -29,6 +29,7 @@ interface MainContentProps {
   onChangeDisplayMode: (mode: GroupDisplayMode) => void;
   onSelectAllGroups: () => void;
   onUnselectAllGroups: () => void;
+  onClearGroupFilter: () => void;
 }
 
 export default function MainContent({
@@ -52,7 +53,8 @@ export default function MainContent({
   onToggleGroupEnabled,
   onChangeDisplayMode,
   onSelectAllGroups,
-  onUnselectAllGroups
+  onUnselectAllGroups,
+  onClearGroupFilter
 }: MainContentProps) {
   const getTabTitle = () => {
     switch (activeTab) {
@@ -119,8 +121,10 @@ export default function MainContent({
                 selectedChannel={selectedChannel}
                 focusedIndex={focusedIndex}
                 favorites={favorites}
+                selectedGroup={selectedGroup}
                 onSelectChannel={onSelectChannel}
                 onToggleFavorite={onToggleFavorite}
+                onClearGroupFilter={onClearGroupFilter}
               />
             </div>
           </>
@@ -133,8 +137,10 @@ export default function MainContent({
               selectedChannel={selectedChannel}
               focusedIndex={focusedIndex}
               favorites={favorites}
+              selectedGroup={selectedGroup}
               onSelectChannel={onSelectChannel}
               onToggleFavorite={onToggleFavorite}
+              onClearGroupFilter={onClearGroupFilter}
             />
           </div>
         );
@@ -163,8 +169,10 @@ export default function MainContent({
               selectedChannel={selectedChannel}
               focusedIndex={focusedIndex}
               favorites={favorites}
+              selectedGroup={selectedGroup}
               onSelectChannel={onSelectChannel}
               onToggleFavorite={onToggleFavorite}
+              onClearGroupFilter={onClearGroupFilter}
             />
           </div>
         );

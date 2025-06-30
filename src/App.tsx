@@ -223,6 +223,12 @@ function App() {
     setEnabledGroups(new Set());
   };
 
+  const handleClearGroupFilter = () => {
+    // Clear the selected group and go back to enabled groups mode
+    setSelectedGroup(null);
+    setGroupDisplayMode(GroupDisplayMode.EnabledGroups);
+  };
+
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   };
@@ -326,6 +332,7 @@ function App() {
                onChangeDisplayMode={handleChangeDisplayMode}
                onSelectAllGroups={handleSelectAllGroups}
                onUnselectAllGroups={handleUnselectAllGroups}
+               onClearGroupFilter={handleClearGroupFilter}
              />
 
             <div className="video-section">
