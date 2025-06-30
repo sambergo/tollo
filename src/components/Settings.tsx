@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { useImageCache } from "../hooks/useImageCache";
+import type { SavedFilter } from "../hooks/useSavedFilters";
 
 interface ChannelList {
   id: number;
@@ -10,8 +11,13 @@ interface ChannelList {
   last_fetched: number | null;
 }
 
+interface ChannelListWithFilters extends ChannelList {
+  savedFilters: SavedFilter[];
+}
+
 interface SettingsProps {
   onSelectList: (id: number) => void;
+  onFiltersChanged?: () => Promise<void>;
 }
 
 // Icon components
@@ -95,9 +101,16 @@ const LoadingIcon = () => (
   </svg>
 );
 
-function Settings({ onSelectList }: SettingsProps) {
+const FilterIcon = () => (
+  <svg className="settings-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46" stroke="currentColor" fill="none" />
+  </svg>
+);
+
+function Settings({ onSelectList, onFiltersChanged }: SettingsProps) {
   const [playerCommand, setPlayerCommand] = useState("");
   const [channelLists, setChannelLists] = useState<ChannelList[]>([]);
+  const [channelListsWithFilters, setChannelListsWithFilters] = useState<ChannelListWithFilters[]>([]);
   const [newListName, setNewListName] = useState("");
   const [newListSource, setNewListSource] = useState("");
   const [defaultChannelList, setDefaultChannelList] = useState<number | null>(null);
@@ -106,6 +119,7 @@ function Settings({ onSelectList }: SettingsProps) {
   const [imageCacheSize, setImageCacheSize] = useState<number>(0);
   const [loadingLists, setLoadingLists] = useState<Set<number>>(new Set());
   const [isAddingList, setIsAddingList] = useState(false);
+  const [loadingSavedFilters, setLoadingSavedFilters] = useState(false);
   const { clearCache, getCacheSize } = useImageCache();
 
   async function fetchPlayerCommand() {
@@ -132,12 +146,43 @@ function Settings({ onSelectList }: SettingsProps) {
     setImageCacheSize(size);
   }
 
+  async function fetchSavedFilters() {
+    setLoadingSavedFilters(true);
+    try {
+      const listsWithFilters: ChannelListWithFilters[] = [];
+      
+      for (const list of channelLists) {
+        try {
+          const filters = await invoke<SavedFilter[]>("get_saved_filters", { 
+            channelListId: list.id 
+          });
+          listsWithFilters.push({ ...list, savedFilters: filters });
+        } catch (error) {
+          console.error(`Failed to load saved filters for list ${list.id}:`, error);
+          listsWithFilters.push({ ...list, savedFilters: [] });
+        }
+      }
+      
+      setChannelListsWithFilters(listsWithFilters);
+    } catch (error) {
+      console.error("Failed to fetch saved filters:", error);
+    } finally {
+      setLoadingSavedFilters(false);
+    }
+  }
+
   useEffect(() => {
     fetchPlayerCommand();
     fetchChannelLists();
     fetchCacheDuration();
     fetchImageCacheSize();
   }, []);
+
+  useEffect(() => {
+    if (channelLists.length > 0) {
+      fetchSavedFilters();
+    }
+  }, [channelLists]);
 
   const handleSavePlayerCommand = async () => {
     await invoke("set_player_command", { command: playerCommand });
@@ -232,6 +277,26 @@ function Settings({ onSelectList }: SettingsProps) {
       alert("Image cache cleared successfully!");
     } catch (error) {
       alert("Failed to clear image cache: " + error);
+    }
+  };
+
+  const handleDeleteSavedFilter = async (channelListId: number, slotNumber: number) => {
+    try {
+      await invoke("delete_saved_filter", {
+        channelListId,
+        slotNumber
+      });
+      
+      // Refresh saved filters
+      await fetchSavedFilters();
+      
+      // Notify parent component to refresh its saved filters
+      if (onFiltersChanged) {
+        await onFiltersChanged();
+      }
+    } catch (error) {
+      console.error("Failed to delete saved filter:", error);
+      alert("Failed to delete saved filter: " + error);
     }
   };
 
@@ -467,6 +532,60 @@ function Settings({ onSelectList }: SettingsProps) {
               Clear Cache
             </button>
           </div>
+        </div>
+      </div>
+
+      {/* Saved Filters Management Card */}
+      <div className="settings-card">
+        <div className="card-header">
+          <FilterIcon />
+          <h3>Saved Filters</h3>
+        </div>
+        <div className="card-content">
+          {loadingSavedFilters ? (
+            <div className="loading-indicator">
+              <LoadingIcon />
+              <span className="loading-text">Loading saved filters...</span>
+            </div>
+          ) : (
+            <div className="saved-filters-management">
+              {channelListsWithFilters.length === 0 ? (
+                <p className="form-help">No channel lists available.</p>
+              ) : (
+                channelListsWithFilters.map((list) => (
+                  <div key={list.id} className="channel-list-filters">
+                    <h4 className="list-name">{list.name}</h4>
+                    {list.savedFilters.length === 0 ? (
+                      <p className="form-help">No saved filters for this list.</p>
+                    ) : (
+                      <div className="filters-list">
+                        {list.savedFilters.map((filter) => (
+                          <div key={filter.slot_number} className="filter-item">
+                            <div className="filter-details">
+                              <div className="filter-slot">Slot {filter.slot_number}</div>
+                              {filter.selected_group && (
+                                <div className="filter-group">Group: {filter.selected_group}</div>
+                              )}
+                              {filter.search_query && (
+                                <div className="filter-query">Search: {filter.search_query}</div>
+                              )}
+                            </div>
+                            <button 
+                              className="btn-icon btn-danger"
+                              onClick={() => handleDeleteSavedFilter(list.id, filter.slot_number)}
+                              title="Delete this saved filter"
+                            >
+                              <TrashIcon />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </div>
       </div>
 

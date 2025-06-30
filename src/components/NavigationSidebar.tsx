@@ -9,15 +9,13 @@ interface NavigationSidebarProps {
   onTabChange: (tab: Tab) => void;
   savedFilters: SavedFilter[];
   onApplyFilter: (filter: SavedFilter) => void;
-  onDeleteFilter: (slotNumber: number) => void;
 }
 
 export default function NavigationSidebar({ 
   activeTab, 
   onTabChange, 
   savedFilters, 
-  onApplyFilter, 
-  onDeleteFilter 
+  onApplyFilter
 }: NavigationSidebarProps) {
   return (
     <div className="nav-sidebar">
@@ -66,7 +64,6 @@ export default function NavigationSidebar({
         <SavedFilters 
           savedFilters={savedFilters}
           onApplyFilter={onApplyFilter}
-          onDeleteFilter={onDeleteFilter}
         />
       </div>
     </div>

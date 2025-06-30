@@ -91,11 +91,32 @@ export function useSavedFilters(selectedChannelListId: number | null) {
     return savedFilters.find(filter => filter.slot_number === slotNumber);
   };
 
+  const refreshFilters = async (): Promise<void> => {
+    if (selectedChannelListId === null) {
+      setSavedFilters([]);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const filters = await invoke<SavedFilter[]>("get_saved_filters", { 
+        channelListId: selectedChannelListId 
+      });
+      setSavedFilters(filters);
+    } catch (error) {
+      console.error("Failed to refresh saved filters:", error);
+      setSavedFilters([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return {
     savedFilters,
     isLoading,
     saveFilter,
     deleteFilter,
-    getFilter
+    getFilter,
+    refreshFilters
   };
 } 

@@ -40,7 +40,7 @@ function App() {
   const hlsRef = useRef<Hls | null>(null);
   const channelListName = useChannelListName(selectedChannelListId);
   const { searchQuery, setSearchQuery, debouncedSearchQuery, isSearching, searchChannels } = useChannelSearch(selectedChannelListId);
-  const { savedFilters, saveFilter, deleteFilter } = useSavedFilters(selectedChannelListId);
+  const { savedFilters, saveFilter, refreshFilters } = useSavedFilters(selectedChannelListId);
 
   // Load default channel list on app startup
   useEffect(() => {
@@ -397,10 +397,6 @@ function App() {
     setFocusedIndex(0);
   };
 
-  const handleDeleteFilter = async (slotNumber: number) => {
-    await deleteFilter(slotNumber);
-  };
-
   useKeyboardNavigation({
     activeTab,
     channels,
@@ -430,7 +426,6 @@ function App() {
         onTabChange={setActiveTab}
         savedFilters={savedFilters}
         onApplyFilter={handleApplyFilter}
-        onDeleteFilter={handleDeleteFilter}
       />
 
       <div className="main-content">
@@ -441,7 +436,10 @@ function App() {
               <p className="section-subtitle">Application settings</p>
             </div>
             <div className="settings-container">
-              <Settings onSelectList={handleSelectChannelList} />
+              <Settings 
+                onSelectList={handleSelectChannelList} 
+                onFiltersChanged={refreshFilters}
+              />
             </div>
           </div>
         ) : (
