@@ -76,7 +76,10 @@ function App() {
     if (query === "") {
       fetchChannels(selectedChannelListId);
     } else {
-      const searchedChannels = await invoke<Channel[]>("search_channels", { query });
+      const searchedChannels = await invoke<Channel[]>("search_channels", { 
+        query, 
+        id: selectedChannelListId 
+      });
       setChannels(searchedChannels);
     }
   }

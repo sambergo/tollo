@@ -23,7 +23,7 @@ const CachedImage: React.FC<CachedImageProps> = ({
   rootMargin = '50px'
 }) => {
   const [isIntersecting, setIsIntersecting] = useState(!lazy);
-  const imgRef = useRef<HTMLElement>(null);
+  const imgRef = useRef<HTMLDivElement | HTMLImageElement>(null);
   
   useEffect(() => {
     if (!lazy || !imgRef.current) return;
@@ -49,7 +49,7 @@ const CachedImage: React.FC<CachedImageProps> = ({
   if (!src || src.trim() === '') {
     return (
       <div 
-        ref={imgRef}
+        ref={imgRef as React.RefObject<HTMLDivElement>}
         className={className} 
         style={{ 
           ...style, 
@@ -72,7 +72,7 @@ const CachedImage: React.FC<CachedImageProps> = ({
   if (lazy && !isIntersecting) {
     return (
       <div 
-        ref={imgRef}
+        ref={imgRef as React.RefObject<HTMLDivElement>}
         className={className} 
         style={{ 
           ...style, 
@@ -95,7 +95,7 @@ const CachedImage: React.FC<CachedImageProps> = ({
   if (loading) {
     return (
       <div 
-        ref={imgRef}
+        ref={imgRef as React.RefObject<HTMLDivElement>}
         className={className} 
         style={{ 
           ...style, 
@@ -118,7 +118,7 @@ const CachedImage: React.FC<CachedImageProps> = ({
   if (error) {
     return (
       <div 
-        ref={imgRef}
+        ref={imgRef as React.RefObject<HTMLDivElement>}
         className={className} 
         style={{ 
           ...style, 
@@ -141,7 +141,7 @@ const CachedImage: React.FC<CachedImageProps> = ({
   if (!cachedUrl || cachedUrl.trim() === '') {
     return (
       <div 
-        ref={imgRef}
+        ref={imgRef as React.RefObject<HTMLDivElement>}
         className={className} 
         style={{ 
           ...style, 

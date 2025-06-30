@@ -90,26 +90,22 @@ fn get_groups(state: State<DbState>, id: Option<i32>) -> Result<Vec<String>, Str
 }
 
 #[tauri::command]
-fn search_channels(state: State<DbState>, query: String) -> Result<Vec<Channel>, String> {
-    let db = state.db.lock().unwrap();
-    let mut stmt = db.prepare("SELECT c.name, c.logo, c.url, c.group_title, c.tvg_id, c.resolution, c.extra_info FROM channels c JOIN channels_fts fts ON c.id = fts.rowid WHERE fts.name MATCH ?").map_err(|e| e.to_string())?;
-    let channel_iter = stmt.query_map([query], |row| {
-        Ok(Channel {
-            name: row.get(0)?,
-            logo: row.get(1)?,
-            url: row.get(2)?,
-            group_title: row.get(3)?,
-            tvg_id: row.get(4)?,
-            resolution: row.get(5)?,
-            extra_info: row.get(6)?,
+fn search_channels(state: State<DbState>, query: String, id: Option<i32>) -> Result<Vec<Channel>, String> {
+    let mut db = state.db.lock().unwrap();
+    // Get all channels from the specified (or default) channel list
+    let channels = m3u_parser::get_channels(&mut db, id);
+    
+    // Perform case-insensitive search in memory
+    let query_lower = query.to_lowercase();
+    let filtered_channels: Vec<Channel> = channels
+        .into_iter()
+        .filter(|channel| {
+            channel.name.to_lowercase().contains(&query_lower) ||
+            channel.group_title.to_lowercase().contains(&query_lower)
         })
-    }).map_err(|e| e.to_string())?;
-
-    let mut channels = Vec::new();
-    for channel in channel_iter {
-        channels.push(channel.map_err(|e| e.to_string())?);
-    }
-    Ok(channels)
+        .collect();
+    
+    Ok(filtered_channels)
 }
 
 #[tauri::command]
