@@ -113,13 +113,11 @@ function App() {
         // Auto-enable all groups if none are enabled (new or empty list)  
         if (currentEnabledGroups.length === 0 && fetchedGroups.length > 0) {
           console.log(`Auto-enabling all ${fetchedGroups.length} groups for new channel list`);
-          for (const group of fetchedGroups) {
-            await invoke("update_group_selection", {
-              channelListId: selectedChannelListId,
-              groupName: group,
-              enabled: true
-            });
-          }
+          // Use bulk operation instead of individual calls to avoid UI blocking
+          await invoke("enable_all_groups", {
+            channelListId: selectedChannelListId,
+            groups: fetchedGroups
+          });
           // Refresh enabled groups to get the updated list
           await fetchEnabledGroups(selectedChannelListId);
         }

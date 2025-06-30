@@ -1,6 +1,6 @@
 ---
-description: when running npm
+description: 
 globs: 
-alwaysApply: false
+alwaysApply: true
 ---
 this is pnpm project, not npm. use pnpm.

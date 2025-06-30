@@ -192,3 +192,18 @@ pub fn sync_channel_list_groups(conn: &mut Connection, channel_list_id: i64, gro
     tx.commit()?;
     Ok(())
 }
+
+pub fn enable_all_groups(conn: &mut Connection, channel_list_id: i64, groups: Vec<String>) -> Result<()> {
+    // Enable all groups in a single transaction for much better performance
+    let tx = conn.transaction()?;
+    
+    {
+        let mut stmt = tx.prepare("INSERT OR REPLACE INTO group_selections (channel_list_id, group_name, is_enabled) VALUES (?1, ?2, ?3)")?;
+        for group in groups {
+            stmt.execute((channel_list_id, group, true))?;
+        }
+    }
+    
+    tx.commit()?;
+    Ok(())
+}

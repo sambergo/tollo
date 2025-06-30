@@ -599,6 +599,12 @@ fn sync_channel_list_groups(state: State<DbState>, channel_list_id: i64, groups:
     database::sync_channel_list_groups(&mut db, channel_list_id, groups).map_err(|e| e.to_string())
 }
 
+#[tauri::command]
+fn enable_all_groups(state: State<DbState>, channel_list_id: i64, groups: Vec<String>) -> Result<(), String> {
+    let mut db = state.db.lock().unwrap();
+    database::enable_all_groups(&mut db, channel_list_id, groups).map_err(|e| e.to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let mut db_connection = database::initialize_database().expect("Failed to initialize database");
@@ -647,7 +653,8 @@ pub fn run() {
             get_image_cache_size,
             get_enabled_groups,
             update_group_selection,
-            sync_channel_list_groups
+            sync_channel_list_groups,
+            enable_all_groups
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
