@@ -20,16 +20,37 @@
   flex: 1;
   padding: 2rem;
   overflow-y: auto;
-  max-width: 800px;
-  margin: 0 auto;
+  width: 100%;
+  max-width: none;
 }
 
 /* Settings Layout */
 .settings-layout {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr;
   gap: 1.5rem;
   width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* On wider screens, use a 2-column layout for smaller settings cards */
+@media (min-width: 1200px) {
+  .settings-layout {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 2rem;
+  }
+  
+  /* Channel Lists takes full width at the top */
+  .settings-card:first-child {
+    grid-column: 1 / -1;
+  }
+  
+  /* Saved Filters takes full width at the bottom */
+  .settings-card:last-child {
+    grid-column: 1 / -1;
+  }
 }
 
 .settings-card {
@@ -59,6 +80,17 @@
   padding: 1.5rem;
 }
 
+/* Improve spacing for wider layouts */
+@media (min-width: 768px) {
+  .card-content {
+    padding: 2rem;
+  }
+  
+  .card-header {
+    padding: 2rem;
+  }
+}
+
 .settings-icon {
   width: 20px;
   height: 20px;
@@ -76,6 +108,22 @@
   margin-bottom: 2rem;
   padding-bottom: 1.5rem;
   border-bottom: 1px solid var(--border-primary);
+}
+
+/* Improve form layout for wider screens */
+@media (min-width: 768px) {
+  .add-list-form .form-row {
+    gap: 1.5rem;
+  }
+  
+  .add-list-form .form-input {
+    min-width: 200px;
+  }
+  
+  .add-list-form .btn-primary {
+    min-width: 120px;
+    white-space: nowrap;
+  }
 }
 
 .channel-lists {
