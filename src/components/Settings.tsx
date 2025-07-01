@@ -1,131 +1,16 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { useImageCache } from "../hooks/useImageCache";
-import type { SavedFilter } from "../hooks/useSavedFilters";
-
-interface ChannelList {
-  id: number;
-  name: string;
-  source: string; // url or file path
-  is_default: boolean;
-  last_fetched: number | null;
-}
-
-interface ChannelListWithFilters extends ChannelList {
-  savedFilters: SavedFilter[];
-}
-
-interface SettingsProps {
-  onSelectList: (id: number) => void;
-  onFiltersChanged?: () => Promise<void>;
-}
-
-// Icon components
-const PlayIcon = () => (
-  <svg className="settings-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polygon points="5,3 19,12 5,21" stroke="currentColor" fill="none" />
-  </svg>
-);
-
-const ClockIcon = () => (
-  <svg className="settings-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10" stroke="currentColor" fill="none" />
-    <polyline points="12,6 12,12 16,14" stroke="currentColor" fill="none" />
-  </svg>
-);
-
-const ListIcon = () => (
-  <svg className="settings-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="8" y1="6" x2="21" y2="6" stroke="currentColor" />
-    <line x1="8" y1="12" x2="21" y2="12" stroke="currentColor" />
-    <line x1="8" y1="18" x2="21" y2="18" stroke="currentColor" />
-    <line x1="3" y1="6" x2="3.01" y2="6" stroke="currentColor" />
-    <line x1="3" y1="12" x2="3.01" y2="12" stroke="currentColor" />
-    <line x1="3" y1="18" x2="3.01" y2="18" stroke="currentColor" />
-  </svg>
-);
-
-const ImageIcon = () => (
-  <svg className="settings-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke="currentColor" fill="none" />
-    <circle cx="8.5" cy="8.5" r="1.5" stroke="currentColor" fill="none" />
-    <polyline points="21,15 16,10 5,21" stroke="currentColor" fill="none" />
-  </svg>
-);
-
-const EditIcon = () => (
-  <svg className="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" fill="none" />
-    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" fill="none" />
-  </svg>
-);
-
-const TrashIcon = () => (
-  <svg className="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="3,6 5,6 21,6" stroke="currentColor" fill="none" />
-    <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2V6" stroke="currentColor" fill="none" />
-    <line x1="10" y1="11" x2="10" y2="17" stroke="currentColor" />
-    <line x1="14" y1="11" x2="14" y2="17" stroke="currentColor" />
-  </svg>
-);
-
-const RefreshIcon = () => (
-  <svg className="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M23 4v6h-6" stroke="currentColor" fill="none" />
-    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" stroke="currentColor" fill="none" />
-  </svg>
-);
-
-const CheckIcon = () => (
-  <svg className="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="20,6 9,17 4,12" stroke="currentColor" fill="none" />
-  </svg>
-);
-
-const XIcon = () => (
-  <svg className="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" />
-    <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" />
-  </svg>
-);
-
-const StarIcon = ({ filled }: { filled: boolean }) => (
-  <svg className="action-icon" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill={filled ? "currentColor" : "none"}>
-    <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" stroke="currentColor" />
-  </svg>
-);
-
-const LoadingIcon = () => (
-  <svg className="action-icon animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M21 12a9 9 0 11-6.219-8.56" stroke="currentColor" fill="none" />
-  </svg>
-);
-
-const FilterIcon = () => (
-  <svg className="settings-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46" stroke="currentColor" fill="none" />
-  </svg>
-);
+import type { ChannelList, SettingsProps } from "../types/settings";
+import { ChannelListsSettings } from "./settings/ChannelListsSettings";
+import { PlayerSettings } from "./settings/PlayerSettings";
+import { CacheSettings } from "./settings/CacheSettings";
+import { ImageCacheSettings } from "./settings/ImageCacheSettings";
+import { SavedFiltersSettings } from "./settings/SavedFiltersSettings";
 
 function Settings({ onSelectList, onFiltersChanged }: SettingsProps) {
-  const [playerCommand, setPlayerCommand] = useState("");
   const [channelLists, setChannelLists] = useState<ChannelList[]>([]);
-  const [channelListsWithFilters, setChannelListsWithFilters] = useState<ChannelListWithFilters[]>([]);
-  const [newListName, setNewListName] = useState("");
-  const [newListSource, setNewListSource] = useState("");
   const [defaultChannelList, setDefaultChannelList] = useState<number | null>(null);
-  const [cacheDuration, setCacheDuration] = useState(24);
-  const [editingList, setEditingList] = useState<ChannelList | null>(null);
-  const [imageCacheSize, setImageCacheSize] = useState<number>(0);
   const [loadingLists, setLoadingLists] = useState<Set<number>>(new Set());
-  const [isAddingList, setIsAddingList] = useState(false);
-  const [loadingSavedFilters, setLoadingSavedFilters] = useState(false);
-  const { clearCache, getCacheSize } = useImageCache();
-
-  async function fetchPlayerCommand() {
-    const fetchedCommand = await invoke<string>("get_player_command");
-    setPlayerCommand(fetchedCommand);
-  }
 
   async function fetchChannelLists() {
     const fetchedLists = await invoke<ChannelList[]>("get_channel_lists");
@@ -136,459 +21,47 @@ function Settings({ onSelectList, onFiltersChanged }: SettingsProps) {
     }
   }
 
-  async function fetchCacheDuration() {
-    const duration = await invoke<number>("get_cache_duration");
-    setCacheDuration(duration);
-  }
-
-  async function fetchImageCacheSize() {
-    const size = await getCacheSize();
-    setImageCacheSize(size);
-  }
-
-  async function fetchSavedFilters() {
-    setLoadingSavedFilters(true);
-    try {
-      const listsWithFilters: ChannelListWithFilters[] = [];
-      
-      for (const list of channelLists) {
-        try {
-          const filters = await invoke<SavedFilter[]>("get_saved_filters", { 
-            channelListId: list.id 
-          });
-          listsWithFilters.push({ ...list, savedFilters: filters });
-        } catch (error) {
-          console.error(`Failed to load saved filters for list ${list.id}:`, error);
-          listsWithFilters.push({ ...list, savedFilters: [] });
-        }
-      }
-      
-      setChannelListsWithFilters(listsWithFilters);
-    } catch (error) {
-      console.error("Failed to fetch saved filters:", error);
-    } finally {
-      setLoadingSavedFilters(false);
-    }
-  }
-
   useEffect(() => {
-    fetchPlayerCommand();
     fetchChannelLists();
-    fetchCacheDuration();
-    fetchImageCacheSize();
   }, []);
 
-  useEffect(() => {
-    if (channelLists.length > 0) {
-      fetchSavedFilters();
-    }
-  }, [channelLists]);
-
-  const handleSavePlayerCommand = async () => {
-    await invoke("set_player_command", { command: playerCommand });
+  const handleRefreshLists = async () => {
+    await fetchChannelLists();
   };
 
-  const handleSaveCacheDuration = async () => {
-    await invoke("set_cache_duration", { hours: cacheDuration });
-  };
-
-  const handleAddChannelList = async () => {
-    if (newListName && newListSource) {
-      setIsAddingList(true);
-      try {
-        // Use the new validate_and_add_channel_list function which does everything in one go
-        const listId = await invoke<number>("validate_and_add_channel_list", { 
-          name: newListName, 
-          source: newListSource 
-        });
-        
-        console.log("Successfully added and fetched channel list with ID:", listId);
-        
-        // Clear form
-        setNewListName("");
-        setNewListSource("");
-        
-        // Refresh the lists to show the new list
-        await fetchChannelLists();
-        
-      } catch (error) {
-        console.error("Failed to add channel list:", error);
-        const errorMsg = error instanceof Error ? error.message : String(error);
-        alert(`Failed to add channel list "${newListName}".\n\nError: ${errorMsg}`);
-      } finally {
-        setIsAddingList(false);
-      }
-    }
-  };
-
-  const handleSetDefault = async (id: number) => {
-    setDefaultChannelList(id);
-    await invoke("set_default_channel_list", { id });
-  };
-
-  const handleRefreshChannelList = async (id: number, shouldRefetchList: boolean = true) => {
+  const handleSelectList = async (id: number) => {
     try {
       setLoadingLists(prev => new Set([...prev, id]));
-      await invoke("refresh_channel_list", { id });
-      
-      if (shouldRefetchList) {
-        await fetchChannelLists();
-      }
-    } catch (error) {
-      console.error("Failed to refresh channel list:", error);
-      alert("Failed to refresh channel list: " + error);
+      onSelectList(id);
     } finally {
       setLoadingLists(prev => {
         const newSet = new Set(prev);
         newSet.delete(id);
         return newSet;
       });
-      
-      // Always refetch the lists after refresh completes to update last_fetched
-      await fetchChannelLists();
     }
-  };
-
-  const handleDeleteChannelList = async (id: number) => {
-    await invoke("delete_channel_list", { id });
-    fetchChannelLists();
-  };
-
-  const handleUpdateChannelList = async () => {
-    if (editingList) {
-      await invoke("update_channel_list", {
-        id: editingList.id,
-        name: editingList.name,
-        source: editingList.source,
-      });
-      setEditingList(null);
-      fetchChannelLists();
-    }
-  };
-
-  const handleEditClick = (list: ChannelList) => {
-    setEditingList({ ...list });
-  };
-
-  const handleClearImageCache = async () => {
-    try {
-      await clearCache();
-      await fetchImageCacheSize(); // Refresh cache size
-      alert("Image cache cleared successfully!");
-    } catch (error) {
-      alert("Failed to clear image cache: " + error);
-    }
-  };
-
-  const handleDeleteSavedFilter = async (channelListId: number, slotNumber: number) => {
-    try {
-      await invoke("delete_saved_filter", {
-        channelListId,
-        slotNumber
-      });
-      
-      // Refresh saved filters
-      await fetchSavedFilters();
-      
-      // Notify parent component to refresh its saved filters
-      if (onFiltersChanged) {
-        await onFiltersChanged();
-      }
-    } catch (error) {
-      console.error("Failed to delete saved filter:", error);
-      alert("Failed to delete saved filter: " + error);
-    }
-  };
-
-  const formatBytes = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   return (
     <div className="settings-layout">
-      {/* Channel Lists Card */}
-      <div className="settings-card">
-        <div className="card-header">
-          <ListIcon />
-          <h3>Channel Lists</h3>
-        </div>
-        <div className="card-content">
-          {/* Add New List Form */}
-          <div className="add-list-form">
-            <div className="form-row">
-              <input
-                type="text"
-                className="form-input"
-                placeholder="List Name"
-                value={newListName}
-                onChange={(e) => setNewListName(e.target.value)}
-              />
-              <input
-                type="text"
-                className="form-input"
-                placeholder="URL or File Path"
-                value={newListSource}
-                onChange={(e) => setNewListSource(e.target.value)}
-              />
-              <button 
-                className="btn-primary"
-                onClick={handleAddChannelList}
-                disabled={!newListName || !newListSource || isAddingList}
-              >
-                {isAddingList ? "Adding..." : "Add List"}
-              </button>
-            </div>
-          </div>
+      <ChannelListsSettings
+        channelLists={channelLists}
+        defaultChannelList={defaultChannelList}
+        loadingLists={loadingLists}
+        onSelectList={handleSelectList}
+        onRefreshLists={handleRefreshLists}
+      />
 
-          {/* Channel Lists */}
-          <div className="channel-lists">
-            {channelLists.map((list) => (
-              <div key={list.id} className="channel-list-item">
-                {editingList && editingList.id === list.id ? (
-                  /* Edit Mode */
-                  <div className="edit-form">
-                    <div className="form-row">
-                      <input
-                        type="text"
-                        className="form-input"
-                        value={editingList.name}
-                        onChange={(e) =>
-                          setEditingList({ ...editingList, name: e.target.value })
-                        }
-                      />
-                      <input
-                        type="text"
-                        className="form-input"
-                        value={editingList.source}
-                        onChange={(e) =>
-                          setEditingList({ ...editingList, source: e.target.value })
-                        }
-                      />
-                      <div className="edit-actions">
-                        <button className="btn-success" onClick={handleUpdateChannelList}>
-                          <CheckIcon />
-                        </button>
-                        <button className="btn-secondary" onClick={() => setEditingList(null)}>
-                          <XIcon />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  /* View Mode */
-                  <div className="list-info">
-                    <div className="list-details">
-                      <div className="list-header">
-                        <h4 className="list-name">{list.name}</h4>
-                        <div className="list-status">
-                          {loadingLists.has(list.id) && (
-                            <span className="loading-indicator">
-                              <LoadingIcon />
-                              <span className="loading-text">Fetching...</span>
-                            </span>
-                          )}
-                          {defaultChannelList === list.id && (
-                            <span className="default-badge">Default</span>
-                          )}
-                        </div>
-                      </div>
-                      <p className="list-source">{list.source}</p>
-                      {list.last_fetched && (
-                        <p className="list-meta">
-                          Last updated: {new Date(list.last_fetched * 1000).toLocaleString()}
-                        </p>
-                      )}
-                      {loadingLists.has(list.id) && (
-                        <p className="list-meta loading-status">
-                          Downloading channel data...
-                        </p>
-                      )}
-                    </div>
-                    <div className="list-actions">
-                      <button 
-                        className="btn-primary btn-sm"
-                        onClick={() => onSelectList(list.id)}
-                        disabled={loadingLists.has(list.id)}
-                        title={loadingLists.has(list.id) ? "Fetching channels..." : "Select this list"}
-                      >
-                        {loadingLists.has(list.id) ? "Fetching..." : "Select"}
-                      </button>
-                      <button 
-                        className={`btn-icon ${defaultChannelList === list.id ? 'active' : ''}`}
-                        onClick={() => handleSetDefault(list.id)}
-                        title={defaultChannelList === list.id ? "Default" : "Set as Default"}
-                        disabled={loadingLists.has(list.id)}
-                      >
-                        <StarIcon filled={defaultChannelList === list.id} />
-                      </button>
-                      <button 
-                        className="btn-icon"
-                        onClick={() => handleRefreshChannelList(list.id)}
-                        title="Refresh"
-                        disabled={loadingLists.has(list.id)}
-                      >
-                        <RefreshIcon />
-                      </button>
-                      <button 
-                        className="btn-icon"
-                        onClick={() => handleEditClick(list)}
-                        title="Edit"
-                        disabled={loadingLists.has(list.id)}
-                      >
-                        <EditIcon />
-                      </button>
-                      <button 
-                        className="btn-icon btn-danger"
-                        onClick={() => handleDeleteChannelList(list.id)}
-                        title="Delete"
-                        disabled={loadingLists.has(list.id)}
-                      >
-                        <TrashIcon />
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      <PlayerSettings />
 
-      {/* Player Settings Card */}
-      <div className="settings-card">
-        <div className="card-header">
-          <PlayIcon />
-          <h3>Player Settings</h3>
-        </div>
-        <div className="card-content">
-          <div className="form-group">
-            <label className="form-label">Player Command</label>
-            <div className="form-row">
-              <input
-                type="text"
-                className="form-input"
-                value={playerCommand}
-                onChange={(e) => setPlayerCommand(e.target.value)}
-                placeholder="e.g., mpv"
-              />
-              <button className="btn-primary" onClick={handleSavePlayerCommand}>
-                Save
-              </button>
-            </div>
-            <p className="form-help">Command to launch external video player</p>
-          </div>
-        </div>
-      </div>
+      <CacheSettings />
 
-      {/* Cache Settings Card */}
-      <div className="settings-card">
-        <div className="card-header">
-          <ClockIcon />
-          <h3>Cache Settings</h3>
-        </div>
-        <div className="card-content">
-          <div className="form-group">
-            <label className="form-label">Cache Duration (hours)</label>
-            <div className="form-row">
-              <input
-                type="number"
-                className="form-input"
-                value={cacheDuration}
-                onChange={(e) => setCacheDuration(parseInt(e.target.value))}
-                min="1"
-                max="168"
-              />
-              <button className="btn-primary" onClick={handleSaveCacheDuration}>
-                Save
-              </button>
-            </div>
-            <p className="form-help">How long to cache channel data before refreshing</p>
-          </div>
-        </div>
-      </div>
+      <ImageCacheSettings />
 
-      {/* Image Cache Card */}
-      <div className="settings-card">
-        <div className="card-header">
-          <ImageIcon />
-          <h3>Image Cache</h3>
-        </div>
-        <div className="card-content">
-          <div className="cache-info">
-            <div className="cache-stat">
-              <span className="stat-label">Cache Size:</span>
-              <span className="stat-value">{formatBytes(imageCacheSize)}</span>
-            </div>
-          </div>
-          <div className="cache-actions">
-            <button className="btn-secondary" onClick={fetchImageCacheSize}>
-              Refresh Size
-            </button>
-            <button className="btn-danger" onClick={handleClearImageCache}>
-              Clear Cache
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Saved Filters Management Card */}
-      <div className="settings-card">
-        <div className="card-header">
-          <FilterIcon />
-          <h3>Saved Filters</h3>
-        </div>
-        <div className="card-content">
-          {loadingSavedFilters ? (
-            <div className="loading-indicator">
-              <LoadingIcon />
-              <span className="loading-text">Loading saved filters...</span>
-            </div>
-          ) : (
-            <div className="saved-filters-management">
-              {channelListsWithFilters.length === 0 ? (
-                <p className="form-help">No channel lists available.</p>
-              ) : (
-                channelListsWithFilters.map((list) => (
-                  <div key={list.id} className="channel-list-filters">
-                    <h4 className="list-name">{list.name}</h4>
-                    {list.savedFilters.length === 0 ? (
-                      <p className="form-help">No saved filters for this list.</p>
-                    ) : (
-                      <div className="filters-list">
-                        {list.savedFilters.map((filter) => (
-                          <div key={filter.slot_number} className="filter-item">
-                            <div className="filter-details">
-                              <div className="filter-slot">Slot {filter.slot_number}</div>
-                              {filter.selected_group && (
-                                <div className="filter-group">Group: {filter.selected_group}</div>
-                              )}
-                              {filter.search_query && (
-                                <div className="filter-query">Search: {filter.search_query}</div>
-                              )}
-                            </div>
-                            <button 
-                              className="btn-icon btn-danger"
-                              onClick={() => handleDeleteSavedFilter(list.id, filter.slot_number)}
-                              title="Delete this saved filter"
-                            >
-                              <TrashIcon />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
+      <SavedFiltersSettings
+        channelLists={channelLists}
+        onFiltersChanged={onFiltersChanged}
+      />
     </div>
   );
 }

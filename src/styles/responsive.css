@@ -1,0 +1,38 @@
+/* Responsive design */
+@media (max-width: 1024px) {
+  .channels-section {
+    width: 420px;
+  }
+}
+
+@media (max-width: 768px) {
+  .nav-sidebar {
+    width: 200px;
+  }
+  
+  .channels-section {
+    width: 240px;
+  }
+  
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-row {
+    flex-direction: column;
+  }
+  
+  .list-info {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .list-actions {
+    justify-content: center;
+    margin-top: 1rem;
+  }
+  
+  .cache-actions {
+    flex-direction: column;
+  }
+} 
