@@ -319,6 +319,10 @@ function App() {
     setSearchQuery(e.target.value);
   };
 
+  const handleClearSearch = () => {
+    setSearchQuery("");
+  };
+
   const handleSelectChannelList = (id: number) => {
     // Set loading state immediately when user clicks Select
     setIsLoadingChannelList(true);
@@ -468,6 +472,7 @@ function App() {
                groupDisplayMode={groupDisplayMode}
                isLoadingChannelList={isLoadingChannelList}
                onSearch={handleSearch}
+               onClearSearch={handleClearSearch}
                onSelectChannel={setSelectedChannel}
                onToggleFavorite={handleToggleFavorite}
                onSelectGroup={handleSelectGroup}

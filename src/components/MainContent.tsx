@@ -23,6 +23,7 @@ interface MainContentProps {
   groupDisplayMode: GroupDisplayMode;
   isLoadingChannelList: boolean;
   onSearch: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onClearSearch: () => void;
   onSelectChannel: (channel: Channel) => void;
   onToggleFavorite: (channel: Channel) => void;
   onSelectGroup: (group: string | null) => void;
@@ -62,6 +63,7 @@ export default function MainContent({
   groupDisplayMode,
   isLoadingChannelList,
   onSearch,
+  onClearSearch,
   onSelectChannel,
   onToggleFavorite,
   onSelectGroup,
@@ -116,13 +118,25 @@ export default function MainContent({
               </div>
             )}
             <div className="search-container">
-              <input
-                type="text"
-                className="search-input"
-                placeholder="Search channels (min 3 characters)..."
-                value={searchQuery}
-                onChange={onSearch}
-              />
+              <div className="search-input-wrapper">
+                <input
+                  type="text"
+                  className="search-input"
+                  placeholder="Search channels (min 3 characters)..."
+                  value={searchQuery}
+                  onChange={onSearch}
+                />
+                {searchQuery && (
+                  <button
+                    className="clear-search-btn"
+                    onClick={onClearSearch}
+                    type="button"
+                    title="Clear search"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
             </div>
             {searchQuery.length > 0 && searchQuery.length < 3 && (
               <div className="search-status">
