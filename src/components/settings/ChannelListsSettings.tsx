@@ -16,6 +16,7 @@ interface ChannelListsSettingsProps {
   channelLists: ChannelList[];
   defaultChannelList: number | null;
   loadingLists: Set<number>;
+  selectedChannelListId: number | null;
   onSelectList: (id: number) => void;
   onRefreshLists: () => Promise<void>;
 }
@@ -24,6 +25,7 @@ export function ChannelListsSettings({
   channelLists,
   defaultChannelList,
   loadingLists,
+  selectedChannelListId,
   onSelectList,
   onRefreshLists
 }: ChannelListsSettingsProps) {
@@ -195,8 +197,8 @@ export function ChannelListsSettings({
                     <button 
                       className="btn-primary btn-sm"
                       onClick={() => onSelectList(list.id)}
-                      disabled={loadingLists.has(list.id)}
-                      title={loadingLists.has(list.id) ? "Fetching channels..." : "Select this list"}
+                      disabled={loadingLists.has(list.id) || selectedChannelListId === list.id}
+                      title={loadingLists.has(list.id) ? "Fetching channels..." : selectedChannelListId === list.id ? "Selected" : "Select this list"}
                     >
                       {loadingLists.has(list.id) ? "Fetching..." : "Select"}
                     </button>

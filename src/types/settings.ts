@@ -15,4 +15,5 @@ export interface ChannelListWithFilters extends ChannelList {
 export interface SettingsProps {
   onSelectList: (id: number) => void;
   onFiltersChanged?: () => Promise<void>;
+  selectedChannelListId: number | null;
 } 

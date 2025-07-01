@@ -7,7 +7,7 @@ import { CacheSettings } from "./settings/CacheSettings";
 import { ImageCacheSettings } from "./settings/ImageCacheSettings";
 import { SavedFiltersSettings } from "./settings/SavedFiltersSettings";
 
-function Settings({ onSelectList, onFiltersChanged }: SettingsProps) {
+function Settings({ onSelectList, onFiltersChanged, selectedChannelListId }: SettingsProps) {
   const [channelLists, setChannelLists] = useState<ChannelList[]>([]);
   const [defaultChannelList, setDefaultChannelList] = useState<number | null>(null);
   const [loadingLists, setLoadingLists] = useState<Set<number>>(new Set());
@@ -30,6 +30,11 @@ function Settings({ onSelectList, onFiltersChanged }: SettingsProps) {
   };
 
   const handleSelectList = async (id: number) => {
+    // Don't proceed if this list is already selected
+    if (id === selectedChannelListId) {
+      return;
+    }
+    
     try {
       setLoadingLists(prev => new Set([...prev, id]));
       onSelectList(id);
@@ -48,6 +53,7 @@ function Settings({ onSelectList, onFiltersChanged }: SettingsProps) {
         channelLists={channelLists}
         defaultChannelList={defaultChannelList}
         loadingLists={loadingLists}
+        selectedChannelListId={selectedChannelListId}
         onSelectList={handleSelectList}
         onRefreshLists={handleRefreshLists}
       />

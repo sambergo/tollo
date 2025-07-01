@@ -451,6 +451,7 @@ function App() {
               <Settings 
                 onSelectList={handleSelectChannelList} 
                 onFiltersChanged={refreshFilters}
+                selectedChannelListId={selectedChannelListId}
               />
             </div>
           </div>
