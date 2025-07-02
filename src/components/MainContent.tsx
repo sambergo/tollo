@@ -1,10 +1,10 @@
 import ChannelList, { type Channel } from "./ChannelList";
 import GroupList from "./GroupList";
-import { 
-  useChannelStore, 
-  useUIStore, 
-  useSearchStore, 
-  useSettingsStore
+import {
+  useChannelStore,
+  useUIStore,
+  useSearchStore,
+  useSettingsStore,
 } from "../stores";
 import { useEffect } from "react";
 
@@ -27,24 +27,18 @@ const LoadingChannelList = () => (
 
 export default function MainContent({ filteredChannels }: MainContentProps) {
   // Get state from stores
-  const { 
-    favorites, 
-    groups, 
-    history, 
+  const {
+    favorites,
+    groups,
+    history,
     isLoadingChannelList,
-    selectedChannelListId
+    selectedChannelListId,
   } = useChannelStore();
-  
-  const { 
-    activeTab
-  } = useUIStore();
-  
-  const { 
-    searchQuery, 
-    isSearching, 
-    setSearchQuery 
-  } = useSearchStore();
-  
+
+  const { activeTab } = useUIStore();
+
+  const { searchQuery, isSearching, setSearchQuery } = useSearchStore();
+
   const { channelListName, getChannelListName } = useSettingsStore();
 
   useEffect(() => {
@@ -97,7 +91,7 @@ export default function MainContent({ filteredChannels }: MainContentProps) {
         if (isLoadingChannelList) {
           return <LoadingChannelList />;
         }
-        
+
         return (
           <>
             <div className="search-container">
@@ -126,11 +120,7 @@ export default function MainContent({ filteredChannels }: MainContentProps) {
                 Type at least 3 characters to search...
               </div>
             )}
-            {isSearching && (
-              <div className="search-status">
-                Searching...
-              </div>
-            )}
+            {isSearching && <div className="search-status">Searching...</div>}
             <div className="content-list">
               <ChannelList channels={filteredChannels} />
             </div>
@@ -169,4 +159,4 @@ export default function MainContent({ filteredChannels }: MainContentProps) {
       {renderContent()}
     </div>
   );
-} 
+}

@@ -1,4 +1,10 @@
-import { TvIcon, HeartIcon, UsersIcon, HistoryIcon, SettingsIcon } from "./Icons";
+import {
+  TvIcon,
+  HeartIcon,
+  UsersIcon,
+  HistoryIcon,
+  SettingsIcon,
+} from "./Icons";
 import SavedFilters from "./SavedFilters";
 import { useUIStore, useChannelStore } from "../stores";
 
@@ -16,35 +22,35 @@ export default function NavigationSidebar() {
           <h1 className="app-title">IPTV Pro</h1>
         </div>
         <nav className="nav-menu">
-          <button 
+          <button
             className={`nav-button ${activeTab === "channels" ? "active" : ""}`}
             onClick={() => setActiveTab("channels")}
           >
             <TvIcon />
             Channels
           </button>
-          <button 
+          <button
             className={`nav-button ${activeTab === "favorites" ? "active" : ""}`}
             onClick={() => setActiveTab("favorites")}
           >
             <HeartIcon />
             Favorites
           </button>
-          <button 
+          <button
             className={`nav-button ${activeTab === "groups" ? "active" : ""}`}
             onClick={() => setActiveTab("groups")}
           >
             <UsersIcon />
             Groups
           </button>
-          <button 
+          <button
             className={`nav-button ${activeTab === "history" ? "active" : ""}`}
             onClick={() => setActiveTab("history")}
           >
             <HistoryIcon />
             History
           </button>
-          <button 
+          <button
             className={`nav-button ${activeTab === "settings" ? "active" : ""}`}
             onClick={() => setActiveTab("settings")}
           >
@@ -53,11 +59,9 @@ export default function NavigationSidebar() {
           </button>
         </nav>
       </div>
-      {selectedChannelListId && (
-        <SavedFilters />
-      )}
+      {selectedChannelListId && <SavedFilters />}
     </div>
   );
 }
 
-export type { Tab }; 
+export type { Tab };

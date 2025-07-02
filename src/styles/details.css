@@ -75,7 +75,7 @@
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
   font-size: 0.75rem;
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
 }
 
 .channel-meta-row {
@@ -145,4 +145,4 @@
   font-size: 0.875rem;
   color: var(--text-primary);
   word-break: break-all;
-} 
+}

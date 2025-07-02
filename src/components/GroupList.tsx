@@ -18,30 +18,33 @@ export default function GroupList() {
     setGroupDisplayMode,
     selectAllGroups,
     unselectAllGroups,
-    setActiveTab
+    setActiveTab,
   } = useUIStore();
 
   const { groups, selectedChannelListId } = useChannelStore();
 
   // Filter groups based on search term
   const filteredGroups = groups.filter((group: string) =>
-    group.toLowerCase().includes(searchTerm.toLowerCase())
+    group.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setDropdownOpen(false);
       }
     };
 
     if (dropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [dropdownOpen]);
 
@@ -100,23 +103,23 @@ export default function GroupList() {
 
       {/* Mode Toggle Buttons */}
       <div className="group-mode-controls">
-        <button 
+        <button
           className={`mode-btn ${groupDisplayMode === GroupDisplayMode.EnabledGroups ? "active" : ""}`}
           onClick={() => setGroupDisplayMode(GroupDisplayMode.EnabledGroups)}
         >
           Enabled Groups
         </button>
-        <button 
+        <button
           className={`mode-btn ${groupDisplayMode === GroupDisplayMode.AllGroups ? "active" : ""}`}
           onClick={() => setGroupDisplayMode(GroupDisplayMode.AllGroups)}
         >
           Select group
         </button>
-        
+
         {/* Bulk Actions Dropdown - Only show in Enabled Groups mode */}
         {groupDisplayMode === GroupDisplayMode.EnabledGroups && (
           <div className="bulk-actions-dropdown" ref={dropdownRef}>
-            <button 
+            <button
               className="dropdown-toggle"
               onClick={() => setDropdownOpen(!dropdownOpen)}
             >
@@ -124,13 +127,13 @@ export default function GroupList() {
             </button>
             {dropdownOpen && (
               <div className="dropdown-menu">
-                <button 
+                <button
                   className="dropdown-item"
                   onClick={handleSelectAllGroups}
                 >
                   Select All
                 </button>
-                <button 
+                <button
                   className="dropdown-item"
                   onClick={handleUnselectAllGroups}
                 >
@@ -158,7 +161,10 @@ export default function GroupList() {
 
         {filteredGroups.map((group: string, index: number) => {
           const isSelected = selectedGroup === group;
-          const adjustedIndex = (groupDisplayMode === GroupDisplayMode.EnabledGroups) ? index : index + 1;
+          const adjustedIndex =
+            groupDisplayMode === GroupDisplayMode.EnabledGroups
+              ? index
+              : index + 1;
           const isFocused = focusedIndex === adjustedIndex;
           const isEnabled = enabledGroups.has(group);
 
@@ -169,7 +175,7 @@ export default function GroupList() {
             >
               <div className="group-item-content">
                 {/* Checkbox for enabling/disabling groups (only in Enabled Groups mode) */}
-                {(groupDisplayMode === GroupDisplayMode.EnabledGroups) && (
+                {groupDisplayMode === GroupDisplayMode.EnabledGroups && (
                   <input
                     type="checkbox"
                     className="group-checkbox"
@@ -177,9 +183,9 @@ export default function GroupList() {
                     onChange={() => handleToggleGroupEnabled(group)}
                   />
                 )}
-                
+
                 {/* Group name - different click behavior based on mode */}
-                <span 
+                <span
                   className="group-name"
                   onClick={() => {
                     if (groupDisplayMode === GroupDisplayMode.EnabledGroups) {
@@ -201,4 +207,4 @@ export default function GroupList() {
       </ul>
     </div>
   );
-} 
+}

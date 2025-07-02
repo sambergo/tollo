@@ -1,13 +1,19 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { useSettingsStore, useFilterStore, type SavedFilter } from "../../stores";
+import {
+  useSettingsStore,
+  useFilterStore,
+  type SavedFilter,
+} from "../../stores";
 import type { ChannelListWithFilters } from "../../types/settings";
 import { FilterIcon, LoadingIcon, TrashIcon } from "./SettingsIcons";
 
 export function SavedFiltersSettings() {
-  const [channelListsWithFilters, setChannelListsWithFilters] = useState<ChannelListWithFilters[]>([]);
+  const [channelListsWithFilters, setChannelListsWithFilters] = useState<
+    ChannelListWithFilters[]
+  >([]);
   const [loadingSavedFilters, setLoadingSavedFilters] = useState(false);
-  
+
   const { channelLists } = useSettingsStore();
   const { refreshFilters } = useFilterStore();
 
@@ -21,19 +27,22 @@ export function SavedFiltersSettings() {
     setLoadingSavedFilters(true);
     try {
       const listsWithFilters: ChannelListWithFilters[] = [];
-      
+
       for (const list of channelLists) {
         try {
-          const filters = await invoke<SavedFilter[]>("get_saved_filters", { 
-            channelListId: list.id 
+          const filters = await invoke<SavedFilter[]>("get_saved_filters", {
+            channelListId: list.id,
           });
           listsWithFilters.push({ ...list, savedFilters: filters });
         } catch (error) {
-          console.error(`Failed to load saved filters for list ${list.id}:`, error);
+          console.error(
+            `Failed to load saved filters for list ${list.id}:`,
+            error,
+          );
           listsWithFilters.push({ ...list, savedFilters: [] });
         }
       }
-      
+
       setChannelListsWithFilters(listsWithFilters);
     } catch (error) {
       console.error("Failed to fetch saved filters:", error);
@@ -42,16 +51,19 @@ export function SavedFiltersSettings() {
     }
   }
 
-  const handleDeleteSavedFilter = async (channelListId: number, slotNumber: number) => {
+  const handleDeleteSavedFilter = async (
+    channelListId: number,
+    slotNumber: number,
+  ) => {
     try {
       await invoke("delete_saved_filter", {
         channelListId,
-        slotNumber
+        slotNumber,
       });
-      
+
       // Refresh saved filters
       await fetchSavedFilters();
-      
+
       // Refresh the global filter store if it's the current channel list
       await refreshFilters(channelListId);
     } catch (error) {
@@ -87,17 +99,28 @@ export function SavedFiltersSettings() {
                       {list.savedFilters.map((filter) => (
                         <div key={filter.slot_number} className="filter-item">
                           <div className="filter-details">
-                            <div className="filter-slot">Slot {filter.slot_number}</div>
+                            <div className="filter-slot">
+                              Slot {filter.slot_number}
+                            </div>
                             {filter.selected_group && (
-                              <div className="filter-group">Group: {filter.selected_group}</div>
+                              <div className="filter-group">
+                                Group: {filter.selected_group}
+                              </div>
                             )}
                             {filter.search_query && (
-                              <div className="filter-query">Search: {filter.search_query}</div>
+                              <div className="filter-query">
+                                Search: {filter.search_query}
+                              </div>
                             )}
                           </div>
-                          <button 
+                          <button
                             className="btn-icon btn-danger"
-                            onClick={() => handleDeleteSavedFilter(list.id, filter.slot_number)}
+                            onClick={() =>
+                              handleDeleteSavedFilter(
+                                list.id,
+                                filter.slot_number,
+                              )
+                            }
                             title="Delete this saved filter"
                           >
                             <TrashIcon />
@@ -114,4 +137,4 @@ export function SavedFiltersSettings() {
       </div>
     </div>
   );
-} 
+}

@@ -2,12 +2,12 @@ import { useEffect } from "react";
 import { useSearchStore } from "../stores";
 
 export function useChannelSearch(selectedChannelListId: number | null) {
-  const { 
-    searchQuery, 
-    debouncedSearchQuery, 
-    isSearching, 
+  const {
+    searchQuery,
+    debouncedSearchQuery,
+    isSearching,
     setDebouncedSearchQuery,
-    searchChannels 
+    searchChannels,
   } = useSearchStore();
 
   // Clear debounced query when channel list changes
@@ -19,6 +19,7 @@ export function useChannelSearch(selectedChannelListId: number | null) {
     searchQuery,
     debouncedSearchQuery,
     isSearching,
-    searchChannels: (query: string) => searchChannels(query, selectedChannelListId)
+    searchChannels: (query: string) =>
+      searchChannels(query, selectedChannelListId),
   };
-} 
+}

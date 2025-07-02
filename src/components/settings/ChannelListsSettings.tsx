@@ -2,15 +2,15 @@ import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { useChannelStore, useSettingsStore } from "../../stores";
 import type { ChannelList } from "../../types/settings";
-import { 
-  ListIcon, 
-  EditIcon, 
-  TrashIcon, 
-  RefreshIcon, 
-  CheckIcon, 
-  XIcon, 
-  StarIcon, 
-  LoadingIcon 
+import {
+  ListIcon,
+  EditIcon,
+  TrashIcon,
+  RefreshIcon,
+  CheckIcon,
+  XIcon,
+  StarIcon,
+  LoadingIcon,
 } from "./SettingsIcons";
 
 interface ChannelListsSettingsProps {
@@ -26,7 +26,7 @@ export function ChannelListsSettings({
   loadingLists,
   onSelectList,
   onRefreshLists,
-  onSelectingChange
+  onSelectingChange,
 }: ChannelListsSettingsProps) {
   const [newListName, setNewListName] = useState("");
   const [newListSource, setNewListSource] = useState("");
@@ -43,21 +43,25 @@ export function ChannelListsSettings({
     if (newListName && newListSource) {
       setIsAddingList(true);
       try {
-        const listId = await invoke<number>("validate_and_add_channel_list", { 
-          name: newListName, 
-          source: newListSource 
+        const listId = await invoke<number>("validate_and_add_channel_list", {
+          name: newListName,
+          source: newListSource,
         });
-        
-        console.log("Successfully added and fetched channel list with ID:", listId);
-        
+
+        console.log(
+          "Successfully added and fetched channel list with ID:",
+          listId,
+        );
+
         setNewListName("");
         setNewListSource("");
         await onRefreshLists();
-        
       } catch (error) {
         console.error("Failed to add channel list:", error);
         const errorMsg = error instanceof Error ? error.message : String(error);
-        alert(`Failed to add channel list "${newListName}".\n\nError: ${errorMsg}`);
+        alert(
+          `Failed to add channel list "${newListName}".\n\nError: ${errorMsg}`,
+        );
       } finally {
         setIsAddingList(false);
       }
@@ -71,7 +75,7 @@ export function ChannelListsSettings({
 
   const handleRefreshChannelList = (id: number) => {
     setRefreshingList(id);
-    
+
     // Use setTimeout to ensure the UI updates before starting the operation
     setTimeout(async () => {
       try {
@@ -108,18 +112,18 @@ export function ChannelListsSettings({
   };
 
   const handleSelectList = (id: number) => {
-    const selectedList = channelLists.find(list => list.id === id);
-    const listName = selectedList?.name || 'Unknown List';
-    
+    const selectedList = channelLists.find((list) => list.id === id);
+    const listName = selectedList?.name || "Unknown List";
+
     setSelectingList(id);
     onSelectingChange?.(true, listName);
-    
+
     // Use setTimeout to ensure the UI updates before starting the operation
     setTimeout(async () => {
       try {
         // Call the new backend command to prepare for selection
         await invoke("start_channel_list_selection");
-        
+
         // Then call the original select handler (it's not async)
         onSelectList(id);
       } catch (error) {
@@ -155,7 +159,7 @@ export function ChannelListsSettings({
               value={newListSource}
               onChange={(e) => setNewListSource(e.target.value)}
             />
-            <button 
+            <button
               className="btn-primary"
               onClick={handleAddChannelList}
               disabled={!newListName || !newListSource || isAddingList}
@@ -168,7 +172,10 @@ export function ChannelListsSettings({
         {/* Channel Lists */}
         <div className="channel-lists">
           {channelLists.map((list) => (
-            <div key={list.id} className={`channel-list-item ${refreshingList === list.id ? 'refreshing' : ''}`}>
+            <div
+              key={list.id}
+              className={`channel-list-item ${refreshingList === list.id ? "refreshing" : ""}`}
+            >
               {refreshingList === list.id && (
                 <div className="channel-list-loading-overlay">
                   <div className="loading-content">
@@ -194,14 +201,23 @@ export function ChannelListsSettings({
                       className="form-input"
                       value={editingList.source}
                       onChange={(e) =>
-                        setEditingList({ ...editingList, source: e.target.value })
+                        setEditingList({
+                          ...editingList,
+                          source: e.target.value,
+                        })
                       }
                     />
                     <div className="edit-actions">
-                      <button className="btn-success" onClick={handleUpdateChannelList}>
+                      <button
+                        className="btn-success"
+                        onClick={handleUpdateChannelList}
+                      >
                         <CheckIcon />
                       </button>
-                      <button className="btn-secondary" onClick={() => setEditingList(null)}>
+                      <button
+                        className="btn-secondary"
+                        onClick={() => setEditingList(null)}
+                      >
                         <XIcon />
                       </button>
                     </div>
@@ -228,7 +244,8 @@ export function ChannelListsSettings({
                     <p className="list-source">{list.source}</p>
                     {list.last_fetched && (
                       <p className="list-meta">
-                        Last updated: {new Date(list.last_fetched * 1000).toLocaleString()}
+                        Last updated:{" "}
+                        {new Date(list.last_fetched * 1000).toLocaleString()}
                       </p>
                     )}
                     {loadingLists.has(list.id) && (
@@ -238,24 +255,34 @@ export function ChannelListsSettings({
                     )}
                   </div>
                   <div className="list-actions">
-                    <button 
+                    <button
                       className="btn-primary btn-sm"
                       onClick={() => handleSelectList(list.id)}
-                      disabled={loadingLists.has(list.id) || selectedChannelListId === list.id || selectingList === list.id}
+                      disabled={
+                        loadingLists.has(list.id) ||
+                        selectedChannelListId === list.id ||
+                        selectingList === list.id
+                      }
                     >
                       {selectingList === list.id ? "Selecting..." : "Select"}
                     </button>
-                    
-                    <button 
+
+                    <button
                       className="btn-icon btn-secondary"
                       onClick={() => handleRefreshChannelList(list.id)}
-                      disabled={loadingLists.has(list.id) || refreshingList === list.id}
-                      title={refreshingList === list.id ? "Refreshing..." : "Refresh channel list data"}
+                      disabled={
+                        loadingLists.has(list.id) || refreshingList === list.id
+                      }
+                      title={
+                        refreshingList === list.id
+                          ? "Refreshing..."
+                          : "Refresh channel list data"
+                      }
                     >
                       <RefreshIcon />
                     </button>
-                    
-                    <button 
+
+                    <button
                       className="btn-icon btn-secondary"
                       onClick={() => handleEditClick(list)}
                       disabled={loadingLists.has(list.id)}
@@ -263,17 +290,20 @@ export function ChannelListsSettings({
                     >
                       <EditIcon />
                     </button>
-                    
-                    <button 
+
+                    <button
                       className="btn-icon btn-secondary"
                       onClick={() => handleSetDefault(list.id)}
-                      disabled={loadingLists.has(list.id) || defaultChannelList === list.id}
+                      disabled={
+                        loadingLists.has(list.id) ||
+                        defaultChannelList === list.id
+                      }
                       title="Set as default channel list"
                     >
                       <StarIcon filled={defaultChannelList === list.id} />
                     </button>
-                    
-                    <button 
+
+                    <button
                       className="btn-icon btn-danger"
                       onClick={() => handleDeleteChannelList(list.id)}
                       disabled={loadingLists.has(list.id)}
@@ -289,9 +319,11 @@ export function ChannelListsSettings({
         </div>
 
         {channelLists.length === 0 && (
-          <p className="form-help">No channel lists found. Add one above to get started.</p>
+          <p className="form-help">
+            No channel lists found. Add one above to get started.
+          </p>
         )}
       </div>
     </div>
   );
-} 
+}

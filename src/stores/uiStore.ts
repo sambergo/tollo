@@ -1,25 +1,25 @@
-import { create } from 'zustand';
-import { invoke } from '@tauri-apps/api/core';
-import type { Tab } from '../components/NavigationSidebar';
+import { create } from "zustand";
+import { invoke } from "@tauri-apps/api/core";
+import type { Tab } from "../components/NavigationSidebar";
 
 export enum GroupDisplayMode {
-  EnabledGroups = 'enabled',
-  AllGroups = 'all'
+  EnabledGroups = "enabled",
+  AllGroups = "all",
 }
 
 interface UIState {
   // Navigation and focus
   activeTab: Tab;
   focusedIndex: number;
-  
+
   // Group selection
   selectedGroup: string | null;
   groupDisplayMode: GroupDisplayMode;
   enabledGroups: Set<string>;
-  
+
   // Control flags
   skipSearchEffect: boolean;
-  
+
   // Actions
   setActiveTab: (tab: Tab) => void;
   setFocusedIndex: (index: number | ((prev: number) => number)) => void;
@@ -27,9 +27,12 @@ interface UIState {
   setGroupDisplayMode: (mode: GroupDisplayMode) => void;
   setEnabledGroups: (groups: Set<string>) => void;
   setSkipSearchEffect: (skip: boolean) => void;
-  
+
   // Group management actions
-  toggleGroupEnabled: (groupName: string, channelListId: number) => Promise<void>;
+  toggleGroupEnabled: (
+    groupName: string,
+    channelListId: number,
+  ) => Promise<void>;
   selectAllGroups: (groups: string[], channelListId: number) => Promise<void>;
   unselectAllGroups: (groups: string[], channelListId: number) => Promise<void>;
   fetchEnabledGroups: (channelListId: number) => Promise<string[]>;
@@ -44,11 +47,11 @@ export const useUIStore = create<UIState>((set, get) => ({
   groupDisplayMode: GroupDisplayMode.EnabledGroups,
   enabledGroups: new Set(),
   skipSearchEffect: false,
-  
+
   // Basic setters
   setActiveTab: (activeTab) => set({ activeTab }),
   setFocusedIndex: (focusedIndex) => {
-    if (typeof focusedIndex === 'function') {
+    if (typeof focusedIndex === "function") {
       set((state) => ({ focusedIndex: focusedIndex(state.focusedIndex) }));
     } else {
       set({ focusedIndex });
@@ -58,19 +61,19 @@ export const useUIStore = create<UIState>((set, get) => ({
   setGroupDisplayMode: (groupDisplayMode) => set({ groupDisplayMode }),
   setEnabledGroups: (enabledGroups) => set({ enabledGroups }),
   setSkipSearchEffect: (skipSearchEffect) => set({ skipSearchEffect }),
-  
+
   // Group management actions
   toggleGroupEnabled: async (groupName, channelListId) => {
     const { enabledGroups } = get();
     const newEnabledState = !enabledGroups.has(groupName);
-    
+
     // Update database
     await invoke("update_group_selection", {
       channelListId,
       groupName,
-      enabled: newEnabledState
+      enabled: newEnabledState,
     });
-    
+
     // Update local state
     const newEnabledGroups = new Set(enabledGroups);
     if (newEnabledState) {
@@ -80,53 +83,55 @@ export const useUIStore = create<UIState>((set, get) => ({
     }
     set({ enabledGroups: newEnabledGroups });
   },
-  
+
   selectAllGroups: async (groups, channelListId) => {
     const { enabledGroups } = get();
-    
+
     // Enable all groups that aren't already enabled
     for (const group of groups) {
       if (!enabledGroups.has(group)) {
         await invoke("update_group_selection", {
           channelListId,
           groupName: group,
-          enabled: true
+          enabled: true,
         });
       }
     }
-    
+
     // Update local state to include all groups
     set({ enabledGroups: new Set(groups) });
   },
-  
+
   unselectAllGroups: async (groups, channelListId) => {
     const { enabledGroups } = get();
-    
+
     // Disable all groups that are currently enabled
     for (const group of groups) {
       if (enabledGroups.has(group)) {
         await invoke("update_group_selection", {
           channelListId,
           groupName: group,
-          enabled: false
+          enabled: false,
         });
       }
     }
-    
+
     // Update local state to empty set
     set({ enabledGroups: new Set() });
   },
-  
+
   fetchEnabledGroups: async (channelListId) => {
-    const fetchedEnabledGroups = await invoke<string[]>("get_enabled_groups", { channelListId });
+    const fetchedEnabledGroups = await invoke<string[]>("get_enabled_groups", {
+      channelListId,
+    });
     set({ enabledGroups: new Set(fetchedEnabledGroups) });
     return fetchedEnabledGroups;
   },
-  
+
   clearGroupFilter: () => {
-    set({ 
-      selectedGroup: null, 
-      groupDisplayMode: GroupDisplayMode.EnabledGroups 
+    set({
+      selectedGroup: null,
+      groupDisplayMode: GroupDisplayMode.EnabledGroups,
     });
   },
-})); 
+}));

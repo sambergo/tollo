@@ -50,4 +50,4 @@ export function ImageCacheSettings() {
       </div>
     </div>
   );
-} 
+}

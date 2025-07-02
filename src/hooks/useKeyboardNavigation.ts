@@ -22,7 +22,12 @@ interface UseKeyboardNavigationProps {
   handlePlayInMpv: (channel: Channel) => void;
   // Saved filters functionality
   savedFilters: SavedFilter[];
-  onSaveFilter: (slotNumber: number, searchQuery: string, selectedGroup: string | null, name: string) => Promise<boolean>;
+  onSaveFilter: (
+    slotNumber: number,
+    searchQuery: string,
+    selectedGroup: string | null,
+    name: string,
+  ) => Promise<boolean>;
   onApplyFilter: (filter: SavedFilter) => void;
 }
 
@@ -45,7 +50,7 @@ export function useKeyboardNavigation({
   handlePlayInMpv,
   savedFilters,
   onSaveFilter,
-  onApplyFilter
+  onApplyFilter,
 }: UseKeyboardNavigationProps) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -54,9 +59,15 @@ export function useKeyboardNavigation({
       }
 
       // Handle number keys (0-9) for applying saved filters
-      if (e.key >= '0' && e.key <= '9' && !e.altKey && !e.ctrlKey && !e.shiftKey) {
+      if (
+        e.key >= "0" &&
+        e.key <= "9" &&
+        !e.altKey &&
+        !e.ctrlKey &&
+        !e.shiftKey
+      ) {
         const slotNumber = parseInt(e.key);
-        const filter = savedFilters.find(f => f.slot_number === slotNumber);
+        const filter = savedFilters.find((f) => f.slot_number === slotNumber);
         if (filter) {
           onApplyFilter(filter);
           return;
@@ -64,15 +75,21 @@ export function useKeyboardNavigation({
       }
 
       // Handle Alt+number keys (Alt+0-9) for saving current filter
-      if (e.altKey && e.key >= '0' && e.key <= '9' && !e.ctrlKey && !e.shiftKey) {
+      if (
+        e.altKey &&
+        e.key >= "0" &&
+        e.key <= "9" &&
+        !e.ctrlKey &&
+        !e.shiftKey
+      ) {
         e.preventDefault();
         const slotNumber = parseInt(e.key);
-        
+
         // Generate a name for the filter
-        const groupPart = selectedGroup ? `${selectedGroup}` : 'All';
-        const searchPart = searchQuery ? `"${searchQuery}"` : 'No search';
+        const groupPart = selectedGroup ? `${selectedGroup}` : "All";
+        const searchPart = searchQuery ? `"${searchQuery}"` : "No search";
         const filterName = `${groupPart} + ${searchPart}`;
-        
+
         onSaveFilter(slotNumber, searchQuery, selectedGroup, filterName);
         return;
       }
@@ -82,19 +99,35 @@ export function useKeyboardNavigation({
       } else if (e.key === "k" || e.key === "ArrowUp") {
         setFocusedIndex((prev) => Math.max(prev - 1, 0));
       } else if (e.key === "Enter") {
-        if (activeTab === "channels" || activeTab === "favorites" || activeTab === "history") {
+        if (
+          activeTab === "channels" ||
+          activeTab === "favorites" ||
+          activeTab === "history"
+        ) {
           setSelectedChannel(listItems[focusedIndex] as Channel);
         } else if (activeTab === "groups") {
           handleSelectGroup(listItems[focusedIndex] as string);
         }
       } else if (e.key === "l" || e.key === "ArrowRight") {
-        const tabs: Tab[] = ["channels", "favorites", "groups", "history", "settings"];
+        const tabs: Tab[] = [
+          "channels",
+          "favorites",
+          "groups",
+          "history",
+          "settings",
+        ];
         const currentIndex = tabs.indexOf(activeTab);
         const nextIndex = (currentIndex + 1) % tabs.length;
         setActiveTab(tabs[nextIndex]);
         setFocusedIndex(0);
       } else if (e.key === "h" || e.key === "ArrowLeft") {
-        const tabs: Tab[] = ["channels", "favorites", "groups", "history", "settings"];
+        const tabs: Tab[] = [
+          "channels",
+          "favorites",
+          "groups",
+          "history",
+          "settings",
+        ];
         const currentIndex = tabs.indexOf(activeTab);
         const prevIndex = (currentIndex - 1 + tabs.length) % tabs.length;
         setActiveTab(tabs[prevIndex]);
@@ -104,7 +137,11 @@ export function useKeyboardNavigation({
           handleToggleFavorite(listItems[focusedIndex] as Channel);
         }
       } else if (e.key === "p") {
-        if (activeTab === "channels" || activeTab === "favorites" || activeTab === "history") {
+        if (
+          activeTab === "channels" ||
+          activeTab === "favorites" ||
+          activeTab === "history"
+        ) {
           handlePlayInMpv(listItems[focusedIndex] as Channel);
         }
       }
@@ -115,5 +152,19 @@ export function useKeyboardNavigation({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [activeTab, channels, favorites, groups, history, selectedGroup, selectedChannel, focusedIndex, listItems, searchQuery, savedFilters, onSaveFilter, onApplyFilter]);
-} 
+  }, [
+    activeTab,
+    channels,
+    favorites,
+    groups,
+    history,
+    selectedGroup,
+    selectedChannel,
+    focusedIndex,
+    listItems,
+    searchQuery,
+    savedFilters,
+    onSaveFilter,
+    onApplyFilter,
+  ]);
+}

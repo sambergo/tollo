@@ -10,4 +10,4 @@ export interface ChannelList {
 
 export interface ChannelListWithFilters extends ChannelList {
   savedFilters: SavedFilter[];
-} 
+}

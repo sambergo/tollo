@@ -4,14 +4,14 @@ import { useFilterStore, type SavedFilter } from "../stores";
 export type { SavedFilter };
 
 export function useSavedFilters(selectedChannelListId: number | null) {
-  const { 
-    savedFilters, 
-    isLoading, 
+  const {
+    savedFilters,
+    isLoading,
     loadSavedFilters,
     saveFilter: storeSaveFilter,
     deleteFilter: storeDeleteFilter,
     getFilter,
-    refreshFilters: storeRefreshFilters
+    refreshFilters: storeRefreshFilters,
   } = useFilterStore();
 
   // Load saved filters when channel list changes
@@ -21,13 +21,19 @@ export function useSavedFilters(selectedChannelListId: number | null) {
 
   // Wrapper functions to include selectedChannelListId
   const saveFilter = async (
-    slotNumber: number, 
-    searchQuery: string, 
+    slotNumber: number,
+    searchQuery: string,
     selectedGroup: string | null,
-    name: string
+    name: string,
   ): Promise<boolean> => {
     if (selectedChannelListId === null) return false;
-    return storeSaveFilter(selectedChannelListId, slotNumber, searchQuery, selectedGroup, name);
+    return storeSaveFilter(
+      selectedChannelListId,
+      slotNumber,
+      searchQuery,
+      selectedGroup,
+      name,
+    );
   };
 
   const deleteFilter = async (slotNumber: number): Promise<boolean> => {
@@ -45,6 +51,6 @@ export function useSavedFilters(selectedChannelListId: number | null) {
     saveFilter,
     deleteFilter,
     getFilter,
-    refreshFilters
+    refreshFilters,
   };
-} 
+}

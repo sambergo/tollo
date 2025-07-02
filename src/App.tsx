@@ -10,7 +10,14 @@ import Settings from "./components/Settings";
 import { useKeyboardNavigation } from "./hooks/useKeyboardNavigation";
 import { useChannelSearch } from "./hooks/useChannelSearch";
 import { useSavedFilters } from "./hooks/useSavedFilters";
-import { useChannelStore, useUIStore, useSearchStore, useSettingsStore, GroupDisplayMode, type SavedFilter } from "./stores";
+import {
+  useChannelStore,
+  useUIStore,
+  useSearchStore,
+  useSettingsStore,
+  GroupDisplayMode,
+  type SavedFilter,
+} from "./stores";
 import type { Channel } from "./components/ChannelList";
 import "./App.css";
 
@@ -32,7 +39,7 @@ function App() {
     fetchGroups,
     fetchHistory,
     toggleFavorite,
-    playInMpv
+    playInMpv,
   } = useChannelStore();
 
   const {
@@ -47,13 +54,10 @@ function App() {
     setSelectedGroup,
     setGroupDisplayMode,
     setSkipSearchEffect,
-    fetchEnabledGroups
+    fetchEnabledGroups,
   } = useUIStore();
 
-  const {
-    searchQuery,
-    setSearchQuery
-  } = useSearchStore();
+  const { searchQuery, setSearchQuery } = useSearchStore();
 
   // Get settings
   const { enablePreview, fetchEnablePreview, autoplay } = useSettingsStore();
@@ -61,9 +65,11 @@ function App() {
   // Refs for video player
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
-  
+
   // Custom hooks (keeping existing functionality)
-  const { debouncedSearchQuery, searchChannels } = useChannelSearch(selectedChannelListId);
+  const { debouncedSearchQuery, searchChannels } = useChannelSearch(
+    selectedChannelListId,
+  );
   const { savedFilters, saveFilter } = useSavedFilters(selectedChannelListId);
 
   // Fetch settings on app load
@@ -75,21 +81,30 @@ function App() {
   useEffect(() => {
     const loadDefaultChannelList = async () => {
       try {
-        const channelLists = await invoke<{id: number, name: string, source: string, is_default: boolean, last_fetched: number | null}[]>("get_channel_lists");
-        const defaultList = channelLists.find(list => list.is_default);
+        const channelLists =
+          await invoke<
+            {
+              id: number;
+              name: string;
+              source: string;
+              is_default: boolean;
+              last_fetched: number | null;
+            }[]
+          >("get_channel_lists");
+        const defaultList = channelLists.find((list) => list.is_default);
         if (defaultList && selectedChannelListId === null) {
           // Set loading state immediately for initial app load
           setIsLoadingChannelList(true);
           setSkipSearchEffect(true);
-          
+
           // Clear current data to show loading state immediately
           setChannels([]);
           setSelectedGroup(null);
           setFocusedIndex(0);
-          
+
           // Make sure user is on channels tab to see the loading screen
           setActiveTab("channels");
-          
+
           // Give React a moment to render the loading screen before starting heavy operations
           setTimeout(() => {
             startTransition(() => {
@@ -107,14 +122,20 @@ function App() {
     loadDefaultChannelList();
   }, []); // Only run once on mount
 
-  async function syncGroupsForChannelList(channelListId: number, allGroups: string[]) {
-    await invoke("sync_channel_list_groups", { channelListId, groups: allGroups });
+  async function syncGroupsForChannelList(
+    channelListId: number,
+    allGroups: string[],
+  ) {
+    await invoke("sync_channel_list_groups", {
+      channelListId,
+      groups: allGroups,
+    });
   }
 
   // Trigger search when debounced query changes
   useEffect(() => {
     if (skipSearchEffect) return;
-    
+
     const performSearch = async () => {
       const searchedChannels = await searchChannels(debouncedSearchQuery);
       setChannels(searchedChannels);
@@ -129,10 +150,10 @@ function App() {
         setSkipSearchEffect(false);
         return;
       }
-      
+
       // Skip search effect during channel list loading
       setSkipSearchEffect(true);
-      
+
       try {
         // Use setTimeout to break up the work and keep UI responsive
         const performStep = (step: () => Promise<void>) => {
@@ -155,35 +176,40 @@ function App() {
           await fetchGroups(selectedChannelListId);
           await fetchHistory();
         });
-        
+
         // Step 3: Handle group setup
         await performStep(async () => {
           // Get all groups for this channel list
-          const fetchedGroups = await invoke<string[]>("get_groups", { id: selectedChannelListId });
-          
+          const fetchedGroups = await invoke<string[]>("get_groups", {
+            id: selectedChannelListId,
+          });
+
           // Sync groups with database (adds new groups, removes deleted ones)
           await syncGroupsForChannelList(selectedChannelListId, fetchedGroups);
-          
+
           // Load enabled groups for this channel list
-          const currentEnabledGroups = await fetchEnabledGroups(selectedChannelListId);
-          
-          // Auto-enable all groups if none are enabled (new or empty list)  
+          const currentEnabledGroups = await fetchEnabledGroups(
+            selectedChannelListId,
+          );
+
+          // Auto-enable all groups if none are enabled (new or empty list)
           if (currentEnabledGroups.length === 0 && fetchedGroups.length > 0) {
-            console.log(`Auto-enabling all ${fetchedGroups.length} groups for new channel list`);
+            console.log(
+              `Auto-enabling all ${fetchedGroups.length} groups for new channel list`,
+            );
             // Use bulk operation instead of individual calls to avoid UI blocking
             await invoke("enable_all_groups", {
               channelListId: selectedChannelListId,
-              groups: fetchedGroups
+              groups: fetchedGroups,
             });
             // Refresh enabled groups to get the updated list
             await fetchEnabledGroups(selectedChannelListId);
           }
-          
+
           // Reset UI state for new channel list
           setGroupDisplayMode(GroupDisplayMode.EnabledGroups);
           setSelectedGroup(null);
         });
-        
       } catch (error) {
         console.error("Failed to load channel list data:", error);
       } finally {
@@ -191,7 +217,7 @@ function App() {
         setSkipSearchEffect(false);
       }
     };
-    
+
     loadChannelListData();
   }, [selectedChannelListId]);
 
@@ -203,8 +229,10 @@ function App() {
     // Only load video if preview is enabled
     if (enablePreview && selectedChannel && videoRef.current) {
       const video = videoRef.current;
-      const isHlsUrl = selectedChannel.url.includes('.m3u8') || selectedChannel.url.includes('m3u8');
-      
+      const isHlsUrl =
+        selectedChannel.url.includes(".m3u8") ||
+        selectedChannel.url.includes("m3u8");
+
       if (isHlsUrl && Hls.isSupported()) {
         // Use HLS.js for .m3u8 streams when supported
         const hls = new Hls();
@@ -214,7 +242,10 @@ function App() {
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
           if (autoplay) video.play();
         });
-      } else if (isHlsUrl && video.canPlayType("application/vnd.apple.mpegurl")) {
+      } else if (
+        isHlsUrl &&
+        video.canPlayType("application/vnd.apple.mpegurl")
+      ) {
         // Native HLS support (Safari)
         video.src = selectedChannel.url;
         video.addEventListener("loadedmetadata", () => {
@@ -226,7 +257,7 @@ function App() {
         video.addEventListener("loadedmetadata", () => {
           if (autoplay) video.play();
         });
-        
+
         // Handle load errors gracefully
         video.addEventListener("error", (e) => {
           console.warn(`Video load error for ${selectedChannel.name}:`, e);
@@ -250,17 +281,24 @@ function App() {
 
   const filteredChannels = (() => {
     let filtered = [...channels];
-    
+
     // Apply group filtering based on current mode
     if (groupDisplayMode === GroupDisplayMode.EnabledGroups) {
       // Show only channels from enabled groups
-      filtered = filtered.filter(channel => enabledGroups.has(channel.group_title));
-    } else if (groupDisplayMode === GroupDisplayMode.AllGroups && selectedGroup) {
+      filtered = filtered.filter((channel) =>
+        enabledGroups.has(channel.group_title),
+      );
+    } else if (
+      groupDisplayMode === GroupDisplayMode.AllGroups &&
+      selectedGroup
+    ) {
       // Traditional single group selection from all groups
-      filtered = filtered.filter(channel => channel.group_title === selectedGroup);
+      filtered = filtered.filter(
+        (channel) => channel.group_title === selectedGroup,
+      );
     }
     // If AllGroups mode with no selection, show all channels
-    
+
     return filtered;
   })();
 
@@ -283,8 +321,18 @@ function App() {
   })();
 
   // Saved filter handlers
-  const handleSaveFilter = async (slotNumber: number, searchQuery: string, selectedGroup: string | null, name: string): Promise<boolean> => {
-    const success = await saveFilter(slotNumber, searchQuery, selectedGroup, name);
+  const handleSaveFilter = async (
+    slotNumber: number,
+    searchQuery: string,
+    selectedGroup: string | null,
+    name: string,
+  ): Promise<boolean> => {
+    const success = await saveFilter(
+      slotNumber,
+      searchQuery,
+      selectedGroup,
+      name,
+    );
     if (success) {
       // Show some feedback to user (you could add a toast here)
       console.log(`Saved filter to slot ${slotNumber}: ${name}`);
@@ -295,10 +343,10 @@ function App() {
   const handleApplyFilter = (filter: SavedFilter) => {
     // Apply the search query
     setSearchQuery(filter.search_query);
-    
+
     // Apply the group selection and set appropriate display mode
     setSelectedGroup(filter.selected_group);
-    
+
     // If the filter has a selected group, switch to AllGroups mode to make the group filter active
     // If no group is selected, use EnabledGroups mode
     if (filter.selected_group) {
@@ -306,7 +354,7 @@ function App() {
     } else {
       setGroupDisplayMode(GroupDisplayMode.EnabledGroups);
     }
-    
+
     // Switch to channels tab to see the results
     setActiveTab("channels");
     setFocusedIndex(0);
@@ -331,7 +379,7 @@ function App() {
     handlePlayInMpv,
     savedFilters,
     onSaveFilter: handleSaveFilter,
-    onApplyFilter: handleApplyFilter
+    onApplyFilter: handleApplyFilter,
   });
 
   return (
@@ -351,20 +399,14 @@ function App() {
           </div>
         ) : (
           <>
-            <MainContent
-              filteredChannels={filteredChannels}
-            />
+            <MainContent filteredChannels={filteredChannels} />
 
-            <div className={`video-section ${!enablePreview ? 'preview-disabled' : ''}`}>
-              {enablePreview && (
-                <VideoPlayer 
-                  ref={videoRef}
-                />
-              )}
+            <div
+              className={`video-section ${!enablePreview ? "preview-disabled" : ""}`}
+            >
+              {enablePreview && <VideoPlayer ref={videoRef} />}
 
-              {selectedChannel && (
-                <ChannelDetails />
-              )}
+              {selectedChannel && <ChannelDetails />}
             </div>
           </>
         )}

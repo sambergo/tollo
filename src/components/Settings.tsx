@@ -1,6 +1,11 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { useChannelStore, useSettingsStore, useUIStore, useSearchStore } from "../stores";
+import {
+  useChannelStore,
+  useSettingsStore,
+  useUIStore,
+  useSearchStore,
+} from "../stores";
 import type { ChannelList } from "../types/settings";
 import { ChannelListsSettings } from "./settings/ChannelListsSettings";
 import { PlayerSettings } from "./settings/PlayerSettings";
@@ -9,13 +14,21 @@ import { ImageCacheSettings } from "./settings/ImageCacheSettings";
 import { SavedFiltersSettings } from "./settings/SavedFiltersSettings";
 
 function Settings() {
-  const [defaultChannelList, setDefaultChannelList] = useState<number | null>(null);
+  const [defaultChannelList, setDefaultChannelList] = useState<number | null>(
+    null,
+  );
   const [loadingLists, setLoadingLists] = useState<Set<number>>(new Set());
   const [isSelectingChannelList, setIsSelectingChannelList] = useState(false);
   const [selectingListName, setSelectingListName] = useState<string>("");
-  
+
   // Get state and actions from stores
-  const { selectedChannelListId, setSelectedChannelListId, setIsLoadingChannelList, setChannels, setSelectedChannel } = useChannelStore();
+  const {
+    selectedChannelListId,
+    setSelectedChannelListId,
+    setIsLoadingChannelList,
+    setChannels,
+    setSelectedChannel,
+  } = useChannelStore();
   const { setChannelLists } = useSettingsStore();
   const { setActiveTab, clearGroupFilter } = useUIStore();
   const { clearSearch } = useSearchStore();
@@ -54,27 +67,26 @@ function Settings() {
     if (id === selectedChannelListId) {
       return;
     }
-    
+
     try {
-      setLoadingLists(prev => new Set([...prev, id]));
-      
+      setLoadingLists((prev) => new Set([...prev, id]));
+
       // Set loading state immediately when user clicks Select
       setIsLoadingChannelList(true);
-      
+
       // Clear current data to show loading state immediately
       setChannels([]);
-      
+
       // Clear selected channel to get a clean starting point
       resetToDefaultState();
-      
+
       // Update selected channel list
       setSelectedChannelListId(id);
-      
+
       // Navigate back to channels tab to see the loaded data
       setActiveTab("channels");
-      
     } finally {
-      setLoadingLists(prev => {
+      setLoadingLists((prev) => {
         const newSet = new Set(prev);
         newSet.delete(id);
         return newSet;
@@ -82,10 +94,10 @@ function Settings() {
     }
   };
 
-
-
   return (
-    <div className={`settings-layout ${isSelectingChannelList ? 'selecting' : ''}`}>
+    <div
+      className={`settings-layout ${isSelectingChannelList ? "selecting" : ""}`}
+    >
       {isSelectingChannelList && (
         <div className="settings-loading-overlay">
           <div className="loading-content">
@@ -95,7 +107,7 @@ function Settings() {
           </div>
         </div>
       )}
-      
+
       <ChannelListsSettings
         defaultChannelList={defaultChannelList}
         loadingLists={loadingLists}
@@ -116,4 +128,3 @@ function Settings() {
 }
 
 export default Settings;
-

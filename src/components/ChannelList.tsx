@@ -20,21 +20,13 @@ const CHANNELS_PER_PAGE = 200; // Reasonable number for performance
 
 export default function ChannelList({ channels }: ChannelListProps) {
   const [currentPage, setCurrentPage] = useState(1);
-  
+
   // Get state and actions from stores
-  const { 
-    selectedChannel, 
-    favorites, 
-    setSelectedChannel, 
-    toggleFavorite 
-  } = useChannelStore();
-  
-  const { 
-    focusedIndex, 
-    selectedGroup,
-    clearGroupFilter 
-  } = useUIStore();
-  
+  const { selectedChannel, favorites, setSelectedChannel, toggleFavorite } =
+    useChannelStore();
+
+  const { focusedIndex, selectedGroup, clearGroupFilter } = useUIStore();
+
   // Reset to first page when channels change
   useEffect(() => {
     setCurrentPage(1);
@@ -44,7 +36,7 @@ export default function ChannelList({ channels }: ChannelListProps) {
   const startIndex = (currentPage - 1) * CHANNELS_PER_PAGE;
   const endIndex = startIndex + CHANNELS_PER_PAGE;
   const currentChannels = channels.slice(startIndex, endIndex);
-  
+
   const isFavorite = (channel: Channel) => {
     return favorites.some((fav) => fav.name === channel.name);
   };
@@ -60,19 +52,19 @@ export default function ChannelList({ channels }: ChannelListProps) {
   const getPageNumbers = () => {
     const pages = [];
     const maxVisiblePages = 5;
-    
+
     let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
     let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-    
+
     // Adjust startPage if we're near the end
     if (endPage - startPage < maxVisiblePages - 1) {
       startPage = Math.max(1, endPage - maxVisiblePages + 1);
     }
-    
+
     for (let i = startPage; i <= endPage; i++) {
       pages.push(i);
     }
-    
+
     return pages;
   };
 
@@ -82,19 +74,36 @@ export default function ChannelList({ channels }: ChannelListProps) {
       {selectedGroup && (
         <div className="group-filter-indicator">
           <div className="filter-info">
-            <svg className="folder-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+            <svg
+              className="folder-icon"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
             </svg>
             <span className="filter-label">Group:</span>
             <span className="filter-value">{selectedGroup}</span>
           </div>
-          <button 
+          <button
             className="clear-filter-btn"
             onClick={clearGroupFilter}
             title="Clear group filter"
           >
-            <svg className="close-icon" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-              <path d="M18.3 5.71a.996.996 0 0 0-1.41 0L12 10.59 7.11 5.7A.996.996 0 1 0 5.7 7.11L10.59 12 5.7 16.89a.996.996 0 1 0 1.41 1.41L12 13.41l4.89 4.89a.996.996 0 1 0 1.41-1.41L13.41 12l4.89-4.89c.38-.38.38-1.02 0-1.4z"/>
+            <svg
+              className="close-icon"
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              stroke="none"
+            >
+              <path d="M18.3 5.71a.996.996 0 0 0-1.41 0L12 10.59 7.11 5.7A.996.996 0 1 0 5.7 7.11L10.59 12 5.7 16.89a.996.996 0 1 0 1.41 1.41L12 13.41l4.89 4.89a.996.996 0 1 0 1.41-1.41L13.41 12l4.89-4.89c.38-.38.38-1.02 0-1.4z" />
             </svg>
           </button>
         </div>
@@ -103,7 +112,8 @@ export default function ChannelList({ channels }: ChannelListProps) {
       {/* Pagination Info */}
       <div className="pagination-info">
         <span className="channel-count">
-          Showing {startIndex + 1}-{Math.min(endIndex, channels.length)} of {channels.length} channels
+          Showing {startIndex + 1}-{Math.min(endIndex, channels.length)} of{" "}
+          {channels.length} channels
           {totalPages > 1 && ` (Page ${currentPage} of ${totalPages})`}
         </span>
       </div>
@@ -119,9 +129,9 @@ export default function ChannelList({ channels }: ChannelListProps) {
             >
               <div className="channel-content">
                 <div className="channel-logo-container">
-                  <CachedImage 
-                    src={channel.logo} 
-                    alt={channel.name} 
+                  <CachedImage
+                    src={channel.logo}
+                    alt={channel.name}
                     className="channel-logo"
                   />
                   <div className="channel-status"></div>
@@ -132,13 +142,17 @@ export default function ChannelList({ channels }: ChannelListProps) {
                     <span className="channel-name">{channel.name}</span>
                   </div>
                   <div className="channel-badges">
-                    <span className="badge badge-category">{channel.group_title}</span>
-                    <span className="badge badge-quality">{channel.resolution || "HD"}</span>
+                    <span className="badge badge-category">
+                      {channel.group_title}
+                    </span>
+                    <span className="badge badge-quality">
+                      {channel.resolution || "HD"}
+                    </span>
                   </div>
                   <div className="channel-group">{channel.extra_info}</div>
                 </div>
                 <div className="channel-actions">
-                  <button 
+                  <button
                     className={`action-button ${isFavorite(channel) ? "favorite" : ""}`}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -157,7 +171,7 @@ export default function ChannelList({ channels }: ChannelListProps) {
       {/* Pagination Controls */}
       {totalPages > 1 && (
         <div className="pagination-controls">
-          <button 
+          <button
             className="pagination-btn"
             onClick={() => handlePageChange(1)}
             disabled={currentPage === 1}
@@ -165,7 +179,7 @@ export default function ChannelList({ channels }: ChannelListProps) {
           >
             ««
           </button>
-          <button 
+          <button
             className="pagination-btn"
             onClick={() => handlePageChange(currentPage - 1)}
             disabled={currentPage === 1}
@@ -173,18 +187,18 @@ export default function ChannelList({ channels }: ChannelListProps) {
           >
             ‹
           </button>
-          
-          {getPageNumbers().map(page => (
+
+          {getPageNumbers().map((page) => (
             <button
               key={page}
-              className={`pagination-btn ${page === currentPage ? 'active' : ''}`}
+              className={`pagination-btn ${page === currentPage ? "active" : ""}`}
               onClick={() => handlePageChange(page)}
             >
               {page}
             </button>
           ))}
-          
-          <button 
+
+          <button
             className="pagination-btn"
             onClick={() => handlePageChange(currentPage + 1)}
             disabled={currentPage === totalPages}
@@ -192,7 +206,7 @@ export default function ChannelList({ channels }: ChannelListProps) {
           >
             ›
           </button>
-          <button 
+          <button
             className="pagination-btn"
             onClick={() => handlePageChange(totalPages)}
             disabled={currentPage === totalPages}
@@ -204,4 +218,4 @@ export default function ChannelList({ channels }: ChannelListProps) {
       )}
     </div>
   );
-} 
+}

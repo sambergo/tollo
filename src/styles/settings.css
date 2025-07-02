@@ -96,12 +96,12 @@
     grid-template-rows: auto auto auto;
     gap: 2rem;
   }
-  
+
   /* Channel Lists takes full width at the top */
   .settings-card:first-child {
     grid-column: 1 / -1;
   }
-  
+
   /* Saved Filters takes full width at the bottom */
   .settings-card:last-child {
     grid-column: 1 / -1;
@@ -140,7 +140,7 @@
   .card-content {
     padding: 2rem;
   }
-  
+
   .card-header {
     padding: 2rem;
   }
@@ -170,11 +170,11 @@
   .add-list-form .form-row {
     gap: 1.5rem;
   }
-  
+
   .add-list-form .form-input {
     min-width: 200px;
   }
-  
+
   .add-list-form .btn-primary {
     min-width: 120px;
     white-space: nowrap;
@@ -239,8 +239,12 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .list-info {
@@ -351,4 +355,4 @@
   justify-content: center;
   padding-top: 1.5rem;
   border-top: 1px solid var(--border-primary);
-} 
+}

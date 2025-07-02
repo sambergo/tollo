@@ -1,14 +1,14 @@
 /* Import all modular CSS files */
-@import './styles/variables.css';
-@import './styles/navigation.css';
-@import './styles/channels.css';
-@import './styles/groups.css';
-@import './styles/video.css';
-@import './styles/details.css';
-@import './styles/buttons.css';
-@import './styles/forms.css';
-@import './styles/loading.css';
-@import './styles/pagination.css';
-@import './styles/settings.css';
-@import './styles/filters.css';
-@import './styles/responsive.css'; 
+@import "./styles/variables.css";
+@import "./styles/navigation.css";
+@import "./styles/channels.css";
+@import "./styles/groups.css";
+@import "./styles/video.css";
+@import "./styles/details.css";
+@import "./styles/buttons.css";
+@import "./styles/forms.css";
+@import "./styles/loading.css";
+@import "./styles/pagination.css";
+@import "./styles/settings.css";
+@import "./styles/filters.css";
+@import "./styles/responsive.css";

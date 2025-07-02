@@ -142,8 +142,13 @@
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 .btn-sm {
@@ -176,7 +181,7 @@
 }
 
 .toggle-button::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 2px;
   left: 2px;
@@ -222,4 +227,4 @@
 .toggle-setting .setting-description {
   font-size: 0.75rem;
   color: var(--text-muted);
-} 
+}

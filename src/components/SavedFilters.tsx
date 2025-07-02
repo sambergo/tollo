@@ -1,30 +1,42 @@
 import { useState, useEffect } from "react";
-import { useSearchStore, useUIStore, useFilterStore, useChannelStore, GroupDisplayMode, type SavedFilter } from "../stores";
+import {
+  useSearchStore,
+  useUIStore,
+  useFilterStore,
+  useChannelStore,
+  GroupDisplayMode,
+  type SavedFilter,
+} from "../stores";
 
 export default function SavedFilters() {
   const [currentPage, setCurrentPage] = useState(0);
   const { setSearchQuery } = useSearchStore();
-  const { setSelectedGroup, setGroupDisplayMode, setActiveTab, setFocusedIndex } = useUIStore();
+  const {
+    setSelectedGroup,
+    setGroupDisplayMode,
+    setActiveTab,
+    setFocusedIndex,
+  } = useUIStore();
   const { savedFilters, loadSavedFilters } = useFilterStore();
   const { selectedChannelListId } = useChannelStore();
-  
+
   // Load saved filters when channel list changes
   useEffect(() => {
     loadSavedFilters(selectedChannelListId);
   }, [selectedChannelListId, loadSavedFilters]);
-  
+
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(0);
   }, [savedFilters]);
-  
+
   const handleApplyFilter = (filter: SavedFilter) => {
     // Apply the search query
     setSearchQuery(filter.search_query);
-    
+
     // Apply the group selection and set appropriate display mode
     setSelectedGroup(filter.selected_group);
-    
+
     // If the filter has a selected group, switch to AllGroups mode to make the group filter active
     // If no group is selected, use EnabledGroups mode
     if (filter.selected_group) {
@@ -32,12 +44,12 @@ export default function SavedFilters() {
     } else {
       setGroupDisplayMode(GroupDisplayMode.EnabledGroups);
     }
-    
+
     // Switch to channels tab to see the results
     setActiveTab("channels");
     setFocusedIndex(0);
   };
-  
+
   if (savedFilters.length === 0) {
     return (
       <div className="saved-filters">
@@ -85,10 +97,12 @@ export default function SavedFilters() {
             <button
               className="saved-filter-button"
               onClick={() => handleApplyFilter(filter)}
-              title={`Press ${filter.slot_number === 0 ? '0' : filter.slot_number} to apply this filter`}
+              title={`Press ${filter.slot_number === 0 ? "0" : filter.slot_number} to apply this filter`}
             >
               <div className="filter-first-line">
-                <span className="filter-key">{filter.slot_number === 0 ? '0' : filter.slot_number}</span>
+                <span className="filter-key">
+                  {filter.slot_number === 0 ? "0" : filter.slot_number}
+                </span>
                 {filter.search_query && (
                   <span className="filter-query">{filter.search_query}</span>
                 )}
@@ -127,4 +141,4 @@ export default function SavedFilters() {
       </div>
     </div>
   );
-} 
+}

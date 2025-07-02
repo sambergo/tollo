@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import { invoke } from '@tauri-apps/api/core';
+import { create } from "zustand";
+import { invoke } from "@tauri-apps/api/core";
 
 export interface SavedFilter {
   slot_number: number;
@@ -12,19 +12,19 @@ interface FilterState {
   // Saved filters state
   savedFilters: SavedFilter[];
   isLoading: boolean;
-  
+
   // Actions
   setSavedFilters: (filters: SavedFilter[]) => void;
   setIsLoading: (loading: boolean) => void;
-  
+
   // Filter operations
   loadSavedFilters: (channelListId: number | null) => Promise<void>;
   saveFilter: (
     channelListId: number,
-    slotNumber: number, 
-    searchQuery: string, 
+    slotNumber: number,
+    searchQuery: string,
     selectedGroup: string | null,
-    name: string
+    name: string,
   ) => Promise<boolean>;
   deleteFilter: (channelListId: number, slotNumber: number) => Promise<boolean>;
   getFilter: (slotNumber: number) => SavedFilter | undefined;
@@ -35,11 +35,11 @@ export const useFilterStore = create<FilterState>((set, get) => ({
   // Initial state
   savedFilters: [],
   isLoading: false,
-  
+
   // Basic setters
   setSavedFilters: (savedFilters) => set({ savedFilters }),
   setIsLoading: (isLoading) => set({ isLoading }),
-  
+
   // Filter operations
   loadSavedFilters: async (channelListId) => {
     if (channelListId === null) {
@@ -49,8 +49,8 @@ export const useFilterStore = create<FilterState>((set, get) => ({
 
     set({ isLoading: true });
     try {
-      const filters = await invoke<SavedFilter[]>("get_saved_filters", { 
-        channelListId 
+      const filters = await invoke<SavedFilter[]>("get_saved_filters", {
+        channelListId,
       });
       set({ savedFilters: filters });
     } catch (error) {
@@ -61,14 +61,20 @@ export const useFilterStore = create<FilterState>((set, get) => ({
     }
   },
 
-  saveFilter: async (channelListId, slotNumber, searchQuery, selectedGroup, name) => {
+  saveFilter: async (
+    channelListId,
+    slotNumber,
+    searchQuery,
+    selectedGroup,
+    name,
+  ) => {
     try {
       await invoke("save_filter", {
         channelListId,
         slotNumber,
         searchQuery,
         selectedGroup,
-        name
+        name,
       });
 
       // Reload saved filters
@@ -84,7 +90,7 @@ export const useFilterStore = create<FilterState>((set, get) => ({
     try {
       await invoke("delete_saved_filter", {
         channelListId,
-        slotNumber
+        slotNumber,
       });
 
       // Reload saved filters
@@ -98,10 +104,10 @@ export const useFilterStore = create<FilterState>((set, get) => ({
 
   getFilter: (slotNumber) => {
     const { savedFilters } = get();
-    return savedFilters.find(filter => filter.slot_number === slotNumber);
+    return savedFilters.find((filter) => filter.slot_number === slotNumber);
   },
 
   refreshFilters: async (channelListId) => {
     await get().loadSavedFilters(channelListId);
   },
-})); 
+}));
