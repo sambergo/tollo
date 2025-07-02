@@ -1,5 +1,5 @@
 use std::fs;
-use tauri::State;
+use tauri::{State, Manager};
 use reqwest;
 use rusqlite;
 use uuid::Uuid;
@@ -310,5 +310,14 @@ pub fn update_channel_list(
     // Invalidate cache since channel list was updated
     invalidate_channel_cache(cache_state)?;
     
+    Ok(())
+}
+
+#[tauri::command]
+pub fn start_channel_list_selection(
+    cache_state: State<ChannelCacheState>,
+) -> Result<(), String> {
+    // Simply invalidate the cache to trigger a reload
+    invalidate_channel_cache(cache_state)?;
     Ok(())
 } 

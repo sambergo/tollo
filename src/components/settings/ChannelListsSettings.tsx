@@ -30,6 +30,7 @@ export function ChannelListsSettings({
   const [newListSource, setNewListSource] = useState("");
   const [editingList, setEditingList] = useState<ChannelList | null>(null);
   const [isAddingList, setIsAddingList] = useState(false);
+  const [selectingList, setSelectingList] = useState<number | null>(null);
 
   // Get data from stores
   const { channelLists } = useSettingsStore();
@@ -94,6 +95,25 @@ export function ChannelListsSettings({
 
   const handleEditClick = (list: ChannelList) => {
     setEditingList({ ...list });
+  };
+
+  const handleSelectList = (id: number) => {
+    setSelectingList(id);
+    
+    // Use setTimeout to ensure the UI updates before starting the operation
+    setTimeout(async () => {
+      try {
+        // Call the new backend command to prepare for selection
+        await invoke("start_channel_list_selection");
+        
+        // Then call the original select handler
+        await onSelectList(id);
+      } catch (error) {
+        console.error("Failed to select channel list:", error);
+      } finally {
+        setSelectingList(null);
+      }
+    }, 50); // Small delay to ensure UI renders
   };
 
   return (
@@ -197,10 +217,10 @@ export function ChannelListsSettings({
                   <div className="list-actions">
                     <button 
                       className="btn-primary btn-sm"
-                      onClick={() => onSelectList(list.id)}
-                      disabled={loadingLists.has(list.id) || selectedChannelListId === list.id}
+                      onClick={() => handleSelectList(list.id)}
+                      disabled={loadingLists.has(list.id) || selectedChannelListId === list.id || selectingList === list.id}
                     >
-                      Select
+                      {selectingList === list.id ? "Selecting..." : "Select"}
                     </button>
                     
                     <button 

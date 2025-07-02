@@ -82,6 +82,7 @@ pub fn run() {
             validate_and_add_channel_list,
             delete_channel_list,
             update_channel_list,
+            start_channel_list_selection,
             // Image cache commands
             get_cached_image,
             clear_image_cache,

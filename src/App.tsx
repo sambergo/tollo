@@ -134,36 +134,56 @@ function App() {
       setSkipSearchEffect(true);
       
       try {
-        await fetchChannels(selectedChannelListId);
-        await fetchFavorites();
-        await fetchGroups(selectedChannelListId);
-        await fetchHistory();
-        
-        // Handle group selections for the new channel list
-        // Get all groups for this channel list
-        const fetchedGroups = await invoke<string[]>("get_groups", { id: selectedChannelListId });
-        
-        // Sync groups with database (adds new groups, removes deleted ones)
-        await syncGroupsForChannelList(selectedChannelListId, fetchedGroups);
-        
-        // Load enabled groups for this channel list
-        const currentEnabledGroups = await fetchEnabledGroups(selectedChannelListId);
-        
-        // Auto-enable all groups if none are enabled (new or empty list)  
-        if (currentEnabledGroups.length === 0 && fetchedGroups.length > 0) {
-          console.log(`Auto-enabling all ${fetchedGroups.length} groups for new channel list`);
-          // Use bulk operation instead of individual calls to avoid UI blocking
-          await invoke("enable_all_groups", {
-            channelListId: selectedChannelListId,
-            groups: fetchedGroups
+        // Use setTimeout to break up the work and keep UI responsive
+        const performStep = (step: () => Promise<void>) => {
+          return new Promise<void>((resolve) => {
+            setTimeout(async () => {
+              await step();
+              resolve();
+            }, 10); // Small delay to allow UI updates
           });
-          // Refresh enabled groups to get the updated list
-          await fetchEnabledGroups(selectedChannelListId);
-        }
+        };
+
+        // Step 1: Fetch core data
+        await performStep(async () => {
+          await fetchChannels(selectedChannelListId);
+          await fetchFavorites();
+        });
+
+        // Step 2: Fetch groups and history
+        await performStep(async () => {
+          await fetchGroups(selectedChannelListId);
+          await fetchHistory();
+        });
         
-        // Reset UI state for new channel list
-        setGroupDisplayMode(GroupDisplayMode.EnabledGroups);
-        setSelectedGroup(null);
+        // Step 3: Handle group setup
+        await performStep(async () => {
+          // Get all groups for this channel list
+          const fetchedGroups = await invoke<string[]>("get_groups", { id: selectedChannelListId });
+          
+          // Sync groups with database (adds new groups, removes deleted ones)
+          await syncGroupsForChannelList(selectedChannelListId, fetchedGroups);
+          
+          // Load enabled groups for this channel list
+          const currentEnabledGroups = await fetchEnabledGroups(selectedChannelListId);
+          
+          // Auto-enable all groups if none are enabled (new or empty list)  
+          if (currentEnabledGroups.length === 0 && fetchedGroups.length > 0) {
+            console.log(`Auto-enabling all ${fetchedGroups.length} groups for new channel list`);
+            // Use bulk operation instead of individual calls to avoid UI blocking
+            await invoke("enable_all_groups", {
+              channelListId: selectedChannelListId,
+              groups: fetchedGroups
+            });
+            // Refresh enabled groups to get the updated list
+            await fetchEnabledGroups(selectedChannelListId);
+          }
+          
+          // Reset UI state for new channel list
+          setGroupDisplayMode(GroupDisplayMode.EnabledGroups);
+          setSelectedGroup(null);
+        });
+        
       } catch (error) {
         console.error("Failed to load channel list data:", error);
       } finally {
