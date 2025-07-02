@@ -1,11 +1,17 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import type { Channel } from "../components/ChannelList";
+import { useUIStore } from "../stores";
 
 export function useChannelSearch(selectedChannelListId: number | null) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
+  const {
+    searchQuery,
+    debouncedSearchQuery,
+    isSearching,
+    setSearchQuery,
+    setDebouncedSearchQuery,
+    setIsSearching
+  } = useUIStore();
 
   // Debounce search query
   useEffect(() => {
@@ -14,7 +20,7 @@ export function useChannelSearch(selectedChannelListId: number | null) {
     }, 400);
 
     return () => clearTimeout(timer);
-  }, [searchQuery]);
+  }, [searchQuery, setDebouncedSearchQuery]);
 
   const searchChannels = async (query: string): Promise<Channel[]> => {
     if (query === "" || query.length < 3) {

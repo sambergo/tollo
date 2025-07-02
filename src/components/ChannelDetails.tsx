@@ -1,22 +1,32 @@
 import CachedImage from "./CachedImage";
 import { SignalIcon, StarIcon } from "./Icons";
 import type { Channel } from "./ChannelList";
+import { useChannelStore, useUserDataStore, useVideoPlayerStore } from "../stores";
+import { invoke } from "@tauri-apps/api/core";
 
-interface ChannelDetailsProps {
-  selectedChannel: Channel;
-  channels: Channel[];
-  isFavorite: boolean;
-  onPlayInMpv: (channel: Channel) => void;
-  onToggleFavorite: (channel: Channel) => void;
-}
+export default function ChannelDetails() {
+  const { selectedChannel, channels } = useChannelStore();
+  const { favorites, toggleFavorite, fetchHistory } = useUserDataStore();
+  const { cleanupVideo } = useVideoPlayerStore();
 
-export default function ChannelDetails({ 
-  selectedChannel, 
-  channels, 
-  isFavorite, 
-  onPlayInMpv, 
-  onToggleFavorite 
-}: ChannelDetailsProps) {
+  if (!selectedChannel) {
+    return null;
+  }
+
+  const isFavorite = favorites.some((fav: Channel) => fav.name === selectedChannel.name);
+
+  const handlePlayInMpv = async (channel: Channel) => {
+    if (channel) {
+      cleanupVideo();
+      await invoke("play_channel", { channel });
+      await fetchHistory();
+    }
+  };
+
+  const handleToggleFavorite = async (channel: Channel) => {
+    await toggleFavorite(channel);
+  };
+
   return (
     <div className="channel-details">
       <div className="channel-details-content">
@@ -50,13 +60,13 @@ export default function ChannelDetails({
         <div className="actions-section">
           <button 
             className="primary-button"
-            onClick={() => onPlayInMpv(selectedChannel)}
+            onClick={() => handlePlayInMpv(selectedChannel)}
           >
             Play in MPV
           </button>
           <button 
             className="secondary-button"
-            onClick={() => onToggleFavorite(selectedChannel)}
+            onClick={() => handleToggleFavorite(selectedChannel)}
           >
             {isFavorite ? "Remove from Favorites" : "Add to Favorites"}
           </button>

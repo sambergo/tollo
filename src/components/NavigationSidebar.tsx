@@ -1,22 +1,41 @@
 import { TvIcon, HeartIcon, UsersIcon, HistoryIcon, SettingsIcon } from "./Icons";
 import SavedFilters from "./SavedFilters";
-import type { SavedFilter } from "../hooks/useSavedFilters";
+import { useUIStore, useGroupStore, GroupDisplayMode } from "../stores";
+import { useSavedFilters, type SavedFilter } from "../hooks/useSavedFilters";
+import { useChannelStore } from "../stores";
 
 type Tab = "channels" | "favorites" | "groups" | "history" | "settings";
 
-interface NavigationSidebarProps {
-  activeTab: Tab;
-  onTabChange: (tab: Tab) => void;
-  savedFilters: SavedFilter[];
-  onApplyFilter: (filter: SavedFilter) => void;
-}
+export default function NavigationSidebar() {
+  const { activeTab, setActiveTab, setFocusedIndex, setSearchQuery } = useUIStore();
+  const { setSelectedGroup, setGroupDisplayMode } = useGroupStore();
+  const { selectedChannelListId } = useChannelStore();
+  const { savedFilters } = useSavedFilters(selectedChannelListId);
 
-export default function NavigationSidebar({ 
-  activeTab, 
-  onTabChange, 
-  savedFilters, 
-  onApplyFilter
-}: NavigationSidebarProps) {
+  const handleTabChange = (tab: Tab) => {
+    setActiveTab(tab);
+  };
+
+  const handleApplyFilter = (filter: SavedFilter) => {
+    // Apply the search query
+    setSearchQuery(filter.search_query);
+    
+    // Apply the group selection and set appropriate display mode
+    setSelectedGroup(filter.selected_group);
+    
+    // If the filter has a selected group, switch to AllGroups mode to make the group filter active
+    // If no group is selected, use EnabledGroups mode
+    if (filter.selected_group) {
+      setGroupDisplayMode(GroupDisplayMode.AllGroups);
+    } else {
+      setGroupDisplayMode(GroupDisplayMode.EnabledGroups);
+    }
+    
+    // Switch to channels tab to see the results
+    setActiveTab("channels");
+    setFocusedIndex(0);
+  };
+
   return (
     <div className="nav-sidebar">
       <div className="app-header">
@@ -27,35 +46,35 @@ export default function NavigationSidebar({
         <nav className="nav-menu">
           <button 
             className={`nav-button ${activeTab === "channels" ? "active" : ""}`}
-            onClick={() => onTabChange("channels")}
+            onClick={() => handleTabChange("channels")}
           >
             <TvIcon />
             Channels
           </button>
           <button 
             className={`nav-button ${activeTab === "favorites" ? "active" : ""}`}
-            onClick={() => onTabChange("favorites")}
+            onClick={() => handleTabChange("favorites")}
           >
             <HeartIcon />
             Favorites
           </button>
           <button 
             className={`nav-button ${activeTab === "groups" ? "active" : ""}`}
-            onClick={() => onTabChange("groups")}
+            onClick={() => handleTabChange("groups")}
           >
             <UsersIcon />
             Groups
           </button>
           <button 
             className={`nav-button ${activeTab === "history" ? "active" : ""}`}
-            onClick={() => onTabChange("history")}
+            onClick={() => handleTabChange("history")}
           >
             <HistoryIcon />
             History
           </button>
           <button 
             className={`nav-button ${activeTab === "settings" ? "active" : ""}`}
-            onClick={() => onTabChange("settings")}
+            onClick={() => handleTabChange("settings")}
           >
             <SettingsIcon />
             Settings
@@ -64,7 +83,7 @@ export default function NavigationSidebar({
       </div>
       <SavedFilters 
         savedFilters={savedFilters}
-        onApplyFilter={onApplyFilter}
+        onApplyFilter={handleApplyFilter}
       />
     </div>
   );
