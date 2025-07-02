@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { useChannelStore, useSettingsStore, useUIStore } from "../stores";
+import { useChannelStore, useSettingsStore, useUIStore, useSearchStore } from "../stores";
 import type { ChannelList } from "../types/settings";
 import { ChannelListsSettings } from "./settings/ChannelListsSettings";
 import { PlayerSettings } from "./settings/PlayerSettings";
@@ -13,9 +13,17 @@ function Settings() {
   const [loadingLists, setLoadingLists] = useState<Set<number>>(new Set());
   
   // Get state and actions from stores
-  const { selectedChannelListId, setSelectedChannelListId, setIsLoadingChannelList, setChannels } = useChannelStore();
+  const { selectedChannelListId, setSelectedChannelListId, setIsLoadingChannelList, setChannels, setSelectedChannel } = useChannelStore();
   const { setChannelLists } = useSettingsStore();
-  const { setActiveTab } = useUIStore();
+  const { setActiveTab, clearGroupFilter } = useUIStore();
+  const { clearSearch } = useSearchStore();
+
+  // Clear all UI state to provide a clean starting point
+  const resetToDefaultState = () => {
+    setSelectedChannel(null);
+    clearSearch();
+    clearGroupFilter();
+  };
 
   async function fetchChannelListsData() {
     const fetchedLists = await invoke<ChannelList[]>("get_channel_lists");
@@ -48,6 +56,9 @@ function Settings() {
       
       // Clear current data to show loading state immediately
       setChannels([]);
+      
+      // Clear selected channel to get a clean starting point
+      resetToDefaultState();
       
       // Update selected channel list
       setSelectedChannelListId(id);
