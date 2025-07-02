@@ -56,7 +56,7 @@ function App() {
   } = useSearchStore();
 
   // Get settings
-  const { enablePreview, fetchEnablePreview } = useSettingsStore();
+  const { enablePreview, fetchEnablePreview, autoplay } = useSettingsStore();
 
   // Refs for video player
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -192,19 +192,19 @@ function App() {
         hls.loadSource(selectedChannel.url);
         hls.attachMedia(video);
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          video.play();
+          if (autoplay) video.play();
         });
       } else if (isHlsUrl && video.canPlayType("application/vnd.apple.mpegurl")) {
         // Native HLS support (Safari)
         video.src = selectedChannel.url;
         video.addEventListener("loadedmetadata", () => {
-          video.play();
+          if (autoplay) video.play();
         });
       } else {
         // Fallback for direct video streams (MP4, WebM, etc.) and other protocols
         video.src = selectedChannel.url;
         video.addEventListener("loadedmetadata", () => {
-          video.play();
+          if (autoplay) video.play();
         });
         
         // Handle load errors gracefully
@@ -213,7 +213,7 @@ function App() {
         });
       }
     }
-  }, [selectedChannel, enablePreview]);
+  }, [selectedChannel, enablePreview, autoplay]);
 
   const handleSelectGroup = (group: string | null) => {
     setSelectedGroup(group);
