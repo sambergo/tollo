@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { useChannelStore, useSettingsStore } from "../../stores";
 import type { ChannelList } from "../../types/settings";
 import { 
   ListIcon, 
@@ -13,19 +14,15 @@ import {
 } from "./SettingsIcons";
 
 interface ChannelListsSettingsProps {
-  channelLists: ChannelList[];
   defaultChannelList: number | null;
   loadingLists: Set<number>;
-  selectedChannelListId: number | null;
   onSelectList: (id: number) => void;
   onRefreshLists: () => Promise<void>;
 }
 
 export function ChannelListsSettings({
-  channelLists,
   defaultChannelList,
   loadingLists,
-  selectedChannelListId,
   onSelectList,
   onRefreshLists
 }: ChannelListsSettingsProps) {
@@ -33,6 +30,10 @@ export function ChannelListsSettings({
   const [newListSource, setNewListSource] = useState("");
   const [editingList, setEditingList] = useState<ChannelList | null>(null);
   const [isAddingList, setIsAddingList] = useState(false);
+
+  // Get data from stores
+  const { channelLists } = useSettingsStore();
+  const { selectedChannelListId } = useChannelStore();
 
   const handleAddChannelList = async () => {
     if (newListName && newListSource) {
@@ -198,39 +199,42 @@ export function ChannelListsSettings({
                       className="btn-primary btn-sm"
                       onClick={() => onSelectList(list.id)}
                       disabled={loadingLists.has(list.id) || selectedChannelListId === list.id}
-                      title={loadingLists.has(list.id) ? "Fetching channels..." : selectedChannelListId === list.id ? "Selected" : "Select this list"}
                     >
-                      {loadingLists.has(list.id) ? "Fetching..." : "Select"}
+                      Select
                     </button>
+                    
                     <button 
-                      className={`btn-icon ${defaultChannelList === list.id ? 'active' : ''}`}
-                      onClick={() => handleSetDefault(list.id)}
-                      title={defaultChannelList === list.id ? "Default" : "Set as Default"}
-                      disabled={loadingLists.has(list.id)}
-                    >
-                      <StarIcon filled={defaultChannelList === list.id} />
-                    </button>
-                    <button 
-                      className="btn-icon"
+                      className="btn-icon btn-secondary"
                       onClick={() => handleRefreshChannelList(list.id)}
-                      title="Refresh"
                       disabled={loadingLists.has(list.id)}
+                      title="Refresh channel list data"
                     >
                       <RefreshIcon />
                     </button>
+                    
                     <button 
-                      className="btn-icon"
+                      className="btn-icon btn-secondary"
                       onClick={() => handleEditClick(list)}
-                      title="Edit"
                       disabled={loadingLists.has(list.id)}
+                      title="Edit channel list"
                     >
                       <EditIcon />
                     </button>
+                    
+                    <button 
+                      className="btn-icon btn-secondary"
+                      onClick={() => handleSetDefault(list.id)}
+                      disabled={loadingLists.has(list.id) || defaultChannelList === list.id}
+                      title="Set as default channel list"
+                    >
+                      <StarIcon filled={defaultChannelList === list.id} />
+                    </button>
+                    
                     <button 
                       className="btn-icon btn-danger"
                       onClick={() => handleDeleteChannelList(list.id)}
-                      title="Delete"
                       disabled={loadingLists.has(list.id)}
+                      title="Delete channel list"
                     >
                       <TrashIcon />
                     </button>
@@ -240,6 +244,10 @@ export function ChannelListsSettings({
             </div>
           ))}
         </div>
+
+        {channelLists.length === 0 && (
+          <p className="form-help">No channel lists found. Add one above to get started.</p>
+        )}
       </div>
     </div>
   );

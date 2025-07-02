@@ -46,4 +46,25 @@
 
 .form-row .form-input {
   flex: 1;
+}
+
+/* Checkbox styles */
+.form-checkbox {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  flex: 1;
+}
+
+.form-checkbox input[type="checkbox"] {
+  margin-right: 0.75rem;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--accent-blue);
+}
+
+.form-checkbox .checkmark {
+  display: none; /* Using native checkbox styling for simplicity */
 } 

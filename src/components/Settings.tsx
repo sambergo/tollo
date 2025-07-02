@@ -1,18 +1,31 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import type { ChannelList, SettingsProps } from "../types/settings";
+import { useChannelStore, useSettingsStore, useUIStore, useSearchStore } from "../stores";
+import type { ChannelList } from "../types/settings";
 import { ChannelListsSettings } from "./settings/ChannelListsSettings";
 import { PlayerSettings } from "./settings/PlayerSettings";
 import { CacheSettings } from "./settings/CacheSettings";
 import { ImageCacheSettings } from "./settings/ImageCacheSettings";
 import { SavedFiltersSettings } from "./settings/SavedFiltersSettings";
 
-function Settings({ onSelectList, onFiltersChanged, selectedChannelListId }: SettingsProps) {
-  const [channelLists, setChannelLists] = useState<ChannelList[]>([]);
+function Settings() {
   const [defaultChannelList, setDefaultChannelList] = useState<number | null>(null);
   const [loadingLists, setLoadingLists] = useState<Set<number>>(new Set());
+  
+  // Get state and actions from stores
+  const { selectedChannelListId, setSelectedChannelListId, setIsLoadingChannelList, setChannels, setSelectedChannel } = useChannelStore();
+  const { setChannelLists } = useSettingsStore();
+  const { setActiveTab, clearGroupFilter } = useUIStore();
+  const { clearSearch } = useSearchStore();
 
-  async function fetchChannelLists() {
+  // Clear all UI state to provide a clean starting point
+  const resetToDefaultState = () => {
+    setSelectedChannel(null);
+    clearSearch();
+    clearGroupFilter();
+  };
+
+  async function fetchChannelListsData() {
     const fetchedLists = await invoke<ChannelList[]>("get_channel_lists");
     setChannelLists(fetchedLists);
     const defaultList = fetchedLists.find((list) => list.is_default);
@@ -22,11 +35,11 @@ function Settings({ onSelectList, onFiltersChanged, selectedChannelListId }: Set
   }
 
   useEffect(() => {
-    fetchChannelLists();
+    fetchChannelListsData();
   }, []);
 
   const handleRefreshLists = async () => {
-    await fetchChannelLists();
+    await fetchChannelListsData();
   };
 
   const handleSelectList = async (id: number) => {
@@ -37,7 +50,22 @@ function Settings({ onSelectList, onFiltersChanged, selectedChannelListId }: Set
     
     try {
       setLoadingLists(prev => new Set([...prev, id]));
-      onSelectList(id);
+      
+      // Set loading state immediately when user clicks Select
+      setIsLoadingChannelList(true);
+      
+      // Clear current data to show loading state immediately
+      setChannels([]);
+      
+      // Clear selected channel to get a clean starting point
+      resetToDefaultState();
+      
+      // Update selected channel list
+      setSelectedChannelListId(id);
+      
+      // Navigate back to channels tab to see the loaded data
+      setActiveTab("channels");
+      
     } finally {
       setLoadingLists(prev => {
         const newSet = new Set(prev);
@@ -47,13 +75,13 @@ function Settings({ onSelectList, onFiltersChanged, selectedChannelListId }: Set
     }
   };
 
+
+
   return (
     <div className="settings-layout">
       <ChannelListsSettings
-        channelLists={channelLists}
         defaultChannelList={defaultChannelList}
         loadingLists={loadingLists}
-        selectedChannelListId={selectedChannelListId}
         onSelectList={handleSelectList}
         onRefreshLists={handleRefreshLists}
       />
@@ -64,10 +92,7 @@ function Settings({ onSelectList, onFiltersChanged, selectedChannelListId }: Set
 
       <ImageCacheSettings />
 
-      <SavedFiltersSettings
-        channelLists={channelLists}
-        onFiltersChanged={onFiltersChanged}
-      />
+      <SavedFiltersSettings />
     </div>
   );
 }

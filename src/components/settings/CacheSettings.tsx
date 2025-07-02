@@ -1,21 +1,21 @@
-import { useState, useEffect } from "react";
-import { invoke } from "@tauri-apps/api/core";
+import { useEffect } from "react";
+import { useSettingsStore } from "../../stores";
 import { ClockIcon } from "./SettingsIcons";
 
 export function CacheSettings() {
-  const [cacheDuration, setCacheDuration] = useState(24);
+  const { 
+    cacheDuration, 
+    setCacheDuration, 
+    saveCacheDuration, 
+    fetchCacheDuration 
+  } = useSettingsStore();
 
   useEffect(() => {
     fetchCacheDuration();
-  }, []);
-
-  async function fetchCacheDuration() {
-    const duration = await invoke<number>("get_cache_duration");
-    setCacheDuration(duration);
-  }
+  }, [fetchCacheDuration]);
 
   const handleSaveCacheDuration = async () => {
-    await invoke("set_cache_duration", { hours: cacheDuration });
+    await saveCacheDuration();
   };
 
   return (

@@ -5,6 +5,19 @@
   overflow-y: auto;
 }
 
+/* When preview is disabled, ChannelDetails gets more space */
+.video-section.preview-disabled .channel-details {
+  padding: 2rem;
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+}
+
+.video-section.preview-disabled .channel-details-content {
+  max-width: 40rem;
+  margin: 0 auto;
+}
+
 .channel-details::-webkit-scrollbar {
   width: 6px;
 }

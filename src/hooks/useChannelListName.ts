@@ -1,21 +1,12 @@
-import { useState, useEffect } from "react";
-import { invoke } from "@tauri-apps/api/core";
+import { useEffect } from "react";
+import { useSettingsStore } from "../stores";
 
 export function useChannelListName(selectedChannelListId: number | null) {
-  const [channelListName, setChannelListName] = useState<string>("");
+  const { channelListName, getChannelListName } = useSettingsStore();
 
   useEffect(() => {
-    async function fetchChannelLists() {
-      const lists = await invoke<any[]>("get_channel_lists");
-      const found = lists.find((l) => l.id === selectedChannelListId);
-      setChannelListName(found ? found.name : "");
-    }
-    if (selectedChannelListId !== null) {
-      fetchChannelLists();
-    } else {
-      setChannelListName("");
-    }
-  }, [selectedChannelListId]);
+    getChannelListName(selectedChannelListId);
+  }, [selectedChannelListId, getChannelListName]);
 
   return channelListName;
 } 

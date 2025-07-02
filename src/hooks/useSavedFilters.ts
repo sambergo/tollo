@@ -1,42 +1,25 @@
-import { useState, useEffect } from "react";
-import { invoke } from "@tauri-apps/api/core";
+import { useEffect } from "react";
+import { useFilterStore, type SavedFilter } from "../stores";
 
-export interface SavedFilter {
-  slot_number: number;
-  search_query: string;
-  selected_group: string | null;
-  name: string;
-}
+export type { SavedFilter };
 
 export function useSavedFilters(selectedChannelListId: number | null) {
-  const [savedFilters, setSavedFilters] = useState<SavedFilter[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const { 
+    savedFilters, 
+    isLoading, 
+    loadSavedFilters,
+    saveFilter: storeSaveFilter,
+    deleteFilter: storeDeleteFilter,
+    getFilter,
+    refreshFilters: storeRefreshFilters
+  } = useFilterStore();
 
   // Load saved filters when channel list changes
   useEffect(() => {
-    const loadSavedFilters = async () => {
-      if (selectedChannelListId === null) {
-        setSavedFilters([]);
-        return;
-      }
+    loadSavedFilters(selectedChannelListId);
+  }, [selectedChannelListId, loadSavedFilters]);
 
-      setIsLoading(true);
-      try {
-        const filters = await invoke<SavedFilter[]>("get_saved_filters", { 
-          channelListId: selectedChannelListId 
-        });
-        setSavedFilters(filters);
-      } catch (error) {
-        console.error("Failed to load saved filters:", error);
-        setSavedFilters([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadSavedFilters();
-  }, [selectedChannelListId]);
-
+  // Wrapper functions to include selectedChannelListId
   const saveFilter = async (
     slotNumber: number, 
     searchQuery: string, 
@@ -44,71 +27,16 @@ export function useSavedFilters(selectedChannelListId: number | null) {
     name: string
   ): Promise<boolean> => {
     if (selectedChannelListId === null) return false;
-
-    try {
-      await invoke("save_filter", {
-        channelListId: selectedChannelListId,
-        slotNumber,
-        searchQuery,
-        selectedGroup,
-        name
-      });
-
-      // Reload saved filters
-      const filters = await invoke<SavedFilter[]>("get_saved_filters", { 
-        channelListId: selectedChannelListId 
-      });
-      setSavedFilters(filters);
-      return true;
-    } catch (error) {
-      console.error("Failed to save filter:", error);
-      return false;
-    }
+    return storeSaveFilter(selectedChannelListId, slotNumber, searchQuery, selectedGroup, name);
   };
 
   const deleteFilter = async (slotNumber: number): Promise<boolean> => {
     if (selectedChannelListId === null) return false;
-
-    try {
-      await invoke("delete_saved_filter", {
-        channelListId: selectedChannelListId,
-        slotNumber
-      });
-
-      // Reload saved filters
-      const filters = await invoke<SavedFilter[]>("get_saved_filters", { 
-        channelListId: selectedChannelListId 
-      });
-      setSavedFilters(filters);
-      return true;
-    } catch (error) {
-      console.error("Failed to delete filter:", error);
-      return false;
-    }
-  };
-
-  const getFilter = (slotNumber: number): SavedFilter | undefined => {
-    return savedFilters.find(filter => filter.slot_number === slotNumber);
+    return storeDeleteFilter(selectedChannelListId, slotNumber);
   };
 
   const refreshFilters = async (): Promise<void> => {
-    if (selectedChannelListId === null) {
-      setSavedFilters([]);
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const filters = await invoke<SavedFilter[]>("get_saved_filters", { 
-        channelListId: selectedChannelListId 
-      });
-      setSavedFilters(filters);
-    } catch (error) {
-      console.error("Failed to refresh saved filters:", error);
-      setSavedFilters([]);
-    } finally {
-      setIsLoading(false);
-    }
+    return storeRefreshFilters(selectedChannelListId);
   };
 
   return {

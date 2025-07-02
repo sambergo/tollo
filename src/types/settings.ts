@@ -1,4 +1,4 @@
-import type { SavedFilter } from "../hooks/useSavedFilters";
+import type { SavedFilter } from "../stores";
 
 export interface ChannelList {
   id: number;
@@ -10,10 +10,4 @@ export interface ChannelList {
 
 export interface ChannelListWithFilters extends ChannelList {
   savedFilters: SavedFilter[];
-}
-
-export interface SettingsProps {
-  onSelectList: (id: number) => void;
-  onFiltersChanged?: () => Promise<void>;
-  selectedChannelListId: number | null;
 } 

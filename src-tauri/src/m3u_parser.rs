@@ -96,7 +96,8 @@ pub fn get_channels(conn: &mut Connection, id: Option<i32>) -> Vec<Channel> {
         if let (Some(fp), Some(lf)) = (filepath, last_fetched) {
             if now - lf < cache_duration_hours * 3600 {
                 let data_dir = dirs::data_dir().unwrap().join("gui-tollo");
-                if let Ok(content) = fs::read_to_string(data_dir.join(fp)) {
+                let channel_lists_dir = data_dir.join("channel_lists");
+                if let Ok(content) = fs::read_to_string(channel_lists_dir.join(fp)) {
                     return parse_m3u_content(&content);
                 }
             }
@@ -105,8 +106,10 @@ pub fn get_channels(conn: &mut Connection, id: Option<i32>) -> Vec<Channel> {
         if source.starts_with("http") {
             if let Ok(content) = reqwest::blocking::get(&source).and_then(|resp| resp.text()) {
                 let data_dir = dirs::data_dir().unwrap().join("gui-tollo");
+                let channel_lists_dir = data_dir.join("channel_lists");
+                let _ = fs::create_dir_all(&channel_lists_dir);
                 let filename = format!("{}.m3u", Uuid::new_v4());
-                let new_filepath = data_dir.join(&filename);
+                let new_filepath = channel_lists_dir.join(&filename);
                 if fs::write(&new_filepath, &content).is_ok() {
                     conn.execute(
                         "UPDATE channel_lists SET filepath = ?1, last_fetched = ?2 WHERE id = ?3",
@@ -117,7 +120,8 @@ pub fn get_channels(conn: &mut Connection, id: Option<i32>) -> Vec<Channel> {
             }
         } else {
             let data_dir = dirs::data_dir().unwrap().join("gui-tollo");
-            if let Ok(content) = fs::read_to_string(data_dir.join(&source)) {
+            let channel_lists_dir = data_dir.join("channel_lists");
+            if let Ok(content) = fs::read_to_string(channel_lists_dir.join(&source)) {
                 return parse_m3u_content(&content);
             }
         }

@@ -1,22 +1,29 @@
 import CachedImage from "./CachedImage";
 import { SignalIcon, StarIcon } from "./Icons";
-import type { Channel } from "./ChannelList";
+import { useChannelStore } from "../stores";
 
-interface ChannelDetailsProps {
-  selectedChannel: Channel;
-  channels: Channel[];
-  isFavorite: boolean;
-  onPlayInMpv: (channel: Channel) => void;
-  onToggleFavorite: (channel: Channel) => void;
-}
 
-export default function ChannelDetails({ 
-  selectedChannel, 
-  channels, 
-  isFavorite, 
-  onPlayInMpv, 
-  onToggleFavorite 
-}: ChannelDetailsProps) {
+export default function ChannelDetails() {
+  const { 
+    selectedChannel, 
+    channels, 
+    favorites, 
+    toggleFavorite, 
+    playInMpv 
+  } = useChannelStore();
+
+  if (!selectedChannel) {
+    return (
+      <div className="channel-details">
+        <div className="channel-details-content">
+          <p>No channel selected</p>
+        </div>
+      </div>
+    );
+  }
+
+  const isFavorite = favorites.some((fav) => fav.name === selectedChannel.name);
+
   return (
     <div className="channel-details">
       <div className="channel-details-content">
@@ -50,13 +57,13 @@ export default function ChannelDetails({
         <div className="actions-section">
           <button 
             className="primary-button"
-            onClick={() => onPlayInMpv(selectedChannel)}
+            onClick={() => playInMpv(selectedChannel)}
           >
             Play in MPV
           </button>
           <button 
             className="secondary-button"
-            onClick={() => onToggleFavorite(selectedChannel)}
+            onClick={() => toggleFavorite(selectedChannel)}
           >
             {isFavorite ? "Remove from Favorites" : "Add to Favorites"}
           </button>

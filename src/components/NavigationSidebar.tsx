@@ -1,22 +1,13 @@
 import { TvIcon, HeartIcon, UsersIcon, HistoryIcon, SettingsIcon } from "./Icons";
 import SavedFilters from "./SavedFilters";
-import type { SavedFilter } from "../hooks/useSavedFilters";
+import { useUIStore, useChannelStore } from "../stores";
 
 type Tab = "channels" | "favorites" | "groups" | "history" | "settings";
 
-interface NavigationSidebarProps {
-  activeTab: Tab;
-  onTabChange: (tab: Tab) => void;
-  savedFilters: SavedFilter[];
-  onApplyFilter: (filter: SavedFilter) => void;
-}
+export default function NavigationSidebar() {
+  const { activeTab, setActiveTab } = useUIStore();
+  const { selectedChannelListId } = useChannelStore();
 
-export default function NavigationSidebar({ 
-  activeTab, 
-  onTabChange, 
-  savedFilters, 
-  onApplyFilter
-}: NavigationSidebarProps) {
   return (
     <div className="nav-sidebar">
       <div className="app-header">
@@ -27,45 +18,44 @@ export default function NavigationSidebar({
         <nav className="nav-menu">
           <button 
             className={`nav-button ${activeTab === "channels" ? "active" : ""}`}
-            onClick={() => onTabChange("channels")}
+            onClick={() => setActiveTab("channels")}
           >
             <TvIcon />
             Channels
           </button>
           <button 
             className={`nav-button ${activeTab === "favorites" ? "active" : ""}`}
-            onClick={() => onTabChange("favorites")}
+            onClick={() => setActiveTab("favorites")}
           >
             <HeartIcon />
             Favorites
           </button>
           <button 
             className={`nav-button ${activeTab === "groups" ? "active" : ""}`}
-            onClick={() => onTabChange("groups")}
+            onClick={() => setActiveTab("groups")}
           >
             <UsersIcon />
             Groups
           </button>
           <button 
             className={`nav-button ${activeTab === "history" ? "active" : ""}`}
-            onClick={() => onTabChange("history")}
+            onClick={() => setActiveTab("history")}
           >
             <HistoryIcon />
             History
           </button>
           <button 
             className={`nav-button ${activeTab === "settings" ? "active" : ""}`}
-            onClick={() => onTabChange("settings")}
+            onClick={() => setActiveTab("settings")}
           >
             <SettingsIcon />
             Settings
           </button>
         </nav>
       </div>
-      <SavedFilters 
-        savedFilters={savedFilters}
-        onApplyFilter={onApplyFilter}
-      />
+      {selectedChannelListId && (
+        <SavedFilters />
+      )}
     </div>
   );
 }

@@ -1,21 +1,55 @@
 import { useState, useEffect } from "react";
-import type { SavedFilter } from "../hooks/useSavedFilters";
+import { useSearchStore, useUIStore, useFilterStore, useChannelStore, GroupDisplayMode, type SavedFilter } from "../stores";
 
-interface SavedFiltersProps {
-  savedFilters: SavedFilter[];
-  onApplyFilter: (filter: SavedFilter) => void;
-}
-
-export default function SavedFilters({ savedFilters, onApplyFilter }: SavedFiltersProps) {
+export default function SavedFilters() {
   const [currentPage, setCurrentPage] = useState(0);
+  const { setSearchQuery } = useSearchStore();
+  const { setSelectedGroup, setGroupDisplayMode, setActiveTab, setFocusedIndex } = useUIStore();
+  const { savedFilters, loadSavedFilters } = useFilterStore();
+  const { selectedChannelListId } = useChannelStore();
+  
+  // Load saved filters when channel list changes
+  useEffect(() => {
+    loadSavedFilters(selectedChannelListId);
+  }, [selectedChannelListId, loadSavedFilters]);
   
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(0);
   }, [savedFilters]);
   
+  const handleApplyFilter = (filter: SavedFilter) => {
+    // Apply the search query
+    setSearchQuery(filter.search_query);
+    
+    // Apply the group selection and set appropriate display mode
+    setSelectedGroup(filter.selected_group);
+    
+    // If the filter has a selected group, switch to AllGroups mode to make the group filter active
+    // If no group is selected, use EnabledGroups mode
+    if (filter.selected_group) {
+      setGroupDisplayMode(GroupDisplayMode.AllGroups);
+    } else {
+      setGroupDisplayMode(GroupDisplayMode.EnabledGroups);
+    }
+    
+    // Switch to channels tab to see the results
+    setActiveTab("channels");
+    setFocusedIndex(0);
+  };
+  
   if (savedFilters.length === 0) {
-    return null;
+    return (
+      <div className="saved-filters">
+        <div className="saved-filters-header">
+          <h3 className="saved-filters-title">Saved Filters</h3>
+        </div>
+        <div className="saved-filters-help">
+          <p>No saved filters yet</p>
+          <p>Press Alt+number to save current filter</p>
+        </div>
+      </div>
+    );
   }
 
   // Sort filters by slot number, treating 0 as 10
@@ -50,7 +84,7 @@ export default function SavedFilters({ savedFilters, onApplyFilter }: SavedFilte
           <div key={filter.slot_number} className="saved-filter-item">
             <button
               className="saved-filter-button"
-              onClick={() => onApplyFilter(filter)}
+              onClick={() => handleApplyFilter(filter)}
               title={`Press ${filter.slot_number === 0 ? '0' : filter.slot_number} to apply this filter`}
             >
               <div className="filter-first-line">

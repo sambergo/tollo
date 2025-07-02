@@ -91,4 +91,14 @@
   border-radius: 4px;
   font-size: 0.75rem;
   margin-left: auto;
+}
+
+/* When preview is disabled */
+.video-section.preview-disabled {
+  /* ChannelDetails will naturally take full space since VideoPlayer is not rendered */
+}
+
+.video-section.preview-disabled .channel-details {
+  /* Remove any height constraints to let it expand fully */
+  height: 100%;
 } 

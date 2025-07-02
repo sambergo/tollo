@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import type { Tab } from "../components/NavigationSidebar";
 import type { Channel } from "../components/ChannelList";
-import type { SavedFilter } from "./useSavedFilters";
+import type { SavedFilter } from "../stores";
 
 interface UseKeyboardNavigationProps {
   activeTab: Tab;
