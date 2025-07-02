@@ -11,6 +11,8 @@ import { SavedFiltersSettings } from "./settings/SavedFiltersSettings";
 function Settings() {
   const [defaultChannelList, setDefaultChannelList] = useState<number | null>(null);
   const [loadingLists, setLoadingLists] = useState<Set<number>>(new Set());
+  const [isSelectingChannelList, setIsSelectingChannelList] = useState(false);
+  const [selectingListName, setSelectingListName] = useState<string>("");
   
   // Get state and actions from stores
   const { selectedChannelListId, setSelectedChannelListId, setIsLoadingChannelList, setChannels, setSelectedChannel } = useChannelStore();
@@ -40,6 +42,11 @@ function Settings() {
 
   const handleRefreshLists = async () => {
     await fetchChannelListsData();
+  };
+
+  const handleSelectingChange = (isSelecting: boolean, listName?: string) => {
+    setIsSelectingChannelList(isSelecting);
+    setSelectingListName(listName || "");
   };
 
   const handleSelectList = async (id: number) => {
@@ -78,12 +85,23 @@ function Settings() {
 
 
   return (
-    <div className="settings-layout">
+    <div className={`settings-layout ${isSelectingChannelList ? 'selecting' : ''}`}>
+      {isSelectingChannelList && (
+        <div className="settings-loading-overlay">
+          <div className="loading-content">
+            <div className="loading-spinner-large"></div>
+            <h3>Switching to "{selectingListName}"</h3>
+            <p>Preparing channel list and switching to channels tab...</p>
+          </div>
+        </div>
+      )}
+      
       <ChannelListsSettings
         defaultChannelList={defaultChannelList}
         loadingLists={loadingLists}
         onSelectList={handleSelectList}
         onRefreshLists={handleRefreshLists}
+        onSelectingChange={handleSelectingChange}
       />
 
       <PlayerSettings />

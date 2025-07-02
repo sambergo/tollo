@@ -32,6 +32,61 @@
   width: 100%;
   max-width: 1400px;
   margin: 0 auto;
+  position: relative;
+}
+
+.settings-layout.selecting {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.settings-loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(10, 10, 10, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.settings-loading-overlay .loading-content {
+  text-align: center;
+  padding: 2rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-secondary);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  max-width: 400px;
+  margin: 0 1rem;
+}
+
+.settings-loading-overlay h3 {
+  margin: 1rem 0 0.5rem 0;
+  color: var(--text-primary);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.settings-loading-overlay p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.loading-spinner-large {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border-secondary);
+  border-top: 3px solid var(--accent-blue);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
 }
 
 /* On wider screens, use a 2-column layout for smaller settings cards */
@@ -138,11 +193,54 @@
   border-radius: 8px;
   padding: 1rem;
   transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
 }
 
 .channel-list-item:hover {
   border-color: var(--border-secondary);
   background: var(--bg-hover);
+}
+
+.channel-list-item.refreshing {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.channel-list-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(10, 10, 10, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  border-radius: 8px;
+}
+
+.channel-list-loading-overlay .loading-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.channel-list-loading-overlay .loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border-secondary);
+  border-top: 2px solid var(--accent-blue);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .list-info {

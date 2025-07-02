@@ -134,6 +134,18 @@
   color: var(--text-secondary);
 }
 
+.btn-loading-text {
+  font-size: 0.75rem;
+  margin-left: 0.5rem;
+  color: var(--text-muted);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
 .btn-sm {
   padding: 0.5rem 1rem;
   font-size: 0.75rem;

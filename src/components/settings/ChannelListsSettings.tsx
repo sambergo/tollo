@@ -18,19 +18,22 @@ interface ChannelListsSettingsProps {
   loadingLists: Set<number>;
   onSelectList: (id: number) => void;
   onRefreshLists: () => Promise<void>;
+  onSelectingChange?: (isSelecting: boolean, listName?: string) => void;
 }
 
 export function ChannelListsSettings({
   defaultChannelList,
   loadingLists,
   onSelectList,
-  onRefreshLists
+  onRefreshLists,
+  onSelectingChange
 }: ChannelListsSettingsProps) {
   const [newListName, setNewListName] = useState("");
   const [newListSource, setNewListSource] = useState("");
   const [editingList, setEditingList] = useState<ChannelList | null>(null);
   const [isAddingList, setIsAddingList] = useState(false);
   const [selectingList, setSelectingList] = useState<number | null>(null);
+  const [refreshingList, setRefreshingList] = useState<number | null>(null);
 
   // Get data from stores
   const { channelLists } = useSettingsStore();
@@ -66,14 +69,21 @@ export function ChannelListsSettings({
     await onRefreshLists();
   };
 
-  const handleRefreshChannelList = async (id: number) => {
-    try {
-      await invoke("refresh_channel_list", { id });
-      await onRefreshLists();
-    } catch (error) {
-      console.error("Failed to refresh channel list:", error);
-      alert("Failed to refresh channel list: " + error);
-    }
+  const handleRefreshChannelList = (id: number) => {
+    setRefreshingList(id);
+    
+    // Use setTimeout to ensure the UI updates before starting the operation
+    setTimeout(async () => {
+      try {
+        await invoke("refresh_channel_list", { id });
+        await onRefreshLists();
+      } catch (error) {
+        console.error("Failed to refresh channel list:", error);
+        alert("Failed to refresh channel list: " + error);
+      } finally {
+        setRefreshingList(null);
+      }
+    }, 50); // Small delay to ensure UI renders
   };
 
   const handleDeleteChannelList = async (id: number) => {
@@ -98,7 +108,11 @@ export function ChannelListsSettings({
   };
 
   const handleSelectList = (id: number) => {
+    const selectedList = channelLists.find(list => list.id === id);
+    const listName = selectedList?.name || 'Unknown List';
+    
     setSelectingList(id);
+    onSelectingChange?.(true, listName);
     
     // Use setTimeout to ensure the UI updates before starting the operation
     setTimeout(async () => {
@@ -106,12 +120,13 @@ export function ChannelListsSettings({
         // Call the new backend command to prepare for selection
         await invoke("start_channel_list_selection");
         
-        // Then call the original select handler
-        await onSelectList(id);
+        // Then call the original select handler (it's not async)
+        onSelectList(id);
       } catch (error) {
         console.error("Failed to select channel list:", error);
       } finally {
         setSelectingList(null);
+        onSelectingChange?.(false);
       }
     }, 50); // Small delay to ensure UI renders
   };
@@ -153,7 +168,15 @@ export function ChannelListsSettings({
         {/* Channel Lists */}
         <div className="channel-lists">
           {channelLists.map((list) => (
-            <div key={list.id} className="channel-list-item">
+            <div key={list.id} className={`channel-list-item ${refreshingList === list.id ? 'refreshing' : ''}`}>
+              {refreshingList === list.id && (
+                <div className="channel-list-loading-overlay">
+                  <div className="loading-content">
+                    <div className="loading-spinner"></div>
+                    <span>Refreshing channel list...</span>
+                  </div>
+                </div>
+              )}
               {editingList && editingList.id === list.id ? (
                 /* Edit Mode */
                 <div className="edit-form">
@@ -226,8 +249,8 @@ export function ChannelListsSettings({
                     <button 
                       className="btn-icon btn-secondary"
                       onClick={() => handleRefreshChannelList(list.id)}
-                      disabled={loadingLists.has(list.id)}
-                      title="Refresh channel list data"
+                      disabled={loadingLists.has(list.id) || refreshingList === list.id}
+                      title={refreshingList === list.id ? "Refreshing..." : "Refresh channel list data"}
                     >
                       <RefreshIcon />
                     </button>
