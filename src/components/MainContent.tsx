@@ -1,37 +1,14 @@
 import ChannelList, { type Channel } from "./ChannelList";
 import GroupList from "./GroupList";
-import type { Tab } from "./NavigationSidebar";
-
-enum GroupDisplayMode {
-  EnabledGroups = 'enabled',
-  AllGroups = 'all'
-}
+import { 
+  useChannelStore, 
+  useUIStore, 
+  useSearchStore, 
+  useSettingsStore
+} from "../stores";
 
 interface MainContentProps {
-  activeTab: Tab;
-  channelListName: string;
-  searchQuery: string;
-  isSearching: boolean;
   filteredChannels: Channel[];
-  favorites: Channel[];
-  groups: string[];
-  history: Channel[];
-  selectedGroup: string | null;
-  selectedChannel: Channel | null;
-  focusedIndex: number;
-  enabledGroups: Set<string>;
-  groupDisplayMode: GroupDisplayMode;
-  isLoadingChannelList: boolean;
-  onSearch: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onClearSearch: () => void;
-  onSelectChannel: (channel: Channel) => void;
-  onToggleFavorite: (channel: Channel) => void;
-  onSelectGroup: (group: string | null) => void;
-  onToggleGroupEnabled: (group: string) => void;
-  onChangeDisplayMode: (mode: GroupDisplayMode) => void;
-  onSelectAllGroups: () => void;
-  onUnselectAllGroups: () => void;
-  onClearGroupFilter: () => void;
 }
 
 // Loading indicator component
@@ -47,32 +24,37 @@ const LoadingChannelList = () => (
   </div>
 );
 
-export default function MainContent({
-  activeTab,
-  channelListName,
-  searchQuery,
-  isSearching,
-  filteredChannels,
-  favorites,
-  groups,
-  history,
-  selectedGroup,
-  selectedChannel,
-  focusedIndex,
-  enabledGroups,
-  groupDisplayMode,
-  isLoadingChannelList,
-  onSearch,
-  onClearSearch,
-  onSelectChannel,
-  onToggleFavorite,
-  onSelectGroup,
-  onToggleGroupEnabled,
-  onChangeDisplayMode,
-  onSelectAllGroups,
-  onUnselectAllGroups,
-  onClearGroupFilter
-}: MainContentProps) {
+export default function MainContent({ filteredChannels }: MainContentProps) {
+  // Get state from stores
+  const { 
+    favorites, 
+    groups, 
+    history, 
+    isLoadingChannelList 
+  } = useChannelStore();
+  
+  const { 
+    activeTab
+  } = useUIStore();
+  
+  const { 
+    searchQuery, 
+    isSearching, 
+    setSearchQuery 
+  } = useSearchStore();
+  
+  const { channelListName } = useSettingsStore();
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery("");
+  };
+
+
+
   const getTabTitle = () => {
     switch (activeTab) {
       case "channels":
@@ -124,12 +106,12 @@ export default function MainContent({
                   className="search-input"
                   placeholder="Search channels (min 3 characters)..."
                   value={searchQuery}
-                  onChange={onSearch}
+                  onChange={handleSearch}
                 />
                 {searchQuery && (
                   <button
                     className="clear-search-btn"
-                    onClick={onClearSearch}
+                    onClick={handleClearSearch}
                     type="button"
                     title="Clear search"
                   >
@@ -149,64 +131,26 @@ export default function MainContent({
               </div>
             )}
             <div className="content-list">
-              <ChannelList
-                channels={filteredChannels}
-                selectedChannel={selectedChannel}
-                focusedIndex={focusedIndex}
-                favorites={favorites}
-                selectedGroup={selectedGroup}
-                onSelectChannel={onSelectChannel}
-                onToggleFavorite={onToggleFavorite}
-                onClearGroupFilter={onClearGroupFilter}
-              />
+              <ChannelList channels={filteredChannels} />
             </div>
           </>
         );
       case "favorites":
         return (
           <div className="content-list">
-            <ChannelList
-              channels={favorites}
-              selectedChannel={selectedChannel}
-              focusedIndex={focusedIndex}
-              favorites={favorites}
-              selectedGroup={selectedGroup}
-              onSelectChannel={onSelectChannel}
-              onToggleFavorite={onToggleFavorite}
-              onClearGroupFilter={onClearGroupFilter}
-            />
+            <ChannelList channels={favorites} />
           </div>
         );
       case "groups":
         return (
           <div className="content-list">
-            <GroupList
-              groups={groups}
-              selectedGroup={selectedGroup}
-              focusedIndex={focusedIndex}
-              enabledGroups={enabledGroups}
-              groupDisplayMode={groupDisplayMode}
-              onSelectGroup={onSelectGroup}
-              onToggleGroupEnabled={onToggleGroupEnabled}
-              onChangeDisplayMode={onChangeDisplayMode}
-              onSelectAllGroups={onSelectAllGroups}
-              onUnselectAllGroups={onUnselectAllGroups}
-            />
+            <GroupList />
           </div>
         );
       case "history":
         return (
           <div className="content-list">
-            <ChannelList
-              channels={history}
-              selectedChannel={selectedChannel}
-              focusedIndex={focusedIndex}
-              favorites={favorites}
-              selectedGroup={selectedGroup}
-              onSelectChannel={onSelectChannel}
-              onToggleFavorite={onToggleFavorite}
-              onClearGroupFilter={onClearGroupFilter}
-            />
+            <ChannelList channels={history} />
           </div>
         );
 

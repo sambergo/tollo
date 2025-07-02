@@ -1,41 +1,30 @@
 import { useState, useEffect, useRef } from "react";
+import { useUIStore, useChannelStore } from "../stores";
+import { GroupDisplayMode } from "../stores/uiStore";
 
-enum GroupDisplayMode {
-  EnabledGroups = 'enabled',
-  AllGroups = 'all'
-}
-
-interface GroupListProps {
-  groups: string[];
-  selectedGroup: string | null;
-  focusedIndex: number;
-  enabledGroups: Set<string>;
-  groupDisplayMode: GroupDisplayMode;
-  onSelectGroup: (group: string | null) => void;
-  onToggleGroupEnabled: (group: string) => void;
-  onChangeDisplayMode: (mode: GroupDisplayMode) => void;
-  onSelectAllGroups: () => void;
-  onUnselectAllGroups: () => void;
-}
-
-export default function GroupList({ 
-  groups, 
-  selectedGroup, 
-  focusedIndex, 
-  enabledGroups,
-  groupDisplayMode,
-  onSelectGroup,
-  onToggleGroupEnabled,
-  onChangeDisplayMode,
-  onSelectAllGroups,
-  onUnselectAllGroups
-}: GroupListProps) {
+export default function GroupList() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // Get state and actions from stores
+  const {
+    selectedGroup,
+    focusedIndex,
+    enabledGroups,
+    groupDisplayMode,
+    setSelectedGroup,
+    toggleGroupEnabled,
+    setGroupDisplayMode,
+    selectAllGroups,
+    unselectAllGroups,
+    setActiveTab
+  } = useUIStore();
+
+  const { groups, selectedChannelListId } = useChannelStore();
+
   // Filter groups based on search term
-  const filteredGroups = groups.filter(group =>
+  const filteredGroups = groups.filter((group: string) =>
     group.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -58,6 +47,26 @@ export default function GroupList({
 
   const handleClearSearch = () => {
     setSearchTerm("");
+  };
+
+  const handleSelectAllGroups = () => {
+    if (selectedChannelListId) {
+      selectAllGroups(groups, selectedChannelListId);
+    }
+    setDropdownOpen(false);
+  };
+
+  const handleUnselectAllGroups = () => {
+    if (selectedChannelListId) {
+      unselectAllGroups(groups, selectedChannelListId);
+    }
+    setDropdownOpen(false);
+  };
+
+  const handleToggleGroupEnabled = (group: string) => {
+    if (selectedChannelListId) {
+      toggleGroupEnabled(group, selectedChannelListId);
+    }
   };
 
   return (
@@ -93,13 +102,13 @@ export default function GroupList({
       <div className="group-mode-controls">
         <button 
           className={`mode-btn ${groupDisplayMode === GroupDisplayMode.EnabledGroups ? "active" : ""}`}
-          onClick={() => onChangeDisplayMode(GroupDisplayMode.EnabledGroups)}
+          onClick={() => setGroupDisplayMode(GroupDisplayMode.EnabledGroups)}
         >
           Enabled Groups
         </button>
         <button 
           className={`mode-btn ${groupDisplayMode === GroupDisplayMode.AllGroups ? "active" : ""}`}
-          onClick={() => onChangeDisplayMode(GroupDisplayMode.AllGroups)}
+          onClick={() => setGroupDisplayMode(GroupDisplayMode.AllGroups)}
         >
           Select group
         </button>
@@ -117,19 +126,13 @@ export default function GroupList({
               <div className="dropdown-menu">
                 <button 
                   className="dropdown-item"
-                  onClick={() => {
-                    onSelectAllGroups();
-                    setDropdownOpen(false);
-                  }}
+                  onClick={handleSelectAllGroups}
                 >
                   Select All
                 </button>
                 <button 
                   className="dropdown-item"
-                  onClick={() => {
-                    onUnselectAllGroups();
-                    setDropdownOpen(false);
-                  }}
+                  onClick={handleUnselectAllGroups}
                 >
                   Unselect All
                 </button>
@@ -144,13 +147,16 @@ export default function GroupList({
         {groupDisplayMode === GroupDisplayMode.AllGroups && (
           <li
             className={`group-item ${selectedGroup === null ? "selected" : ""} ${focusedIndex === 0 ? "focused" : ""}`}
-            onClick={() => onSelectGroup(null)}
+            onClick={() => {
+              setSelectedGroup(null);
+              setActiveTab("channels");
+            }}
           >
             All Groups
           </li>
         )}
 
-        {filteredGroups.map((group, index) => {
+        {filteredGroups.map((group: string, index: number) => {
           const isSelected = selectedGroup === group;
           const adjustedIndex = (groupDisplayMode === GroupDisplayMode.EnabledGroups) ? index : index + 1;
           const isFocused = focusedIndex === adjustedIndex;
@@ -168,7 +174,7 @@ export default function GroupList({
                     type="checkbox"
                     className="group-checkbox"
                     checked={isEnabled}
-                    onChange={() => onToggleGroupEnabled(group)}
+                    onChange={() => handleToggleGroupEnabled(group)}
                   />
                 )}
                 
@@ -178,10 +184,11 @@ export default function GroupList({
                   onClick={() => {
                     if (groupDisplayMode === GroupDisplayMode.EnabledGroups) {
                       // In enabled groups mode, toggle the checkbox
-                      onToggleGroupEnabled(group);
+                      handleToggleGroupEnabled(group);
                     } else {
-                      // In all groups mode, select the group
-                      onSelectGroup(group);
+                      // In all groups mode, select the group and navigate back to channels
+                      setSelectedGroup(group);
+                      setActiveTab("channels");
                     }
                   }}
                 >

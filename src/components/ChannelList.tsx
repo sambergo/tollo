@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import CachedImage from "./CachedImage";
+import { useChannelStore, useUIStore } from "../stores";
 
 export interface Channel {
   name: string;
@@ -13,28 +14,26 @@ export interface Channel {
 
 interface ChannelListProps {
   channels: Channel[];
-  selectedChannel: Channel | null;
-  focusedIndex: number;
-  favorites: Channel[];
-  selectedGroup?: string | null;
-  onSelectChannel: (channel: Channel) => void;
-  onToggleFavorite: (channel: Channel) => void;
-  onClearGroupFilter?: () => void;
 }
 
 const CHANNELS_PER_PAGE = 200; // Reasonable number for performance
 
-export default function ChannelList({ 
-  channels, 
-  selectedChannel, 
-  focusedIndex, 
-  favorites,
-  selectedGroup,
-  onSelectChannel, 
-  onToggleFavorite,
-  onClearGroupFilter
-}: ChannelListProps) {
+export default function ChannelList({ channels }: ChannelListProps) {
   const [currentPage, setCurrentPage] = useState(1);
+  
+  // Get state and actions from stores
+  const { 
+    selectedChannel, 
+    favorites, 
+    setSelectedChannel, 
+    toggleFavorite 
+  } = useChannelStore();
+  
+  const { 
+    focusedIndex, 
+    selectedGroup,
+    clearGroupFilter 
+  } = useUIStore();
   
   // Reset to first page when channels change
   useEffect(() => {
@@ -52,6 +51,10 @@ export default function ChannelList({
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+  };
+
+  const handleToggleFavorite = async (channel: Channel) => {
+    await toggleFavorite(channel);
   };
 
   const getPageNumbers = () => {
@@ -76,7 +79,7 @@ export default function ChannelList({
   return (
     <div className="channel-list-container">
       {/* Group Filter Indicator */}
-      {selectedGroup && onClearGroupFilter && (
+      {selectedGroup && (
         <div className="group-filter-indicator">
           <div className="filter-info">
             <svg className="folder-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -87,7 +90,7 @@ export default function ChannelList({
           </div>
           <button 
             className="clear-filter-btn"
-            onClick={onClearGroupFilter}
+            onClick={clearGroupFilter}
             title="Clear group filter"
           >
             <svg className="close-icon" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none">
@@ -112,7 +115,7 @@ export default function ChannelList({
             <li
               key={`${channel.name}-${globalIndex}`}
               className={`channel-item ${selectedChannel?.name === channel.name ? "selected" : ""} ${focusedIndex === globalIndex ? "focused" : ""}`}
-              onClick={() => onSelectChannel(channel)}
+              onClick={() => setSelectedChannel(channel)}
             >
               <div className="channel-content">
                 <div className="channel-logo-container">
@@ -139,7 +142,7 @@ export default function ChannelList({
                     className={`action-button ${isFavorite(channel) ? "favorite" : ""}`}
                     onClick={(e) => {
                       e.stopPropagation();
-                      onToggleFavorite(channel);
+                      handleToggleFavorite(channel);
                     }}
                   >
                     {isFavorite(channel) ? "★" : "☆"}

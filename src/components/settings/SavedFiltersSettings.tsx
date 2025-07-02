@@ -1,17 +1,15 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import type { ChannelList, ChannelListWithFilters } from "../../types/settings";
-import type { SavedFilter } from "../../hooks/useSavedFilters";
+import { useSettingsStore, useFilterStore, type SavedFilter } from "../../stores";
+import type { ChannelListWithFilters } from "../../types/settings";
 import { FilterIcon, LoadingIcon, TrashIcon } from "./SettingsIcons";
 
-interface SavedFiltersSettingsProps {
-  channelLists: ChannelList[];
-  onFiltersChanged?: () => Promise<void>;
-}
-
-export function SavedFiltersSettings({ channelLists, onFiltersChanged }: SavedFiltersSettingsProps) {
+export function SavedFiltersSettings() {
   const [channelListsWithFilters, setChannelListsWithFilters] = useState<ChannelListWithFilters[]>([]);
   const [loadingSavedFilters, setLoadingSavedFilters] = useState(false);
+  
+  const { channelLists } = useSettingsStore();
+  const { refreshFilters } = useFilterStore();
 
   useEffect(() => {
     if (channelLists.length > 0) {
@@ -54,10 +52,8 @@ export function SavedFiltersSettings({ channelLists, onFiltersChanged }: SavedFi
       // Refresh saved filters
       await fetchSavedFilters();
       
-      // Notify parent component to refresh its saved filters
-      if (onFiltersChanged) {
-        await onFiltersChanged();
-      }
+      // Refresh the global filter store if it's the current channel list
+      await refreshFilters(channelListId);
     } catch (error) {
       console.error("Failed to delete saved filter:", error);
       alert("Failed to delete saved filter: " + error);

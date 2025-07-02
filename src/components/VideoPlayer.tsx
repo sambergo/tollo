@@ -1,17 +1,23 @@
-import { forwardRef } from "react";
+import { forwardRef, useEffect } from "react";
 import { PlayIcon } from "./Icons";
-import type { Channel } from "./ChannelList";
+import { useChannelStore } from "../stores";
 
-interface VideoPlayerProps {
-  selectedChannel: Channel | null;
-}
 
-const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
-  ({ selectedChannel }, ref) => {
+const VideoPlayer = forwardRef<HTMLVideoElement, {}>(
+  (_, ref) => {
+    const { selectedChannel, isMpvPlaying, setIsMpvPlaying } = useChannelStore();
+
+    // Reset MPV playing state when a new channel is selected
+    useEffect(() => {
+      if (selectedChannel && isMpvPlaying) {
+        setIsMpvPlaying(false);
+      }
+    }, [selectedChannel, isMpvPlaying, setIsMpvPlaying]);
+
     return (
       <div className="video-preview">
         <div className="video-container">
-          {selectedChannel ? (
+          {selectedChannel && !isMpvPlaying ? (
             <>
               <video ref={ref} className="video-player" controls />
               <div className="video-controls">
@@ -24,6 +30,12 @@ const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
                 </div>
               </div>
             </>
+          ) : isMpvPlaying ? (
+            <div className="video-placeholder">
+              <PlayIcon />
+              <div className="video-placeholder-text">Playing in MPV</div>
+              <div className="video-placeholder-channel">{selectedChannel?.name}</div>
+            </div>
           ) : (
             <div className="video-placeholder">
               <PlayIcon />

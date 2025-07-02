@@ -1,21 +1,21 @@
-import { useState, useEffect } from "react";
-import { invoke } from "@tauri-apps/api/core";
+import { useEffect } from "react";
+import { useSettingsStore } from "../../stores";
 import { PlayIcon } from "./SettingsIcons";
 
 export function PlayerSettings() {
-  const [playerCommand, setPlayerCommand] = useState("");
+  const { 
+    playerCommand, 
+    setPlayerCommand, 
+    savePlayerCommand, 
+    fetchPlayerCommand 
+  } = useSettingsStore();
 
   useEffect(() => {
     fetchPlayerCommand();
-  }, []);
-
-  async function fetchPlayerCommand() {
-    const fetchedCommand = await invoke<string>("get_player_command");
-    setPlayerCommand(fetchedCommand);
-  }
+  }, [fetchPlayerCommand]);
 
   const handleSavePlayerCommand = async () => {
-    await invoke("set_player_command", { command: playerCommand });
+    await savePlayerCommand();
   };
 
   return (
