@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { invoke } from '@tauri-apps/api/core';
 import { useSettingsStore } from "../../stores";
 import { PlayIcon } from "./SettingsIcons";
 
@@ -7,15 +8,26 @@ export function PlayerSettings() {
     playerCommand, 
     setPlayerCommand, 
     savePlayerCommand, 
-    fetchPlayerCommand 
+    fetchPlayerCommand,
+    enablePreview,
+    setEnablePreview,
+    fetchEnablePreview
   } = useSettingsStore();
 
   useEffect(() => {
     fetchPlayerCommand();
-  }, [fetchPlayerCommand]);
+    fetchEnablePreview();
+  }, [fetchPlayerCommand, fetchEnablePreview]);
 
   const handleSavePlayerCommand = async () => {
     await savePlayerCommand();
+  };
+
+  const handleTogglePreview = async () => {
+    const newValue = !enablePreview;
+    setEnablePreview(newValue);
+    // Save the new value directly
+    await invoke("set_enable_preview", { enabled: newValue });
   };
 
   return (
@@ -40,6 +52,19 @@ export function PlayerSettings() {
             </button>
           </div>
           <p className="form-help">Command to launch external video player</p>
+        </div>
+        <div className="form-group">
+          <div className="toggle-setting">
+            <div className="setting-info">
+              <div className="setting-label">Enable Preview</div>
+              <div className="setting-description">Enable or disable channel preview functionality</div>
+            </div>
+            <button
+              className={`toggle-button ${enablePreview ? 'active' : ''}`}
+              onClick={handleTogglePreview}
+              type="button"
+            />
+          </div>
         </div>
       </div>
     </div>

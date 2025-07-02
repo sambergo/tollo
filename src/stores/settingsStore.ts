@@ -9,6 +9,7 @@ interface SettingsState {
   
   // Player settings
   playerCommand: string;
+  enablePreview: boolean;
   
   // Cache settings
   cacheDuration: number; // in hours
@@ -25,6 +26,9 @@ interface SettingsState {
   setPlayerCommand: (command: string) => void;
   savePlayerCommand: () => Promise<void>;
   fetchPlayerCommand: () => Promise<void>;
+  setEnablePreview: (enabled: boolean) => void;
+  saveEnablePreview: () => Promise<void>;
+  fetchEnablePreview: () => Promise<void>;
   
   // Cache settings actions
   setCacheDuration: (duration: number) => void;
@@ -37,12 +41,14 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   channelLists: [],
   channelListName: null,
   playerCommand: "",
+  enablePreview: true,
   cacheDuration: 24,
   
   // Basic setters
   setChannelLists: (channelLists) => set({ channelLists }),
   setChannelListName: (channelListName) => set({ channelListName }),
   setPlayerCommand: (playerCommand) => set({ playerCommand }),
+  setEnablePreview: (enablePreview) => set({ enablePreview }),
   setCacheDuration: (cacheDuration) => set({ cacheDuration }),
   
   // Channel list operations
@@ -96,6 +102,16 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   fetchPlayerCommand: async () => {
     const fetchedCommand = await invoke<string>("get_player_command");
     set({ playerCommand: fetchedCommand });
+  },
+  
+  saveEnablePreview: async () => {
+    const { enablePreview } = get();
+    await invoke("set_enable_preview", { enabled: enablePreview });
+  },
+  
+  fetchEnablePreview: async () => {
+    const enabled = await invoke<boolean>("get_enable_preview");
+    set({ enablePreview: enabled });
   },
   
   // Cache settings actions

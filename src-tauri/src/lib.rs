@@ -283,7 +283,7 @@ fn get_player_command(state: State<DbState>) -> Result<String, String> {
 fn set_player_command(state: State<DbState>, command: String) -> Result<(), String> {
     let db = state.db.lock().unwrap();
     db.execute(
-        "INSERT OR REPLACE INTO settings (id, player_command) VALUES (1, ?1)",
+        "UPDATE settings SET player_command = ?1 WHERE id = 1",
         &[&command],
     ).map_err(|e| e.to_string())?;
     Ok(())
@@ -306,6 +306,38 @@ fn set_cache_duration(state: State<DbState>, hours: i64) -> Result<(), String> {
         "UPDATE settings SET cache_duration_hours = ?1 WHERE id = 1",
         &[&hours],
     ).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+fn get_enable_preview(state: State<DbState>) -> Result<bool, String> {
+    let db = state.db.lock().unwrap();
+    let enable_preview: bool = db.query_row(
+        "SELECT enable_preview FROM settings WHERE id = 1",
+        [],
+        |row| row.get(0),
+    ).unwrap_or(true); // Default to true if not found
+    Ok(enable_preview)
+}
+
+#[tauri::command]
+fn set_enable_preview(state: State<DbState>, enabled: bool) -> Result<(), String> {
+    let db = state.db.lock().unwrap();
+    
+    // First try to update existing row
+    let rows_affected = db.execute(
+        "UPDATE settings SET enable_preview = ?1 WHERE id = 1",
+        &[&enabled],
+    ).map_err(|e| e.to_string())?;
+    
+    // If no rows were affected, insert a new settings row with default values
+    if rows_affected == 0 {
+        db.execute(
+            "INSERT INTO settings (id, player_command, cache_duration_hours, enable_preview) VALUES (1, 'mpv', 24, ?1)",
+            &[&enabled],
+        ).map_err(|e| e.to_string())?;
+    }
+    
     Ok(())
 }
 
@@ -355,8 +387,10 @@ fn refresh_channel_list(
             }
             
             let data_dir = dirs::data_dir().unwrap().join("gui-tollo");
+            let channel_lists_dir = data_dir.join("channel_lists");
+            fs::create_dir_all(&channel_lists_dir).map_err(|e| format!("Failed to create channel_lists directory: {}", e))?;
             let filename = format!("{}.m3u", uuid::Uuid::new_v4());
-            let new_filepath = data_dir.join(&filename);
+            let new_filepath = channel_lists_dir.join(&filename);
             
             fs::write(&new_filepath, &content)
                 .map_err(|e| format!("Failed to save playlist file: {}", e))?;
@@ -506,8 +540,10 @@ fn validate_and_add_channel_list(
             println!("Content length: {} bytes", content.len());
             
             let data_dir = dirs::data_dir().unwrap().join("gui-tollo");
+            let channel_lists_dir = data_dir.join("channel_lists");
+            fs::create_dir_all(&channel_lists_dir).map_err(|e| format!("Failed to create channel_lists directory: {}", e))?;
             let filename = format!("{}.m3u", uuid::Uuid::new_v4());
-            let new_filepath = data_dir.join(&filename);
+            let new_filepath = channel_lists_dir.join(&filename);
             
             fs::write(&new_filepath, &content)
                 .map_err(|e| format!("Failed to save playlist file: {}", e))?;
@@ -623,9 +659,102 @@ fn delete_saved_filter(state: State<DbState>, channel_list_id: i64, slot_number:
     database::delete_saved_filter(&db, channel_list_id, slot_number).map_err(|e| e.to_string())
 }
 
+// Add cleanup function near the top with other utility functions
+fn cleanup_orphaned_channel_files(db_connection: &Connection) -> Result<(), String> {
+    let data_dir = dirs::data_dir().unwrap().join("gui-tollo");
+    let channel_lists_dir = data_dir.join("channel_lists");
+    
+    // Create channel_lists directory if it doesn't exist
+    if let Err(e) = fs::create_dir_all(&channel_lists_dir) {
+        println!("Warning: Failed to create channel_lists directory: {}", e);
+        return Ok(()); // Don't fail startup if we can't create the directory
+    }
+    
+    // Get all .m3u files in the channel_lists directory
+    let disk_files = match fs::read_dir(&channel_lists_dir) {
+        Ok(entries) => {
+            entries
+                .filter_map(|entry| entry.ok())
+                .filter(|entry| {
+                    entry.path().is_file() && 
+                    entry.path().extension().map_or(false, |ext| ext == "m3u")
+                })
+                .filter_map(|entry| {
+                    entry.file_name().to_str().map(|s| s.to_string())
+                })
+                .collect::<Vec<String>>()
+        },
+        Err(_) => {
+            println!("Channel lists directory not found or inaccessible, skipping cleanup");
+            return Ok(());
+        }
+    };
+    
+    // Get all filepaths from database
+    let mut stmt = match db_connection.prepare("SELECT filepath FROM channel_lists WHERE filepath IS NOT NULL") {
+        Ok(stmt) => stmt,
+        Err(e) => {
+            println!("Warning: Failed to prepare database query for cleanup: {}", e);
+            return Ok(());
+        }
+    };
+    
+    let db_files: Result<Vec<String>, _> = stmt.query_map([], |row| {
+        Ok(row.get::<_, String>(0)?)
+    }).and_then(|iter| iter.collect());
+    
+    let db_files = match db_files {
+        Ok(files) => files,
+        Err(e) => {
+            println!("Warning: Failed to query database for cleanup: {}", e);
+            return Ok(());
+        }
+    };
+    
+    // Find orphaned files (on disk but not in database)
+    let orphaned_files: Vec<String> = disk_files
+        .into_iter()
+        .filter(|disk_file| !db_files.contains(disk_file))
+        .collect();
+    
+    let mut deleted_count = 0;
+    let mut failed_deletions = 0;
+    
+    // Delete orphaned files
+    for filename in &orphaned_files {
+        let file_path = channel_lists_dir.join(filename);
+        match fs::remove_file(&file_path) {
+            Ok(_) => {
+                deleted_count += 1;
+                println!("Deleted orphaned channel list file: {}", filename);
+            },
+            Err(e) => {
+                failed_deletions += 1;
+                println!("Failed to delete orphaned file {}: {}", filename, e);
+            }
+        }
+    }
+    
+    // Log cleanup statistics
+    if deleted_count > 0 || failed_deletions > 0 {
+        println!("Channel list cache cleanup completed: {} files deleted, {} failures", 
+                deleted_count, failed_deletions);
+    } else if !orphaned_files.is_empty() {
+        println!("Channel list cache cleanup: no orphaned files found");
+    }
+    
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let mut db_connection = database::initialize_database().expect("Failed to initialize database");
+    
+    // Run cleanup on startup to remove orphaned channel list files
+    if let Err(e) = cleanup_orphaned_channel_files(&db_connection) {
+        println!("Warning: Channel list cleanup failed: {}", e);
+    }
+    
     let channels = m3u_parser::get_channels(&mut db_connection, None);
     database::populate_channels(&mut db_connection, &channels).expect("Failed to populate channels");
 
@@ -645,27 +774,28 @@ pub fn run() {
         })
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
+            get_channel_lists,
+            add_channel_list,
+            set_default_channel_list,
             get_channels,
             get_groups,
-            search_channels,
-            get_cached_channels,
-            invalidate_channel_cache,
             play_channel,
             add_favorite,
             remove_favorite,
             get_favorites,
             get_history,
+            search_channels,
             get_player_command,
             set_player_command,
-            get_channel_lists,
-            add_channel_list,
-            validate_and_add_channel_list,
-            set_default_channel_list,
             get_cache_duration,
             set_cache_duration,
+            get_enable_preview,
+            set_enable_preview,
             refresh_channel_list,
+            validate_and_add_channel_list,
             delete_channel_list,
             update_channel_list,
+            invalidate_channel_cache,
             get_cached_image,
             clear_image_cache,
             get_image_cache_size,
@@ -675,7 +805,7 @@ pub fn run() {
             enable_all_groups,
             save_filter,
             get_saved_filters,
-            delete_saved_filter
+            delete_saved_filter,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

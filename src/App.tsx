@@ -10,7 +10,7 @@ import Settings from "./components/Settings";
 import { useKeyboardNavigation } from "./hooks/useKeyboardNavigation";
 import { useChannelSearch } from "./hooks/useChannelSearch";
 import { useSavedFilters } from "./hooks/useSavedFilters";
-import { useChannelStore, useUIStore, useSearchStore, GroupDisplayMode, type SavedFilter } from "./stores";
+import { useChannelStore, useUIStore, useSearchStore, useSettingsStore, GroupDisplayMode, type SavedFilter } from "./stores";
 import type { Channel } from "./components/ChannelList";
 import "./App.css";
 
@@ -55,6 +55,9 @@ function App() {
     setSearchQuery
   } = useSearchStore();
 
+  // Get settings
+  const { enablePreview, fetchEnablePreview } = useSettingsStore();
+
   // Refs for video player
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
@@ -62,6 +65,11 @@ function App() {
   // Custom hooks (keeping existing functionality)
   const { debouncedSearchQuery, searchChannels } = useChannelSearch(selectedChannelListId);
   const { savedFilters, saveFilter } = useSavedFilters(selectedChannelListId);
+
+  // Fetch settings on app load
+  useEffect(() => {
+    fetchEnablePreview();
+  }, [fetchEnablePreview]);
 
   // Load default channel list on app startup
   useEffect(() => {
@@ -172,7 +180,8 @@ function App() {
       hlsRef.current.destroy();
     }
 
-    if (selectedChannel && videoRef.current) {
+    // Only load video if preview is enabled
+    if (enablePreview && selectedChannel && videoRef.current) {
       const video = videoRef.current;
       const isHlsUrl = selectedChannel.url.includes('.m3u8') || selectedChannel.url.includes('m3u8');
       
@@ -204,9 +213,7 @@ function App() {
         });
       }
     }
-  }, [selectedChannel]);
-
-
+  }, [selectedChannel, enablePreview]);
 
   const handleSelectGroup = (group: string | null) => {
     setSelectedGroup(group);
@@ -220,10 +227,6 @@ function App() {
   const handlePlayInMpv = (channel: Channel) => {
     playInMpv(channel);
   };
-
-
-
-
 
   const filteredChannels = (() => {
     let filtered = [...channels];
@@ -332,10 +335,12 @@ function App() {
               filteredChannels={filteredChannels}
             />
 
-            <div className="video-section">
-              <VideoPlayer 
-                ref={videoRef}
-              />
+            <div className={`video-section ${!enablePreview ? 'preview-disabled' : ''}`}>
+              {enablePreview && (
+                <VideoPlayer 
+                  ref={videoRef}
+                />
+              )}
 
               {selectedChannel && (
                 <ChannelDetails />

@@ -60,10 +60,17 @@ pub fn initialize_database() -> Result<Connection> {
         "CREATE TABLE IF NOT EXISTS settings (
             id INTEGER PRIMARY KEY,
             player_command TEXT NOT NULL,
-            cache_duration_hours INTEGER NOT NULL DEFAULT 24
+            cache_duration_hours INTEGER NOT NULL DEFAULT 24,
+            enable_preview BOOLEAN NOT NULL DEFAULT 1
         )",
         [],
     )?;
+
+    // Add the enable_preview column to existing settings table if it doesn't exist
+    conn.execute(
+        "ALTER TABLE settings ADD COLUMN enable_preview BOOLEAN NOT NULL DEFAULT 1",
+        [],
+    ).ok(); // Use ok() to ignore error if column already exists
 
     conn.execute(
         "CREATE TABLE IF NOT EXISTS channel_lists (
@@ -113,6 +120,15 @@ pub fn initialize_database() -> Result<Connection> {
         conn.execute(
             "INSERT INTO channel_lists (name, source, is_default) VALUES (?1, ?2, ?3)",
             &["Default", "https://iptv-org.github.io/iptv/countries/fi.m3u", "1"],
+        )?;
+    }
+
+    // Ensure we have a default settings record
+    let settings_count: i64 = conn.query_row("SELECT COUNT(*) FROM settings", [], |row| row.get(0))?;
+    if settings_count == 0 {
+        conn.execute(
+            "INSERT INTO settings (id, player_command, cache_duration_hours, enable_preview) VALUES (1, 'mpv', 24, 1)",
+            [],
         )?;
     }
 
