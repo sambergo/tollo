@@ -10,6 +10,9 @@ interface SettingsState {
   // Player settings
   playerCommand: string;
   enablePreview: boolean;
+  muteOnStart: boolean;
+  showControls: boolean;
+  autoplay: boolean;
   
   // Cache settings
   cacheDuration: number; // in hours
@@ -34,6 +37,17 @@ interface SettingsState {
   setCacheDuration: (duration: number) => void;
   saveCacheDuration: () => Promise<void>;
   fetchCacheDuration: () => Promise<void>;
+  
+  // New actions
+  setMuteOnStart: (enabled: boolean) => void;
+  saveMuteOnStart: () => Promise<void>;
+  fetchMuteOnStart: () => Promise<void>;
+  setShowControls: (enabled: boolean) => void;
+  saveShowControls: () => Promise<void>;
+  fetchShowControls: () => Promise<void>;
+  setAutoplay: (enabled: boolean) => void;
+  saveAutoplay: () => Promise<void>;
+  fetchAutoplay: () => Promise<void>;
 }
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
@@ -42,6 +56,9 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   channelListName: null,
   playerCommand: "",
   enablePreview: true,
+  muteOnStart: false,
+  showControls: true,
+  autoplay: false,
   cacheDuration: 24,
   
   // Basic setters
@@ -49,6 +66,9 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setChannelListName: (channelListName) => set({ channelListName }),
   setPlayerCommand: (playerCommand) => set({ playerCommand }),
   setEnablePreview: (enablePreview) => set({ enablePreview }),
+  setMuteOnStart: (muteOnStart) => set({ muteOnStart }),
+  setShowControls: (showControls) => set({ showControls }),
+  setAutoplay: (autoplay) => set({ autoplay }),
   setCacheDuration: (cacheDuration) => set({ cacheDuration }),
   
   // Channel list operations
@@ -112,6 +132,36 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   fetchEnablePreview: async () => {
     const enabled = await invoke<boolean>("get_enable_preview");
     set({ enablePreview: enabled });
+  },
+  
+  saveMuteOnStart: async () => {
+    const { muteOnStart } = get();
+    await invoke("set_mute_on_start", { enabled: muteOnStart });
+  },
+  
+  fetchMuteOnStart: async () => {
+    const enabled = await invoke<boolean>("get_mute_on_start");
+    set({ muteOnStart: enabled });
+  },
+  
+  saveShowControls: async () => {
+    const { showControls } = get();
+    await invoke("set_show_controls", { enabled: showControls });
+  },
+  
+  fetchShowControls: async () => {
+    const enabled = await invoke<boolean>("get_show_controls");
+    set({ showControls: enabled });
+  },
+  
+  saveAutoplay: async () => {
+    const { autoplay } = get();
+    await invoke("set_autoplay", { enabled: autoplay });
+  },
+  
+  fetchAutoplay: async () => {
+    const enabled = await invoke<boolean>("get_autoplay");
+    set({ autoplay: enabled });
   },
   
   // Cache settings actions

@@ -61,7 +61,10 @@ pub fn initialize_database() -> Result<Connection> {
             id INTEGER PRIMARY KEY,
             player_command TEXT NOT NULL,
             cache_duration_hours INTEGER NOT NULL DEFAULT 24,
-            enable_preview BOOLEAN NOT NULL DEFAULT 1
+            enable_preview BOOLEAN NOT NULL DEFAULT 1,
+            mute_on_start BOOLEAN NOT NULL DEFAULT 0,
+            show_controls BOOLEAN NOT NULL DEFAULT 1,
+            autoplay BOOLEAN NOT NULL DEFAULT 0
         )",
         [],
     )?;
@@ -71,6 +74,22 @@ pub fn initialize_database() -> Result<Connection> {
         "ALTER TABLE settings ADD COLUMN enable_preview BOOLEAN NOT NULL DEFAULT 1",
         [],
     ).ok(); // Use ok() to ignore error if column already exists
+
+    // Add the mute_on_start column to existing settings table if it doesn't exist
+    conn.execute(
+        "ALTER TABLE settings ADD COLUMN mute_on_start BOOLEAN NOT NULL DEFAULT 0",
+        [],
+    ).ok();
+    // Add the show_controls column to existing settings table if it doesn't exist
+    conn.execute(
+        "ALTER TABLE settings ADD COLUMN show_controls BOOLEAN NOT NULL DEFAULT 1",
+        [],
+    ).ok();
+    // Add the autoplay column to existing settings table if it doesn't exist
+    conn.execute(
+        "ALTER TABLE settings ADD COLUMN autoplay BOOLEAN NOT NULL DEFAULT 0",
+        [],
+    ).ok();
 
     conn.execute(
         "CREATE TABLE IF NOT EXISTS channel_lists (
@@ -127,7 +146,7 @@ pub fn initialize_database() -> Result<Connection> {
     let settings_count: i64 = conn.query_row("SELECT COUNT(*) FROM settings", [], |row| row.get(0))?;
     if settings_count == 0 {
         conn.execute(
-            "INSERT INTO settings (id, player_command, cache_duration_hours, enable_preview) VALUES (1, 'mpv', 24, 1)",
+            "INSERT INTO settings (id, player_command, cache_duration_hours, enable_preview, mute_on_start, show_controls, autoplay) VALUES (1, 'mpv', 24, 1, 0, 1, 0)",
             [],
         )?;
     }

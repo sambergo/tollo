@@ -11,13 +11,28 @@ export function PlayerSettings() {
     fetchPlayerCommand,
     enablePreview,
     setEnablePreview,
-    fetchEnablePreview
+    fetchEnablePreview,
+    muteOnStart,
+    setMuteOnStart,
+    saveMuteOnStart,
+    fetchMuteOnStart,
+    showControls,
+    setShowControls,
+    saveShowControls,
+    fetchShowControls,
+    autoplay,
+    setAutoplay,
+    saveAutoplay,
+    fetchAutoplay
   } = useSettingsStore();
 
   useEffect(() => {
     fetchPlayerCommand();
     fetchEnablePreview();
-  }, [fetchPlayerCommand, fetchEnablePreview]);
+    fetchMuteOnStart();
+    fetchShowControls();
+    fetchAutoplay();
+  }, [fetchPlayerCommand, fetchEnablePreview, fetchMuteOnStart, fetchShowControls, fetchAutoplay]);
 
   const handleSavePlayerCommand = async () => {
     await savePlayerCommand();
@@ -26,8 +41,25 @@ export function PlayerSettings() {
   const handleTogglePreview = async () => {
     const newValue = !enablePreview;
     setEnablePreview(newValue);
-    // Save the new value directly
     await invoke("set_enable_preview", { enabled: newValue });
+  };
+
+  const handleToggleMute = async () => {
+    const newValue = !muteOnStart;
+    setMuteOnStart(newValue);
+    await saveMuteOnStart();
+  };
+
+  const handleToggleControls = async () => {
+    const newValue = !showControls;
+    setShowControls(newValue);
+    await saveShowControls();
+  };
+
+  const handleToggleAutoplay = async () => {
+    const newValue = !autoplay;
+    setAutoplay(newValue);
+    await saveAutoplay();
   };
 
   return (
@@ -62,6 +94,45 @@ export function PlayerSettings() {
             <button
               className={`toggle-button ${enablePreview ? 'active' : ''}`}
               onClick={handleTogglePreview}
+              type="button"
+            />
+          </div>
+        </div>
+        <div className="form-group">
+          <div className="toggle-setting">
+            <div className="setting-info">
+              <div className="setting-label">Mute on Start</div>
+              <div className="setting-description">Start video preview muted</div>
+            </div>
+            <button
+              className={`toggle-button ${muteOnStart ? 'active' : ''}`}
+              onClick={handleToggleMute}
+              type="button"
+            />
+          </div>
+        </div>
+        <div className="form-group">
+          <div className="toggle-setting">
+            <div className="setting-info">
+              <div className="setting-label">Show Controls</div>
+              <div className="setting-description">Show video player controls</div>
+            </div>
+            <button
+              className={`toggle-button ${showControls ? 'active' : ''}`}
+              onClick={handleToggleControls}
+              type="button"
+            />
+          </div>
+        </div>
+        <div className="form-group">
+          <div className="toggle-setting">
+            <div className="setting-info">
+              <div className="setting-label">Autoplay</div>
+              <div className="setting-description">Start playing video automatically</div>
+            </div>
+            <button
+              className={`toggle-button ${autoplay ? 'active' : ''}`}
+              onClick={handleToggleAutoplay}
               type="button"
             />
           </div>

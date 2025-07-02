@@ -341,6 +341,90 @@ fn set_enable_preview(state: State<DbState>, enabled: bool) -> Result<(), String
     Ok(())
 }
 
+// --- Video Player Settings: Mute on Start ---
+#[tauri::command]
+fn get_mute_on_start(state: State<DbState>) -> Result<bool, String> {
+    let db = state.db.lock().unwrap();
+    let mute_on_start: bool = db.query_row(
+        "SELECT mute_on_start FROM settings WHERE id = 1",
+        [],
+        |row| row.get(0),
+    ).unwrap_or(false); // Default to false if not found
+    Ok(mute_on_start)
+}
+
+#[tauri::command]
+fn set_mute_on_start(state: State<DbState>, enabled: bool) -> Result<(), String> {
+    let db = state.db.lock().unwrap();
+    let rows_affected = db.execute(
+        "UPDATE settings SET mute_on_start = ?1 WHERE id = 1",
+        &[&enabled],
+    ).map_err(|e| e.to_string())?;
+    if rows_affected == 0 {
+        db.execute(
+            "INSERT INTO settings (id, player_command, cache_duration_hours, enable_preview, mute_on_start, show_controls, autoplay) VALUES (1, 'mpv', 24, 1, ?1, 1, 0)",
+            &[&enabled],
+        ).map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+// --- Video Player Settings: Show Controls ---
+#[tauri::command]
+fn get_show_controls(state: State<DbState>) -> Result<bool, String> {
+    let db = state.db.lock().unwrap();
+    let show_controls: bool = db.query_row(
+        "SELECT show_controls FROM settings WHERE id = 1",
+        [],
+        |row| row.get(0),
+    ).unwrap_or(true); // Default to true if not found
+    Ok(show_controls)
+}
+
+#[tauri::command]
+fn set_show_controls(state: State<DbState>, enabled: bool) -> Result<(), String> {
+    let db = state.db.lock().unwrap();
+    let rows_affected = db.execute(
+        "UPDATE settings SET show_controls = ?1 WHERE id = 1",
+        &[&enabled],
+    ).map_err(|e| e.to_string())?;
+    if rows_affected == 0 {
+        db.execute(
+            "INSERT INTO settings (id, player_command, cache_duration_hours, enable_preview, mute_on_start, show_controls, autoplay) VALUES (1, 'mpv', 24, 1, 0, ?1, 0)",
+            &[&enabled],
+        ).map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+// --- Video Player Settings: Autoplay ---
+#[tauri::command]
+fn get_autoplay(state: State<DbState>) -> Result<bool, String> {
+    let db = state.db.lock().unwrap();
+    let autoplay: bool = db.query_row(
+        "SELECT autoplay FROM settings WHERE id = 1",
+        [],
+        |row| row.get(0),
+    ).unwrap_or(false); // Default to false if not found
+    Ok(autoplay)
+}
+
+#[tauri::command]
+fn set_autoplay(state: State<DbState>, enabled: bool) -> Result<(), String> {
+    let db = state.db.lock().unwrap();
+    let rows_affected = db.execute(
+        "UPDATE settings SET autoplay = ?1 WHERE id = 1",
+        &[&enabled],
+    ).map_err(|e| e.to_string())?;
+    if rows_affected == 0 {
+        db.execute(
+            "INSERT INTO settings (id, player_command, cache_duration_hours, enable_preview, mute_on_start, show_controls, autoplay) VALUES (1, 'mpv', 24, 1, 0, 1, ?1)",
+            &[&enabled],
+        ).map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
 #[tauri::command]
 fn refresh_channel_list(
     db_state: State<DbState>, 
@@ -791,6 +875,12 @@ pub fn run() {
             set_cache_duration,
             get_enable_preview,
             set_enable_preview,
+            get_mute_on_start,
+            set_mute_on_start,
+            get_show_controls,
+            set_show_controls,
+            get_autoplay,
+            set_autoplay,
             refresh_channel_list,
             validate_and_add_channel_list,
             delete_channel_list,
