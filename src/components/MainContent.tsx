@@ -6,6 +6,7 @@ import {
   useSearchStore, 
   useSettingsStore
 } from "../stores";
+import { useEffect } from "react";
 
 interface MainContentProps {
   filteredChannels: Channel[];
@@ -30,7 +31,8 @@ export default function MainContent({ filteredChannels }: MainContentProps) {
     favorites, 
     groups, 
     history, 
-    isLoadingChannelList 
+    isLoadingChannelList,
+    selectedChannelListId
   } = useChannelStore();
   
   const { 
@@ -43,7 +45,13 @@ export default function MainContent({ filteredChannels }: MainContentProps) {
     setSearchQuery 
   } = useSearchStore();
   
-  const { channelListName } = useSettingsStore();
+  const { channelListName, getChannelListName } = useSettingsStore();
+
+  useEffect(() => {
+    if (selectedChannelListId !== null) {
+      getChannelListName(selectedChannelListId);
+    }
+  }, [selectedChannelListId, getChannelListName]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -53,16 +61,14 @@ export default function MainContent({ filteredChannels }: MainContentProps) {
     setSearchQuery("");
   };
 
-
-
   const getTabTitle = () => {
     switch (activeTab) {
       case "channels":
-        return "Channels";
+        return channelListName ? `Channels (${channelListName})` : "Channels";
       case "favorites":
         return "Favorites";
       case "groups":
-        return "Groups";
+        return channelListName ? `Groups (${channelListName})` : "Groups";
       case "history":
         return "History";
       default:
@@ -94,11 +100,6 @@ export default function MainContent({ filteredChannels }: MainContentProps) {
         
         return (
           <>
-            {channelListName && (
-              <div className="channel-list-info">
-                <strong>Channel List:</strong> {channelListName}
-              </div>
-            )}
             <div className="search-container">
               <div className="search-input-wrapper">
                 <input
