@@ -1,39 +1,41 @@
-mod m3u_parser;
-mod database;
-mod image_cache;
-mod state;
 mod channels;
-mod settings;
-mod playlists;
-mod image_cache_api;
-mod groups;
+mod database;
 mod filters;
+mod groups;
+mod image_cache;
+mod image_cache_api;
+mod m3u_parser;
+mod playlists;
+mod settings;
+mod state;
 mod utils;
 
+use image_cache::ImageCache;
+use playlists::FetchState;
+use state::{ChannelCacheState, DbState, ImageCacheState};
 use std::sync::Mutex;
 use tauri::Manager;
-use image_cache::ImageCache;
-use state::{DbState, ImageCacheState, ChannelCacheState};
 
 // Import all the command functions from their respective modules
 use channels::*;
-use settings::*;
-use playlists::*;
-use image_cache_api::*;
-use groups::*;
 use filters::*;
+use groups::*;
+use image_cache_api::*;
+use playlists::*;
+use settings::*;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let mut db_connection = database::initialize_database().expect("Failed to initialize database");
-    
+
     // Run cleanup on startup to remove orphaned channel list files
     if let Err(e) = utils::cleanup_orphaned_channel_files(&db_connection) {
         println!("Warning: Channel list cleanup failed: {}", e);
     }
-    
+
     let channels = m3u_parser::get_channels(&mut db_connection, None);
-    database::populate_channels(&mut db_connection, &channels).expect("Failed to populate channels");
+    database::populate_channels(&mut db_connection, &channels)
+        .expect("Failed to populate channels");
 
     tauri::Builder::default()
         .manage(DbState {
@@ -42,8 +44,10 @@ pub fn run() {
         .manage(ChannelCacheState {
             cache: Mutex::new(None),
         })
+        .manage(FetchState::new())
         .setup(|app| {
-            let image_cache = ImageCache::new(app.handle()).expect("Failed to initialize image cache");
+            let image_cache =
+                ImageCache::new(app.handle()).expect("Failed to initialize image cache");
             app.manage(ImageCacheState {
                 cache: Mutex::new(image_cache),
             });
@@ -83,6 +87,11 @@ pub fn run() {
             delete_channel_list,
             update_channel_list,
             start_channel_list_selection,
+            // Async playlist commands
+            refresh_channel_list_async,
+            validate_and_add_channel_list_async,
+            get_playlist_fetch_status,
+            get_all_playlist_fetch_status,
             // Image cache commands
             get_cached_image,
             clear_image_cache,

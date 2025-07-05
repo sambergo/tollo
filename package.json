@@ -10,6 +10,7 @@
     "tauri": "tauri",
     "dev:tauri": "tauri dev",
     "build:tauri": "tauri build",
+    "check:tauri": "tauri check",
     "start": "tauri dev",
     "clean": "rm -rf dist src-tauri/target",
     "clean:full": "pnpm clean && rm -rf node_modules src-tauri/target pnpm-lock.yaml Cargo.lock",
