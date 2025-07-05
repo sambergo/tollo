@@ -13,15 +13,17 @@
     "windows": [
       {
         "title": "gui-tollo",
-        "width": 800,
-        "height": 600
+        "width": 1024,
+        "height": 768
       }
     ],
     "security": {
       "csp": null,
       "assetProtocol": {
         "enable": true,
-        "scope": ["$APPDATA/image_cache/**"]
+        "scope": [
+          "$APPDATA/image_cache/**"
+        ]
       }
     }
   },
