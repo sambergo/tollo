@@ -118,8 +118,6 @@ function Settings() {
 
       <PlayerSettings />
 
-      <CacheSettings />
-
       <ImageCacheSettings />
 
       <SavedFiltersSettings />
