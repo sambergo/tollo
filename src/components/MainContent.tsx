@@ -1,5 +1,6 @@
 import ChannelList, { type Channel } from "./ChannelList";
 import GroupList from "./GroupList";
+import ChannelLoadingProgress from "./ChannelLoadingProgress";
 import {
   useChannelStore,
   useUIStore,
@@ -33,6 +34,8 @@ export default function MainContent({ filteredChannels }: MainContentProps) {
     history,
     isLoadingChannelList,
     selectedChannelListId,
+    loadingProgress,
+    isAsyncLoading,
   } = useChannelStore();
 
   const { activeTab } = useUIStore();
@@ -88,6 +91,18 @@ export default function MainContent({ filteredChannels }: MainContentProps) {
   const renderContent = () => {
     switch (activeTab) {
       case "channels":
+        // Show loading progress for async operations
+        if (isAsyncLoading || loadingProgress) {
+          return (
+            <>
+              <ChannelLoadingProgress />
+              {/* Still show the old loading screen if no channels are loaded yet */}
+              {filteredChannels.length === 0 && <LoadingChannelList />}
+            </>
+          );
+        }
+
+        // Show legacy loading screen for non-async operations
         if (isLoadingChannelList) {
           return <LoadingChannelList />;
         }

@@ -65,6 +65,14 @@ pub fn run() {
             get_history,
             search_channels,
             invalidate_channel_cache,
+            // Async channel commands
+            get_channels_async,
+            get_groups_async,
+            search_channels_async,
+            add_favorite_async,
+            remove_favorite_async,
+            get_favorites_async,
+            get_history_async,
             // Settings commands
             get_player_command,
             set_player_command,

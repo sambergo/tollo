@@ -1,0 +1,164 @@
+.channel-loading-progress {
+  background: var(--background-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px;
+  margin: 8px 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.loading-progress-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.loading-progress-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.channel-count {
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 400;
+  background: var(--background-tertiary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+}
+
+.loading-progress-bar-container {
+  position: relative;
+  height: 8px;
+  background: var(--background-tertiary);
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+
+.loading-progress-bar {
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--accent-color) 0%,
+    var(--accent-color-hover) 100%
+  );
+  border-radius: 4px;
+  transition: width 0.5s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.loading-progress-bar:not(.complete)::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 100%
+  );
+  animation: shimmer 2s infinite;
+}
+
+.loading-progress-bar.complete {
+  background: linear-gradient(
+    90deg,
+    var(--success-color) 0%,
+    var(--success-color-hover) 100%
+  );
+}
+
+.loading-progress-percentage {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+@keyframes shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* Compact version for smaller spaces */
+.channel-loading-progress.compact {
+  padding: 8px 12px;
+  margin: 4px 0;
+}
+
+.channel-loading-progress.compact .loading-progress-content {
+  gap: 6px;
+}
+
+.channel-loading-progress.compact .loading-progress-message {
+  font-size: 12px;
+}
+
+.channel-loading-progress.compact .loading-progress-bar-container {
+  height: 6px;
+}
+
+/* Error state */
+.channel-loading-progress.error {
+  border-color: var(--error-color);
+  background: var(--error-background);
+}
+
+.channel-loading-progress.error .loading-progress-bar {
+  background: linear-gradient(
+    90deg,
+    var(--error-color) 0%,
+    var(--error-color-hover) 100%
+  );
+}
+
+/* Success state */
+.channel-loading-progress.success {
+  border-color: var(--success-color);
+  background: var(--success-background);
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .channel-loading-progress {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+  
+  .loading-progress-percentage {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .channel-loading-progress {
+    padding: 12px;
+  }
+  
+  .loading-progress-message {
+    font-size: 13px;
+  }
+  
+  .channel-count {
+    font-size: 11px;
+  }
+} 

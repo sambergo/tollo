@@ -40,6 +40,11 @@ function App() {
     fetchHistory,
     toggleFavorite,
     playInMpv,
+    // NEW: Async operations
+    fetchChannelsAsync,
+    fetchFavoritesAsync,
+    fetchGroupsAsync,
+    fetchHistoryAsync,
   } = useChannelStore();
 
   const {
@@ -165,16 +170,16 @@ function App() {
           });
         };
 
-        // Step 1: Fetch core data
+        // Step 1: Fetch core data with async progress
         await performStep(async () => {
-          await fetchChannels(selectedChannelListId);
-          await fetchFavorites();
+          await fetchChannelsAsync(selectedChannelListId);
+          await fetchFavoritesAsync();
         });
 
-        // Step 2: Fetch groups and history
+        // Step 2: Fetch groups and history with async operations
         await performStep(async () => {
-          await fetchGroups(selectedChannelListId);
-          await fetchHistory();
+          await fetchGroupsAsync(selectedChannelListId);
+          await fetchHistoryAsync();
         });
 
         // Step 3: Handle group setup
