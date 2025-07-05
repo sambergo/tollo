@@ -30,3 +30,6 @@ chrono = { version = "0.4.38", features = ["serde"] }
 uuid = { version = "1.8.0", features = ["v4"] }
 tokio = { version = "1", features = ["full"] }
 sha2 = "0.10"
+
+# Add smart caching dependencies
+dashmap = "6.1"

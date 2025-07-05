@@ -73,6 +73,7 @@ pub fn run() {
             get_history,
             search_channels,
             invalidate_channel_cache,
+            invalidate_search_cache,
             // Async channel commands
             get_channels_async,
             get_groups_async,

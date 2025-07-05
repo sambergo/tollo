@@ -2,10 +2,29 @@ use crate::m3u_parser::Channel;
 use crate::state::{ChannelCacheState, DbState};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::{LazyLock, Mutex};
+use std::time::SystemTime;
 use tauri::{AppHandle, Emitter, State};
 
 use crate::channels::{get_cached_channels, ChannelLoadingStatus};
 use crate::fuzzy_search::FuzzyMatcher;
+
+// Search cancellation system
+static SEARCH_COUNTER: AtomicU64 = AtomicU64::new(0);
+static ACTIVE_SEARCH_ID: LazyLock<Mutex<Option<u64>>> = LazyLock::new(|| Mutex::new(None));
+
+// Phase 1: Incremental search cache
+#[derive(Clone, Debug)]
+struct SearchCacheEntry {
+    query: String,
+    results: Vec<Channel>,
+    timestamp: SystemTime,
+    channel_list_id: Option<i32>,
+}
+
+static INCREMENTAL_CACHE: LazyLock<Mutex<Option<SearchCacheEntry>>> =
+    LazyLock::new(|| Mutex::new(None));
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct SearchProgress {
@@ -22,19 +41,101 @@ pub fn search_channels(
     query: String,
     id: Option<i32>,
 ) -> Result<Vec<Channel>, String> {
-    // Get original channels from cache (this already returns a clone)
-    let original_channels = get_cached_channels(db_state, cache_state, id)?;
+    // Generate unique search ID
+    let search_id = SEARCH_COUNTER.fetch_add(1, Ordering::SeqCst);
 
-    // If query is empty, return all channels
+    // Set this as the active search (cancels previous searches)
+    {
+        let mut active_id = ACTIVE_SEARCH_ID.lock().unwrap();
+        *active_id = Some(search_id);
+    }
+
+    // If query is empty, clear cache and return all channels
     if query.is_empty() {
+        {
+            let mut cache = INCREMENTAL_CACHE.lock().unwrap();
+            *cache = None;
+        }
+        let original_channels = get_cached_channels(db_state, cache_state, id)?;
         return Ok(original_channels);
+    }
+
+    // Phase 1: Check incremental cache
+    let search_space = {
+        let cache = INCREMENTAL_CACHE.lock().unwrap();
+        if let Some(ref cached) = *cache {
+            // Check if we can use incremental search
+            if cached.channel_list_id == id
+                && query.len() > cached.query.len()
+                && query.starts_with(&cached.query)
+                && !cached.results.is_empty()
+                && cached
+                    .timestamp
+                    .elapsed()
+                    .unwrap_or(std::time::Duration::from_secs(60))
+                    < std::time::Duration::from_secs(30)
+            {
+                // Use cached results as search space (much smaller dataset)
+                Some(cached.results.clone())
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    };
+
+    // Get search space (either from cache or full dataset)
+    let channels_to_search = if let Some(cached_results) = search_space {
+        cached_results
+    } else {
+        get_cached_channels(db_state, cache_state, id)?
+    };
+
+    // Check if we're still the active search
+    {
+        let active_id = ACTIVE_SEARCH_ID.lock().unwrap();
+        if *active_id != Some(search_id) {
+            return Err("Search cancelled".to_string());
+        }
     }
 
     // Use fuzzy matcher for intelligent search
     let matcher = FuzzyMatcher::new();
-    let filtered_channels = matcher.search_channels(&original_channels, &query);
+    let filtered_channels = matcher.search_channels(&channels_to_search, &query);
+
+    // Final check if we're still the active search
+    {
+        let active_id = ACTIVE_SEARCH_ID.lock().unwrap();
+        if *active_id != Some(search_id) {
+            return Err("Search cancelled".to_string());
+        }
+    }
+
+    // Update incremental cache with new results
+    {
+        let mut cache = INCREMENTAL_CACHE.lock().unwrap();
+        *cache = Some(SearchCacheEntry {
+            query: query.clone(),
+            results: filtered_channels.clone(),
+            timestamp: SystemTime::now(),
+            channel_list_id: id,
+        });
+    }
 
     Ok(filtered_channels)
+}
+
+// Helper function to clear incremental cache when channel data changes
+pub fn clear_incremental_cache() {
+    let mut cache = INCREMENTAL_CACHE.lock().unwrap();
+    *cache = None;
+}
+
+#[tauri::command]
+pub fn invalidate_search_cache() -> Result<(), String> {
+    clear_incremental_cache();
+    Ok(())
 }
 
 #[tauri::command]
@@ -76,7 +177,7 @@ pub async fn search_channels_async(
         },
     );
 
-    // Use the updated blocking version with fuzzy search
+    // Use the main search function (now with cancellation and incremental cache)
     let channels = search_channels(db_state, cache_state, query_clone, id)?;
 
     // Emit completion

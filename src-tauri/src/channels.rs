@@ -1,5 +1,6 @@
 use crate::m3u_parser::{self, Channel};
 use crate::m3u_parser_helpers::{get_m3u_content, parse_m3u_with_progress};
+use crate::search::clear_incremental_cache;
 use crate::state::{ChannelCache, ChannelCacheState, DbState};
 use serde::{Deserialize, Serialize};
 use std::process::Command;
@@ -60,6 +61,10 @@ pub fn get_cached_channels(
 pub fn invalidate_channel_cache(cache_state: State<ChannelCacheState>) -> Result<(), String> {
     let mut cache = cache_state.cache.lock().unwrap();
     *cache = None;
+
+    // Also clear search cache since channel data has changed
+    clear_incremental_cache();
+
     Ok(())
 }
 
@@ -163,6 +168,9 @@ pub async fn get_channels_async(
             last_updated: SystemTime::now(),
         });
     }
+
+    // Clear search cache since channel data has changed
+    clear_incremental_cache();
 
     // Emit completion
     let _ = app_handle.emit(
