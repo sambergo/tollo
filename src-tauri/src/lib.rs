@@ -1,11 +1,15 @@
 mod channels;
 mod database;
+mod favorites;
 mod filters;
 mod groups;
+mod history;
 mod image_cache;
 mod image_cache_api;
 mod m3u_parser;
+mod m3u_parser_helpers;
 mod playlists;
+mod search;
 mod settings;
 mod state;
 mod utils;
@@ -18,10 +22,13 @@ use tauri::Manager;
 
 // Import all the command functions from their respective modules
 use channels::*;
+use favorites::*;
 use filters::*;
 use groups::*;
+use history::*;
 use image_cache_api::*;
 use playlists::*;
+use search::*;
 use settings::*;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
