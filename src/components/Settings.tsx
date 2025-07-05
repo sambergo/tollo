@@ -9,7 +9,7 @@ import {
 import type { ChannelList } from "../types/settings";
 import { ChannelListsSettings } from "./settings/ChannelListsSettings";
 import { PlayerSettings } from "./settings/PlayerSettings";
-import { CacheSettings } from "./settings/CacheSettings";
+
 import { ImageCacheSettings } from "./settings/ImageCacheSettings";
 import { SavedFiltersSettings } from "./settings/SavedFiltersSettings";
 

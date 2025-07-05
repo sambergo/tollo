@@ -34,10 +34,6 @@ function App() {
     setSelectedChannel,
     setSelectedChannelListId,
     setIsLoadingChannelList,
-    fetchChannels,
-    fetchFavorites,
-    fetchGroups,
-    fetchHistory,
     toggleFavorite,
     playInMpv,
     // NEW: Async operations

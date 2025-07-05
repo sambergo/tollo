@@ -5,6 +5,7 @@ use std::collections::HashSet;
 use tauri::{AppHandle, Emitter, State};
 
 use crate::channels::{get_cached_channels, ChannelLoadingStatus};
+use crate::fuzzy_search::FuzzyMatcher;
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct SearchProgress {
@@ -24,17 +25,14 @@ pub fn search_channels(
     // Get original channels from cache (this already returns a clone)
     let original_channels = get_cached_channels(db_state, cache_state, id)?;
 
-    // Clone the original list and perform case-insensitive search
-    // This ensures the cached original list remains untouched
-    let query_lower = query.to_lowercase();
-    let filtered_channels: Vec<Channel> = original_channels
-        .iter() // Use iter() instead of into_iter() to avoid consuming
-        .filter(|channel| {
-            channel.name.to_lowercase().contains(&query_lower)
-                || channel.group_title.to_lowercase().contains(&query_lower)
-        })
-        .cloned() // Clone each matching channel
-        .collect();
+    // If query is empty, return all channels
+    if query.is_empty() {
+        return Ok(original_channels);
+    }
+
+    // Use fuzzy matcher for intelligent search
+    let matcher = FuzzyMatcher::new();
+    let filtered_channels = matcher.search_channels(&original_channels, &query);
 
     Ok(filtered_channels)
 }
@@ -78,7 +76,7 @@ pub async fn search_channels_async(
         },
     );
 
-    // For now, use the blocking version directly to avoid lifetime issues
+    // Use the updated blocking version with fuzzy search
     let channels = search_channels(db_state, cache_state, query_clone, id)?;
 
     // Emit completion

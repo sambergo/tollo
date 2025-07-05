@@ -2,6 +2,7 @@ mod channels;
 mod database;
 mod favorites;
 mod filters;
+mod fuzzy_search;
 mod groups;
 mod history;
 mod image_cache;
