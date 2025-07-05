@@ -74,6 +74,8 @@ pub fn run() {
             search_channels,
             invalidate_channel_cache,
             invalidate_search_cache,
+            get_cache_stats,
+            warm_cache_with_common_searches,
             // Async channel commands
             get_channels_async,
             get_groups_async,
