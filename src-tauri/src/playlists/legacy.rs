@@ -40,7 +40,7 @@ pub fn refresh_channel_list(
             return Err("Invalid M3U playlist".to_string());
         }
 
-        let data_dir = dirs::data_dir().unwrap().join("gui-tollo/channel_lists");
+        let data_dir = dirs::data_dir().unwrap().join("tollo/channel_lists");
         fs::create_dir_all(&data_dir).map_err(|e| format!("Failed to create directory: {}", e))?;
         let filename = format!("{}.m3u", Uuid::new_v4());
         let filepath = data_dir.join(&filename);
@@ -143,7 +143,7 @@ pub fn validate_and_add_channel_list(
             .text()
             .map_err(|e| format!("Failed to read: {}", e))?;
 
-        let data_dir = dirs::data_dir().unwrap().join("gui-tollo/channel_lists");
+        let data_dir = dirs::data_dir().unwrap().join("tollo/channel_lists");
         fs::create_dir_all(&data_dir).map_err(|e| format!("Failed to create directory: {}", e))?;
         let filename = format!("{}.m3u", Uuid::new_v4());
         let filepath = data_dir.join(&filename);
@@ -165,4 +165,4 @@ pub fn validate_and_add_channel_list(
     }
 
     Ok(list_id)
-} 
+}

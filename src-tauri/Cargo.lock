@@ -1493,26 +1493,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "gui-tollo"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "dashmap",
- "dirs 5.0.1",
- "regex",
- "reqwest",
- "rusqlite",
- "serde",
- "serde_json",
- "sha2",
- "tauri",
- "tauri-build",
- "tauri-plugin-opener",
- "tokio",
- "uuid",
-]
-
-[[package]]
 name = "h2"
 version = "0.4.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4333,6 +4313,26 @@ dependencies = [
  "futures-sink",
  "pin-project-lite",
  "tokio",
+]
+
+[[package]]
+name = "tollo"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "dashmap",
+ "dirs 5.0.1",
+ "regex",
+ "reqwest",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-opener",
+ "tokio",
+ "uuid",
 ]
 
 [[package]]

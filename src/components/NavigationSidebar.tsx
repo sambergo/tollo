@@ -18,8 +18,8 @@ export default function NavigationSidebar() {
     <div className="nav-sidebar">
       <div className="app-header">
         <div className="app-logo">
-          <div className="app-logo-icon">TV</div>
-          <h1 className="app-title">IPTV Pro</h1>
+          <img className="app-logo-icon" src="/logo.png" alt="Töllö logo" style={{ width: 32, height: 32 }} />
+          <h1 className="app-title">Töllö</h1>
         </div>
         <nav className="nav-menu">
           <button

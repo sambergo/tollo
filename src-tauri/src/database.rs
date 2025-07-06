@@ -3,7 +3,7 @@ use rusqlite::{Connection, Result};
 use std::fs;
 
 pub fn initialize_database() -> Result<Connection> {
-    let data_dir = dirs::data_dir().unwrap().join("gui-tollo");
+    let data_dir = dirs::data_dir().unwrap().join("tollo");
     fs::create_dir_all(&data_dir).unwrap();
     let db_path = data_dir.join("database.sqlite");
     let conn = Connection::open(&db_path)?;

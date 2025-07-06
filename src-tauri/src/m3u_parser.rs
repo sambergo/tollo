@@ -243,7 +243,7 @@ pub fn get_channels(conn: &mut Connection, id: Option<i32>) -> Vec<Channel> {
 
         if let (Some(fp), Some(lf)) = (filepath, last_fetched) {
             if now - lf < cache_duration_hours * 3600 {
-                let data_dir = dirs::data_dir().unwrap().join("gui-tollo");
+                let data_dir = dirs::data_dir().unwrap().join("tollo");
                 let channel_lists_dir = data_dir.join("channel_lists");
                 if let Ok(content) = fs::read_to_string(channel_lists_dir.join(fp)) {
                     return parse_m3u_content(&content);
@@ -253,7 +253,7 @@ pub fn get_channels(conn: &mut Connection, id: Option<i32>) -> Vec<Channel> {
 
         if source.starts_with("http") {
             if let Ok(content) = reqwest::blocking::get(&source).and_then(|resp| resp.text()) {
-                let data_dir = dirs::data_dir().unwrap().join("gui-tollo");
+                let data_dir = dirs::data_dir().unwrap().join("tollo");
                 let channel_lists_dir = data_dir.join("channel_lists");
                 let _ = fs::create_dir_all(&channel_lists_dir);
                 let filename = format!("{}.m3u", Uuid::new_v4());
@@ -272,7 +272,7 @@ pub fn get_channels(conn: &mut Connection, id: Option<i32>) -> Vec<Channel> {
                 }
             }
         } else {
-            let data_dir = dirs::data_dir().unwrap().join("gui-tollo");
+            let data_dir = dirs::data_dir().unwrap().join("tollo");
             let channel_lists_dir = data_dir.join("channel_lists");
             if let Ok(content) = fs::read_to_string(channel_lists_dir.join(&source)) {
                 return parse_m3u_content(&content);
@@ -328,7 +328,7 @@ where
         if let (Some(fp), Some(lf)) = (filepath, last_fetched) {
             if now - lf < cache_duration_hours * 3600 {
                 progress_callback(0.2, "Loading from cache...".to_string(), 0);
-                let data_dir = dirs::data_dir().unwrap().join("gui-tollo");
+                let data_dir = dirs::data_dir().unwrap().join("tollo");
                 let channel_lists_dir = data_dir.join("channel_lists");
                 if let Ok(content) = fs::read_to_string(channel_lists_dir.join(fp)) {
                     progress_callback(0.3, "Parsing cached M3U content...".to_string(), 0);
@@ -341,7 +341,7 @@ where
             progress_callback(0.2, "Downloading playlist...".to_string(), 0);
             if let Ok(content) = reqwest::blocking::get(&source).and_then(|resp| resp.text()) {
                 progress_callback(0.4, "Saving to cache...".to_string(), 0);
-                let data_dir = dirs::data_dir().unwrap().join("gui-tollo");
+                let data_dir = dirs::data_dir().unwrap().join("tollo");
                 let channel_lists_dir = data_dir.join("channel_lists");
                 let _ = fs::create_dir_all(&channel_lists_dir);
                 let filename = format!("{}.m3u", Uuid::new_v4());
@@ -362,7 +362,7 @@ where
             }
         } else {
             progress_callback(0.2, "Loading from file...".to_string(), 0);
-            let data_dir = dirs::data_dir().unwrap().join("gui-tollo");
+            let data_dir = dirs::data_dir().unwrap().join("tollo");
             let channel_lists_dir = data_dir.join("channel_lists");
             if let Ok(content) = fs::read_to_string(channel_lists_dir.join(&source)) {
                 progress_callback(0.3, "Parsing M3U content...".to_string(), 0);

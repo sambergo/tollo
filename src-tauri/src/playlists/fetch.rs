@@ -133,7 +133,7 @@ pub async fn refresh_channel_list_async(
     .await;
 
     // Save to file
-    let data_dir = dirs::data_dir().unwrap().join("gui-tollo/channel_lists");
+    let data_dir = dirs::data_dir().unwrap().join("tollo/channel_lists");
     fs::create_dir_all(&data_dir).map_err(|e| format!("Failed to create directory: {}", e))?;
     let filename = format!("{}.m3u", Uuid::new_v4());
     let filepath = data_dir.join(&filename);
@@ -347,7 +347,7 @@ pub async fn validate_and_add_channel_list_async(
         .await;
 
         // Save the playlist
-        let data_dir = dirs::data_dir().unwrap().join("gui-tollo/channel_lists");
+        let data_dir = dirs::data_dir().unwrap().join("tollo/channel_lists");
         fs::create_dir_all(&data_dir).map_err(|e| format!("Failed to create directory: {}", e))?;
         let filename = format!("{}.m3u", Uuid::new_v4());
         let filepath = data_dir.join(&filename);

@@ -40,7 +40,7 @@ pub fn get_m3u_content(conn: &mut rusqlite::Connection, id: Option<i32>) -> Resu
         // Check if we have cached content
         if let (Some(fp), Some(lf)) = (filepath, last_fetched) {
             if now - lf < cache_duration_hours * 3600 {
-                let data_dir = dirs::data_dir().unwrap().join("gui-tollo");
+                let data_dir = dirs::data_dir().unwrap().join("tollo");
                 let channel_lists_dir = data_dir.join("channel_lists");
                 if let Ok(content) = std::fs::read_to_string(channel_lists_dir.join(fp)) {
                     return Ok(content);
@@ -56,7 +56,7 @@ pub fn get_m3u_content(conn: &mut rusqlite::Connection, id: Option<i32>) -> Resu
                 .map_err(|e| format!("Failed to read response: {}", e))?;
 
             // Save to cache
-            let data_dir = dirs::data_dir().unwrap().join("gui-tollo");
+            let data_dir = dirs::data_dir().unwrap().join("tollo");
             let channel_lists_dir = data_dir.join("channel_lists");
             let _ = std::fs::create_dir_all(&channel_lists_dir);
             let filename = format!("{}.m3u", uuid::Uuid::new_v4());
@@ -74,7 +74,7 @@ pub fn get_m3u_content(conn: &mut rusqlite::Connection, id: Option<i32>) -> Resu
 
             return Ok(content);
         } else {
-            let data_dir = dirs::data_dir().unwrap().join("gui-tollo");
+            let data_dir = dirs::data_dir().unwrap().join("tollo");
             let channel_lists_dir = data_dir.join("channel_lists");
             if let Ok(content) = std::fs::read_to_string(channel_lists_dir.join(&source)) {
                 return Ok(content);
