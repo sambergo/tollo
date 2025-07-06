@@ -33,3 +33,7 @@ sha2 = "0.10"
 
 # Add smart caching dependencies
 dashmap = "6.1"
+
+# Error handling dependencies
+thiserror = "1.0"
+anyhow = "1.0"

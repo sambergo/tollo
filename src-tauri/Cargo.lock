@@ -4319,6 +4319,7 @@ dependencies = [
 name = "tollo"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "chrono",
  "dashmap",
  "dirs 5.0.1",
@@ -4331,6 +4332,7 @@ dependencies = [
  "tauri",
  "tauri-build",
  "tauri-plugin-opener",
+ "thiserror 1.0.69",
  "tokio",
  "uuid",
 ]

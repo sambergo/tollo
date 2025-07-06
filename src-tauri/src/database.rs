@@ -1,10 +1,16 @@
+use crate::error::{Result, TolloError};
 use crate::m3u_parser::Channel;
-use rusqlite::{Connection, Result};
+use rusqlite::{Connection, Result as RusqliteResult};
 use std::fs;
 
 pub fn initialize_database() -> Result<Connection> {
-    let data_dir = dirs::data_dir().unwrap().join("tollo");
-    fs::create_dir_all(&data_dir).unwrap();
+    let data_dir = dirs::data_dir()
+        .ok_or_else(|| TolloError::DataDirectoryAccess)?
+        .join("tollo");
+    
+    fs::create_dir_all(&data_dir)
+        .map_err(|_e| TolloError::directory_creation(data_dir.display().to_string()))?;
+    
     let db_path = data_dir.join("database.sqlite");
     let conn = Connection::open(&db_path)?;
 
@@ -154,7 +160,7 @@ pub fn initialize_database() -> Result<Connection> {
     Ok(conn)
 }
 
-pub fn populate_channels(conn: &mut Connection, channels: &[Channel]) -> Result<()> {
+pub fn populate_channels(conn: &mut Connection, channels: &[Channel]) -> RusqliteResult<()> {
     let tx = conn.transaction()?;
     {
         let mut stmt = tx.prepare("INSERT OR IGNORE INTO channels (name, logo, url, group_title, tvg_id, resolution, extra_info) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)")?;
@@ -180,7 +186,7 @@ pub fn populate_channels(conn: &mut Connection, channels: &[Channel]) -> Result<
     Ok(())
 }
 
-pub fn get_enabled_groups(conn: &Connection, channel_list_id: i64) -> Result<Vec<String>> {
+pub fn get_enabled_groups(conn: &Connection, channel_list_id: i64) -> RusqliteResult<Vec<String>> {
     let mut stmt = conn.prepare("SELECT group_name FROM group_selections WHERE channel_list_id = ?1 AND is_enabled = 1")?;
     let group_iter = stmt.query_map([channel_list_id], |row| {
         Ok(row.get::<_, String>(0)?)
@@ -193,7 +199,7 @@ pub fn get_enabled_groups(conn: &Connection, channel_list_id: i64) -> Result<Vec
     Ok(groups)
 }
 
-pub fn set_group_enabled(conn: &Connection, channel_list_id: i64, group_name: String, enabled: bool) -> Result<()> {
+pub fn set_group_enabled(conn: &Connection, channel_list_id: i64, group_name: String, enabled: bool) -> RusqliteResult<()> {
     conn.execute(
         "INSERT OR REPLACE INTO group_selections (channel_list_id, group_name, is_enabled) VALUES (?1, ?2, ?3)",
         (channel_list_id, group_name, enabled),
@@ -201,7 +207,7 @@ pub fn set_group_enabled(conn: &Connection, channel_list_id: i64, group_name: St
     Ok(())
 }
 
-pub fn sync_channel_list_groups(conn: &mut Connection, channel_list_id: i64, groups: Vec<String>) -> Result<()> {
+pub fn sync_channel_list_groups(conn: &mut Connection, channel_list_id: i64, groups: Vec<String>) -> RusqliteResult<()> {
     let tx = conn.transaction()?;
     
     // Get existing groups for this channel list  
@@ -242,7 +248,7 @@ pub fn sync_channel_list_groups(conn: &mut Connection, channel_list_id: i64, gro
     Ok(())
 }
 
-pub fn enable_all_groups(conn: &mut Connection, channel_list_id: i64, groups: Vec<String>) -> Result<()> {
+pub fn enable_all_groups(conn: &mut Connection, channel_list_id: i64, groups: Vec<String>) -> RusqliteResult<()> {
     // Enable all groups in a single transaction for much better performance
     let tx = conn.transaction()?;
     
@@ -265,7 +271,7 @@ pub struct SavedFilter {
     pub name: String,
 }
 
-pub fn save_filter(conn: &Connection, channel_list_id: i64, slot_number: i32, search_query: String, selected_group: Option<String>, name: String) -> Result<()> {
+pub fn save_filter(conn: &Connection, channel_list_id: i64, slot_number: i32, search_query: String, selected_group: Option<String>, name: String) -> RusqliteResult<()> {
     conn.execute(
         "INSERT OR REPLACE INTO saved_filters (channel_list_id, slot_number, search_query, selected_group, name) VALUES (?1, ?2, ?3, ?4, ?5)",
         (channel_list_id, slot_number, search_query, selected_group, name),
@@ -273,7 +279,7 @@ pub fn save_filter(conn: &Connection, channel_list_id: i64, slot_number: i32, se
     Ok(())
 }
 
-pub fn get_saved_filters(conn: &Connection, channel_list_id: i64) -> Result<Vec<SavedFilter>> {
+pub fn get_saved_filters(conn: &Connection, channel_list_id: i64) -> RusqliteResult<Vec<SavedFilter>> {
     let mut stmt = conn.prepare("SELECT slot_number, search_query, selected_group, name FROM saved_filters WHERE channel_list_id = ?1 ORDER BY slot_number")?;
     let filter_iter = stmt.query_map([channel_list_id], |row| {
         Ok(SavedFilter {
@@ -291,7 +297,7 @@ pub fn get_saved_filters(conn: &Connection, channel_list_id: i64) -> Result<Vec<
     Ok(filters)
 }
 
-pub fn delete_saved_filter(conn: &Connection, channel_list_id: i64, slot_number: i32) -> Result<()> {
+pub fn delete_saved_filter(conn: &Connection, channel_list_id: i64, slot_number: i32) -> RusqliteResult<()> {
     conn.execute(
         "DELETE FROM saved_filters WHERE channel_list_id = ?1 AND slot_number = ?2",
         (channel_list_id, slot_number),
