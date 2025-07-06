@@ -6,7 +6,9 @@ import { ImageIcon, ClockIcon } from "./SettingsIcons";
 
 export function ImageCacheSettings() {
   const [imageCacheSize, setImageCacheSize] = useState<number>(0);
-  const { clearCache, getCacheSize } = useImageCache();
+  const [isLoadingCacheSize, setIsLoadingCacheSize] = useState<boolean>(false);
+  const [isClearingCache, setIsClearingCache] = useState<boolean>(false);
+  const { clearCacheAsync, getCacheSizeAsync } = useImageCache();
 
   // Cache duration settings
   const {
@@ -22,17 +24,27 @@ export function ImageCacheSettings() {
   }, [fetchCacheDuration]);
 
   async function fetchImageCacheSize() {
-    const size = await getCacheSize();
-    setImageCacheSize(size);
+    setIsLoadingCacheSize(true);
+    try {
+      const size = await getCacheSizeAsync();
+      setImageCacheSize(size);
+    } catch (error) {
+      console.error("Failed to fetch image cache size:", error);
+    } finally {
+      setIsLoadingCacheSize(false);
+    }
   }
 
   const handleClearImageCache = async () => {
+    setIsClearingCache(true);
     try {
-      await clearCache();
+      await clearCacheAsync();
       await fetchImageCacheSize(); // Refresh cache size
       alert("Image cache cleared successfully!");
     } catch (error) {
       alert("Failed to clear image cache: " + error);
+    } finally {
+      setIsClearingCache(false);
     }
   };
 
@@ -82,15 +94,25 @@ export function ImageCacheSettings() {
           <div className="cache-info">
             <div className="cache-stat">
               <span className="stat-label">Cache Size:</span>
-              <span className="stat-value">{formatBytes(imageCacheSize)}</span>
+              <span className="stat-value">
+                {isLoadingCacheSize ? "Loading..." : formatBytes(imageCacheSize)}
+              </span>
             </div>
           </div>
           <div className="cache-actions">
-            <button className="btn-secondary" onClick={fetchImageCacheSize}>
-              Refresh Size
+            <button
+              className="btn-secondary"
+              onClick={fetchImageCacheSize}
+              disabled={isLoadingCacheSize}
+            >
+              {isLoadingCacheSize ? "Loading..." : "Refresh Size"}
             </button>
-            <button className="btn-danger" onClick={handleClearImageCache}>
-              Clear Cache
+            <button
+              className="btn-danger"
+              onClick={handleClearImageCache}
+              disabled={isClearingCache}
+            >
+              {isClearingCache ? "Clearing..." : "Clear Cache"}
             </button>
           </div>
         </div>

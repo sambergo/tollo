@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from "react";
-import { useCachedImage } from "../hooks/useImageCache";
+import { useCachedImageAsync } from "../hooks/useImageCache";
 
 interface CachedImageProps {
   src: string;
@@ -43,7 +43,8 @@ const CachedImage: React.FC<CachedImageProps> = ({
     return () => observer.disconnect();
   }, [lazy, rootMargin]);
 
-  const { cachedUrl, loading, error } = useCachedImage(src, isIntersecting);
+  // Use the new async hook for non-blocking image caching
+  const { cachedUrl, loading, error } = useCachedImageAsync(src, isIntersecting);
 
   // Show placeholder for empty URLs
   if (!src || src.trim() === "") {
@@ -93,7 +94,7 @@ const CachedImage: React.FC<CachedImageProps> = ({
     );
   }
 
-  // Show a placeholder or loading state if needed
+  // Show loading state while image is being cached asynchronously
   if (loading) {
     return (
       <div

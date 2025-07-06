@@ -18,7 +18,7 @@ mod utils;
 use image_cache::ImageCache;
 use playlists::FetchState;
 use state::{ChannelCacheState, DbState, ImageCacheState};
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use tauri::Manager;
 
 // Import all the command functions from their respective modules
@@ -57,7 +57,7 @@ pub fn run() {
             let image_cache =
                 ImageCache::new(app.handle()).expect("Failed to initialize image cache");
             app.manage(ImageCacheState {
-                cache: Mutex::new(image_cache),
+                cache: Arc::new(image_cache),
             });
             Ok(())
         })
@@ -111,10 +111,16 @@ pub fn run() {
             validate_and_add_channel_list_async,
             get_playlist_fetch_status,
             get_all_playlist_fetch_status,
-            // Image cache commands
+            // Image cache commands (sync)
             get_cached_image,
             clear_image_cache,
             get_image_cache_size,
+            // Async image cache commands
+            get_cached_image_async,
+            clear_image_cache_async,
+            get_image_cache_size_async,
+            get_image_download_status,
+            preload_images,
             // Group commands
             get_enabled_groups,
             update_group_selection,
