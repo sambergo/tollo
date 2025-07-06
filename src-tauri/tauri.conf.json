@@ -14,16 +14,15 @@
       {
         "title": "gui-tollo",
         "width": 1024,
-        "height": 768
+        "height": 768,
+        "fullscreen": true
       }
     ],
     "security": {
       "csp": null,
       "assetProtocol": {
         "enable": true,
-        "scope": [
-          "$APPDATA/image_cache/**"
-        ]
+        "scope": ["$APPDATA/image_cache/**"]
       }
     }
   },
