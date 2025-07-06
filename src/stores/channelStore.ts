@@ -55,6 +55,7 @@ interface ChannelState {
   fetchGroupsAsync: (id?: number | null) => Promise<void>;
   fetchHistoryAsync: () => Promise<void>;
   toggleFavoriteAsync: (channel: Channel) => Promise<void>;
+  playInMpvAsync: (channel: Channel) => Promise<void>;
 }
 
 export const useChannelStore = create<ChannelState>((set, get) => ({
@@ -128,9 +129,19 @@ export const useChannelStore = create<ChannelState>((set, get) => ({
 
   playInMpv: async (channel) => {
     set({ isMpvPlaying: true });
-    await invoke("play_channel", { channel });
-    // Refresh history
-    get().fetchHistory();
+    try {
+      await invoke("play_channel", { channel });
+      // Refresh history only on successful playback
+      get().fetchHistory();
+      // Reset loading state after successful playback verification
+      set({ isMpvPlaying: false });
+    } catch (error) {
+      console.error("Failed to play channel:", error);
+      // Reset loading state on error
+      set({ isMpvPlaying: false });
+      // Notify user about the failure
+      alert(`Failed to play channel "${channel.name}". The media player couldn't play this channel.`);
+    }
   },
 
   // NEW: Async API actions with progress tracking
@@ -196,6 +207,23 @@ export const useChannelStore = create<ChannelState>((set, get) => ({
       await get().fetchFavoritesAsync();
     } catch (error) {
       console.error("Failed to toggle favorite async:", error);
+    }
+  },
+
+  playInMpvAsync: async (channel) => {
+    set({ isMpvPlaying: true });
+    try {
+      await invoke("play_channel", { channel });
+      // Refresh history only on successful playback
+      await get().fetchHistoryAsync();
+      // Reset loading state after successful playback verification
+      set({ isMpvPlaying: false });
+    } catch (error) {
+      console.error("Failed to play channel:", error);
+      // Reset loading state on error
+      set({ isMpvPlaying: false });
+      // Notify user about the failure
+      alert(`Failed to play channel "${channel.name}". The media player couldn't play this channel - it may be offline or geo-blocked.`);
     }
   },
 }));

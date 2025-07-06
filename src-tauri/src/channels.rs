@@ -4,8 +4,9 @@ use crate::search::clear_advanced_cache;
 use crate::state::{ChannelCache, ChannelCacheState, DbState};
 use serde::{Deserialize, Serialize};
 use std::process::Command;
-use std::time::SystemTime;
+use std::time::{Duration, SystemTime};
 use tauri::{AppHandle, Emitter, State};
+use tokio::time;
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ChannelLoadingStatus {
@@ -69,30 +70,75 @@ pub fn invalidate_channel_cache(cache_state: State<ChannelCacheState>) -> Result
 }
 
 #[tauri::command]
-pub fn play_channel(state: State<DbState>, channel: Channel) {
-    let db = state.db.lock().unwrap();
-    db.execute(
-        "INSERT OR REPLACE INTO history (name, logo, url, group_title, tvg_id, resolution, extra_info, timestamp) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, CURRENT_TIMESTAMP)",
-        &[&channel.name, &channel.logo, &channel.url, &channel.group_title, &channel.tvg_id, &channel.resolution, &channel.extra_info],
-    ).unwrap();
+pub async fn play_channel(state: State<'_, DbState>, channel: Channel) -> Result<(), String> {
+    let player_command: String = {
+        let db = state.db.lock().unwrap();
 
-    let player_command: String = db
-        .query_row(
+        // First, try to add to history
+        if let Err(e) = db.execute(
+            "INSERT OR REPLACE INTO history (name, logo, url, group_title, tvg_id, resolution, extra_info, timestamp) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, CURRENT_TIMESTAMP)",
+            &[&channel.name, &channel.logo, &channel.url, &channel.group_title, &channel.tvg_id, &channel.resolution, &channel.extra_info],
+        ) {
+            eprintln!("Warning: Failed to add channel to history: {}", e);
+            // Continue anyway, this shouldn't prevent playback
+        }
+
+        db.query_row(
             "SELECT player_command FROM settings WHERE id = 1",
             [],
             |row| row.get(0),
         )
-        .unwrap_or_else(|_| "mpv".to_string());
+        .unwrap_or_else(|_| "mpv".to_string())
+    }; // Release the database lock here
 
     let mut command_parts = player_command.split_whitespace();
     let command = command_parts.next().unwrap_or("mpv");
     let args = command_parts.collect::<Vec<&str>>();
 
-    Command::new(command)
-        .args(args)
-        .arg(channel.url)
-        .spawn()
-        .expect("Failed to launch video player");
+    // Try to spawn the external player
+    match Command::new(command).args(args).arg(&channel.url).spawn() {
+        Ok(mut child) => {
+            println!("Successfully launched player for channel: {}", channel.name);
+
+            // Wait a bit to see if the player exits quickly (indicating failure)
+            time::sleep(Duration::from_millis(3000)).await;
+
+            // Check if the process is still running
+            match child.try_wait() {
+                Ok(Some(exit_status)) => {
+                    // Process has exited
+                    if exit_status.success() {
+                        println!("Player exited successfully for channel: {}", channel.name);
+                        Ok(())
+                    } else {
+                        eprintln!(
+                            "Player exited with error for channel: {} (exit code: {:?})",
+                            channel.name,
+                            exit_status.code()
+                        );
+                        Err("Player failed to play the channel".to_string())
+                    }
+                }
+                Ok(None) => {
+                    // Process is still running, assume success
+                    println!("Player is still running for channel: {}", channel.name);
+                    Ok(())
+                }
+                Err(e) => {
+                    eprintln!(
+                        "Failed to check player status for channel {}: {}",
+                        channel.name, e
+                    );
+                    // If we can't check the status, assume it's working
+                    Ok(())
+                }
+            }
+        }
+        Err(e) => {
+            eprintln!("Failed to launch video player '{}': {}", command, e);
+            Err(format!("Failed to launch video player: {}", e))
+        }
+    }
 }
 
 // NEW ASYNC COMMANDS
