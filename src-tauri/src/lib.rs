@@ -1,20 +1,23 @@
 mod channels;
-mod database;
+pub mod database;
 mod error;
 mod favorites;
 mod filters;
-mod fuzzy_search;
+pub mod fuzzy_search;
 mod groups;
 mod history;
-mod image_cache;
+pub mod image_cache;
 mod image_cache_api;
-mod m3u_parser;
+pub mod m3u_parser;
 mod m3u_parser_helpers;
 mod playlists;
-mod search;
+pub mod search;
 mod settings;
 mod state;
 mod utils;
+
+#[cfg(test)]
+mod integration_tests;
 
 use error::{Result, TolloError};
 use image_cache::ImageCache;

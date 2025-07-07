@@ -261,3 +261,79 @@ impl From<TolloError> for InvokeError {
         InvokeError::from(error.user_message())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_error_display() {
+        let error = TolloError::database_init("Connection failed");
+        assert_eq!(
+            error.to_string(),
+            "Database initialization failed: Connection failed"
+        );
+    }
+
+    #[test]
+    fn test_error_categories() {
+        assert_eq!(TolloError::Database(rusqlite::Error::InvalidPath("test".into())).category(), "database");
+        assert_eq!(TolloError::PlaylistFetch { url: "test".to_string() }.category(), "network");
+        assert_eq!(TolloError::DataDirectoryAccess.category(), "filesystem");
+        assert_eq!(TolloError::M3uParsing { reason: "test".to_string() }.category(), "parsing");
+        assert_eq!(TolloError::Cache { operation: "test".to_string() }.category(), "cache");
+        assert_eq!(TolloError::LockAcquisition { resource: "test".to_string() }.category(), "concurrency");
+    }
+
+    #[test]
+    fn test_recoverable_errors() {
+        assert!(TolloError::PlaylistFetch { url: "test".to_string() }.is_recoverable());
+        assert!(TolloError::Timeout { operation: "test".to_string() }.is_recoverable());
+        assert!(TolloError::Cache { operation: "test".to_string() }.is_recoverable());
+        assert!(TolloError::LockAcquisition { resource: "test".to_string() }.is_recoverable());
+        
+        assert!(!TolloError::DatabaseInitialization { reason: "test".to_string() }.is_recoverable());
+        assert!(!TolloError::DataDirectoryAccess.is_recoverable());
+    }
+
+    #[test]
+    fn test_user_messages() {
+        let db_error = TolloError::Database(rusqlite::Error::InvalidPath("test".into()));
+        assert_eq!(db_error.user_message(), "Database operation failed. Please try again.");
+        
+        let network_error = TolloError::PlaylistFetch { url: "http://example.com".to_string() };
+        assert_eq!(network_error.user_message(), "Failed to load playlist. Please check the URL and try again.");
+    }
+
+    #[test]
+    fn test_error_conversion_to_string() {
+        let error = TolloError::timeout("search operation");
+        let error_string: String = error.into();
+        assert_eq!(error_string, "Operation timed out. Please try again.");
+    }
+
+    #[test]
+    fn test_builder_methods() {
+        let error = TolloError::database_init("Failed to connect");
+        assert!(matches!(error, TolloError::DatabaseInitialization { .. }));
+        
+        let error = TolloError::directory_creation("/tmp/test");
+        assert!(matches!(error, TolloError::DirectoryCreation { .. }));
+        
+        let error = TolloError::playlist_fetch("http://example.com");
+        assert!(matches!(error, TolloError::PlaylistFetch { .. }));
+    }
+
+    #[test]
+    fn test_from_trait_conversions() {
+        // Test rusqlite error conversion
+        let rusqlite_error = rusqlite::Error::InvalidPath("test".into());
+        let tollo_error: TolloError = rusqlite_error.into();
+        assert!(matches!(tollo_error, TolloError::Database(_)));
+        
+        // Test IO error conversion
+        let io_error = std::io::Error::new(std::io::ErrorKind::NotFound, "File not found");
+        let tollo_error: TolloError = io_error.into();
+        assert!(matches!(tollo_error, TolloError::FileSystem(_)));
+    }
+}
