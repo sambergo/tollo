@@ -1,10 +1,11 @@
 import ChannelList, { type Channel } from "./ChannelList";
 import GroupList from "./GroupList";
-import { 
-  useChannelStore, 
-  useUIStore, 
-  useSearchStore, 
-  useSettingsStore
+import ChannelLoadingProgress from "./ChannelLoadingProgress";
+import {
+  useChannelStore,
+  useUIStore,
+  useSearchStore,
+  useSettingsStore,
 } from "../stores";
 import { useEffect } from "react";
 
@@ -27,24 +28,20 @@ const LoadingChannelList = () => (
 
 export default function MainContent({ filteredChannels }: MainContentProps) {
   // Get state from stores
-  const { 
-    favorites, 
-    groups, 
-    history, 
+  const {
+    favorites,
+    groups,
+    history,
     isLoadingChannelList,
-    selectedChannelListId
+    selectedChannelListId,
+    loadingProgress,
+    isAsyncLoading,
   } = useChannelStore();
-  
-  const { 
-    activeTab
-  } = useUIStore();
-  
-  const { 
-    searchQuery, 
-    isSearching, 
-    setSearchQuery 
-  } = useSearchStore();
-  
+
+  const { activeTab } = useUIStore();
+
+  const { searchQuery, isSearching, setSearchQuery } = useSearchStore();
+
   const { channelListName, getChannelListName } = useSettingsStore();
 
   useEffect(() => {
@@ -94,10 +91,22 @@ export default function MainContent({ filteredChannels }: MainContentProps) {
   const renderContent = () => {
     switch (activeTab) {
       case "channels":
+        // Show loading progress for async operations
+        if (isAsyncLoading || loadingProgress) {
+          return (
+            <>
+              <ChannelLoadingProgress />
+              {/* Still show the old loading screen if no channels are loaded yet */}
+              {filteredChannels.length === 0 && <LoadingChannelList />}
+            </>
+          );
+        }
+
+        // Show legacy loading screen for non-async operations
         if (isLoadingChannelList) {
           return <LoadingChannelList />;
         }
-        
+
         return (
           <>
             <div className="search-container">
@@ -126,11 +135,7 @@ export default function MainContent({ filteredChannels }: MainContentProps) {
                 Type at least 3 characters to search...
               </div>
             )}
-            {isSearching && (
-              <div className="search-status">
-                Searching...
-              </div>
-            )}
+            {isSearching && <div className="search-status">Searching...</div>}
             <div className="content-list">
               <ChannelList channels={filteredChannels} />
             </div>
@@ -169,4 +174,4 @@ export default function MainContent({ filteredChannels }: MainContentProps) {
       {renderContent()}
     </div>
   );
-} 
+}

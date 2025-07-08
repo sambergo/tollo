@@ -210,7 +210,7 @@
 .channel-number {
   font-size: 0.75rem;
   color: var(--text-muted);
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
 }
 
 .channel-name {
@@ -280,4 +280,4 @@
   background: var(--accent-yellow);
   color: #1a1a1a;
   border-color: var(--accent-yellow);
-} 
+}

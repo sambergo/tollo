@@ -1,5 +1,5 @@
-import React, { useRef, useEffect, useState } from 'react';
-import { useCachedImage } from '../hooks/useImageCache';
+import React, { useRef, useEffect, useState } from "react";
+import { useCachedImageAsync } from "../hooks/useImageCache";
 
 interface CachedImageProps {
   src: string;
@@ -12,22 +12,22 @@ interface CachedImageProps {
   rootMargin?: string; // Intersection observer root margin
 }
 
-const CachedImage: React.FC<CachedImageProps> = ({ 
-  src, 
-  alt, 
-  className, 
-  style, 
-  onLoad, 
+const CachedImage: React.FC<CachedImageProps> = ({
+  src,
+  alt,
+  className,
+  style,
+  onLoad,
   onError,
   lazy = true,
-  rootMargin = '50px'
+  rootMargin = "50px",
 }) => {
   const [isIntersecting, setIsIntersecting] = useState(!lazy);
   const imgRef = useRef<HTMLDivElement | HTMLImageElement>(null);
-  
+
   useEffect(() => {
     if (!lazy || !imgRef.current) return;
-    
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -35,33 +35,34 @@ const CachedImage: React.FC<CachedImageProps> = ({
           observer.disconnect();
         }
       },
-      { rootMargin }
+      { rootMargin },
     );
-    
+
     observer.observe(imgRef.current);
-    
+
     return () => observer.disconnect();
   }, [lazy, rootMargin]);
 
-  const { cachedUrl, loading, error } = useCachedImage(src, isIntersecting);
+  // Use the new async hook for non-blocking image caching
+  const { cachedUrl, loading, error } = useCachedImageAsync(src, isIntersecting);
 
   // Show placeholder for empty URLs
-  if (!src || src.trim() === '') {
+  if (!src || src.trim() === "") {
     return (
-      <div 
+      <div
         ref={imgRef as React.RefObject<HTMLDivElement>}
-        className={className} 
-        style={{ 
-          ...style, 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-          backgroundColor: '#27272a',
-          color: '#71717a',
-          minWidth: '40px',
-          minHeight: '40px',
-          fontSize: '10px',
-          borderRadius: '8px'
+        className={className}
+        style={{
+          ...style,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "#27272a",
+          color: "#71717a",
+          minWidth: "40px",
+          minHeight: "40px",
+          fontSize: "10px",
+          borderRadius: "8px",
         }}
       >
         No Logo
@@ -72,20 +73,20 @@ const CachedImage: React.FC<CachedImageProps> = ({
   // Show placeholder while not intersecting (lazy loading)
   if (lazy && !isIntersecting) {
     return (
-      <div 
+      <div
         ref={imgRef as React.RefObject<HTMLDivElement>}
-        className={className} 
-        style={{ 
-          ...style, 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-          backgroundColor: '#27272a',
-          color: '#71717a',
-          minWidth: '40px',
-          minHeight: '40px',
-          fontSize: '16px',
-          borderRadius: '8px'
+        className={className}
+        style={{
+          ...style,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "#27272a",
+          color: "#71717a",
+          minWidth: "40px",
+          minHeight: "40px",
+          fontSize: "16px",
+          borderRadius: "8px",
         }}
       >
         📷
@@ -93,23 +94,23 @@ const CachedImage: React.FC<CachedImageProps> = ({
     );
   }
 
-  // Show a placeholder or loading state if needed
+  // Show loading state while image is being cached asynchronously
   if (loading) {
     return (
-      <div 
+      <div
         ref={imgRef as React.RefObject<HTMLDivElement>}
-        className={className} 
-        style={{ 
-          ...style, 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-          backgroundColor: '#27272a',
-          color: '#a1a1aa',
-          minWidth: '40px',
-          minHeight: '40px',
-          fontSize: '10px',
-          borderRadius: '8px'
+        className={className}
+        style={{
+          ...style,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "#27272a",
+          color: "#a1a1aa",
+          minWidth: "40px",
+          minHeight: "40px",
+          fontSize: "10px",
+          borderRadius: "8px",
         }}
       >
         Loading...
@@ -120,20 +121,20 @@ const CachedImage: React.FC<CachedImageProps> = ({
   // Show error state if there's an error
   if (error) {
     return (
-      <div 
+      <div
         ref={imgRef as React.RefObject<HTMLDivElement>}
-        className={className} 
-        style={{ 
-          ...style, 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-          backgroundColor: '#27272a',
-          color: '#ef4444',
-          minWidth: '40px',
-          minHeight: '40px',
-          fontSize: '10px',
-          borderRadius: '8px'
+        className={className}
+        style={{
+          ...style,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "#27272a",
+          color: "#ef4444",
+          minWidth: "40px",
+          minHeight: "40px",
+          fontSize: "10px",
+          borderRadius: "8px",
         }}
       >
         Error
@@ -142,22 +143,22 @@ const CachedImage: React.FC<CachedImageProps> = ({
   }
 
   // Show placeholder for empty cached URLs
-  if (!cachedUrl || cachedUrl.trim() === '') {
+  if (!cachedUrl || cachedUrl.trim() === "") {
     return (
-      <div 
+      <div
         ref={imgRef as React.RefObject<HTMLDivElement>}
-        className={className} 
-        style={{ 
-          ...style, 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-          backgroundColor: '#27272a',
-          color: '#71717a',
-          minWidth: '40px',
-          minHeight: '40px',
-          fontSize: '10px',
-          borderRadius: '8px'
+        className={className}
+        style={{
+          ...style,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "#27272a",
+          color: "#71717a",
+          minWidth: "40px",
+          minHeight: "40px",
+          fontSize: "10px",
+          borderRadius: "8px",
         }}
       >
         No Logo
@@ -178,4 +179,4 @@ const CachedImage: React.FC<CachedImageProps> = ({
   );
 };
 
-export default CachedImage; 
+export default CachedImage;

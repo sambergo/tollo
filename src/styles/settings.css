@@ -32,6 +32,61 @@
   width: 100%;
   max-width: 1400px;
   margin: 0 auto;
+  position: relative;
+}
+
+.settings-layout.selecting {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.settings-loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(10, 10, 10, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.settings-loading-overlay .loading-content {
+  text-align: center;
+  padding: 2rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-secondary);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  max-width: 400px;
+  margin: 0 1rem;
+}
+
+.settings-loading-overlay h3 {
+  margin: 1rem 0 0.5rem 0;
+  color: var(--text-primary);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.settings-loading-overlay p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.loading-spinner-large {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border-secondary);
+  border-top: 3px solid var(--accent-blue);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
 }
 
 /* On wider screens, use a 2-column layout for smaller settings cards */
@@ -41,12 +96,12 @@
     grid-template-rows: auto auto auto;
     gap: 2rem;
   }
-  
+
   /* Channel Lists takes full width at the top */
   .settings-card:first-child {
     grid-column: 1 / -1;
   }
-  
+
   /* Saved Filters takes full width at the bottom */
   .settings-card:last-child {
     grid-column: 1 / -1;
@@ -85,7 +140,7 @@
   .card-content {
     padding: 2rem;
   }
-  
+
   .card-header {
     padding: 2rem;
   }
@@ -115,11 +170,11 @@
   .add-list-form .form-row {
     gap: 1.5rem;
   }
-  
+
   .add-list-form .form-input {
     min-width: 200px;
   }
-  
+
   .add-list-form .btn-primary {
     min-width: 120px;
     white-space: nowrap;
@@ -138,23 +193,167 @@
   border-radius: 8px;
   padding: 1rem;
   transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
 }
 
 .channel-list-item:hover {
-  border-color: var(--border-secondary);
-  background: var(--bg-hover);
+  border-color: var(--border-primary);
+}
+
+.channel-list-item.refreshing {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.channel-list-item.async-operation {
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+/* Async Progress Overlay */
+.async-progress-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(10, 10, 10, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  backdrop-filter: blur(2px);
+}
+
+.async-progress-content {
+  text-align: center;
+  padding: 1.5rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-secondary);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  min-width: 280px;
+  max-width: 90%;
+}
+
+.async-progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.async-progress-message {
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.async-progress-percentage {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.async-progress-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--border-secondary);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.async-progress-fill {
+  height: 100%;
+  background: var(--accent-blue);
+  transition: width 0.3s ease;
+  border-radius: 4px;
+}
+
+.async-status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: white;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Legacy loading overlay */
+.channel-list-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(10, 10, 10, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+}
+
+.channel-list-loading-overlay .loading-content {
+  text-align: center;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.channel-list-loading-overlay .loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--border-secondary);
+  border-top: 2px solid var(--accent-blue);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 0.5rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Status badges in list header */
+.async-success-badge {
+  background: #4CAF50;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.async-error-badge {
+  background: #F44336;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  cursor: help;
 }
 
 .list-info {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   gap: 1rem;
 }
 
 .list-details {
   flex: 1;
-  min-width: 0;
 }
 
 .list-header {
@@ -172,16 +371,16 @@
 }
 
 .default-badge {
-  background: var(--accent-green);
+  background: var(--accent-blue);
   color: white;
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
   font-size: 0.75rem;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .list-source {
-  margin: 0 0 0.25rem 0;
+  margin: 0 0 0.5rem 0;
   font-size: 0.875rem;
   color: var(--text-secondary);
   word-break: break-all;
@@ -197,7 +396,6 @@
   display: flex;
   gap: 0.5rem;
   align-items: center;
-  flex-shrink: 0;
 }
 
 .edit-form {
@@ -207,13 +405,12 @@
 .edit-actions {
   display: flex;
   gap: 0.5rem;
-  margin-left: 1rem;
 }
 
 .list-status {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
 /* Cache Info */
@@ -253,4 +450,4 @@
   justify-content: center;
   padding-top: 1.5rem;
   border-top: 1px solid var(--border-primary);
-} 
+}

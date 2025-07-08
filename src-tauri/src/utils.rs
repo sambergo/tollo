@@ -4,7 +4,7 @@ use dirs;
 
 // Add cleanup function near the top with other utility functions
 pub fn cleanup_orphaned_channel_files(db_connection: &Connection) -> Result<(), String> {
-    let data_dir = dirs::data_dir().unwrap().join("gui-tollo");
+    let data_dir = dirs::data_dir().unwrap().join("tollo");
     let channel_lists_dir = data_dir.join("channel_lists");
     
     // Create channel_lists directory if it doesn't exist

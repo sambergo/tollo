@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "gui-tollo",
+  "productName": "Töllö",
   "version": "0.1.0",
-  "identifier": "com.gui-tollo.app",
+  "identifier": "com.tollo.app",
   "build": {
     "beforeDevCommand": "pnpm dev",
     "devUrl": "http://localhost:1420",
@@ -12,9 +12,10 @@
   "app": {
     "windows": [
       {
-        "title": "gui-tollo",
-        "width": 800,
-        "height": 600
+        "title": "Töllö",
+        "width": 1024,
+        "height": 768,
+        "fullscreen": true
       }
     ],
     "security": {

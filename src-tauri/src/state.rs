@@ -1,16 +1,16 @@
-use std::sync::Mutex;
-use std::time::SystemTime;
-use rusqlite::Connection;
-use serde::{Serialize, Deserialize};
-use crate::m3u_parser::Channel;
 use crate::image_cache::ImageCache;
+use crate::m3u_parser::Channel;
+use rusqlite::Connection;
+use serde::{Deserialize, Serialize};
+use std::sync::{Arc, Mutex};
+use std::time::SystemTime;
 
 pub struct DbState {
     pub db: Mutex<Connection>,
 }
 
 pub struct ImageCacheState {
-    pub cache: Mutex<ImageCache>,
+    pub cache: Arc<ImageCache>,
 }
 
 #[derive(Debug, Clone)]
@@ -32,4 +32,4 @@ pub struct ChannelList {
     pub is_default: bool,
     pub filepath: Option<String>,
     pub last_fetched: Option<i64>,
-} 
+}

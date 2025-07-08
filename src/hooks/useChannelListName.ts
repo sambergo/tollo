@@ -9,4 +9,4 @@ export function useChannelListName(selectedChannelListId: number | null) {
   }, [selectedChannelListId, getChannelListName]);
 
   return channelListName;
-} 
+}

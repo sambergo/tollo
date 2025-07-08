@@ -1,39 +1,49 @@
-mod m3u_parser;
-mod database;
-mod image_cache;
-mod state;
 mod channels;
-mod settings;
-mod playlists;
-mod image_cache_api;
-mod groups;
+mod database;
+mod favorites;
 mod filters;
+mod fuzzy_search;
+mod groups;
+mod history;
+mod image_cache;
+mod image_cache_api;
+mod m3u_parser;
+mod m3u_parser_helpers;
+mod playlists;
+mod search;
+mod settings;
+mod state;
 mod utils;
 
-use std::sync::Mutex;
-use tauri::Manager;
 use image_cache::ImageCache;
-use state::{DbState, ImageCacheState, ChannelCacheState};
+use playlists::FetchState;
+use state::{ChannelCacheState, DbState, ImageCacheState};
+use std::sync::{Arc, Mutex};
+use tauri::Manager;
 
 // Import all the command functions from their respective modules
 use channels::*;
-use settings::*;
-use playlists::*;
-use image_cache_api::*;
-use groups::*;
+use favorites::*;
 use filters::*;
+use groups::*;
+use history::*;
+use image_cache_api::*;
+use playlists::*;
+use search::*;
+use settings::*;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let mut db_connection = database::initialize_database().expect("Failed to initialize database");
-    
+
     // Run cleanup on startup to remove orphaned channel list files
     if let Err(e) = utils::cleanup_orphaned_channel_files(&db_connection) {
         println!("Warning: Channel list cleanup failed: {}", e);
     }
-    
+
     let channels = m3u_parser::get_channels(&mut db_connection, None);
-    database::populate_channels(&mut db_connection, &channels).expect("Failed to populate channels");
+    database::populate_channels(&mut db_connection, &channels)
+        .expect("Failed to populate channels");
 
     tauri::Builder::default()
         .manage(DbState {
@@ -42,10 +52,12 @@ pub fn run() {
         .manage(ChannelCacheState {
             cache: Mutex::new(None),
         })
+        .manage(FetchState::new())
         .setup(|app| {
-            let image_cache = ImageCache::new(app.handle()).expect("Failed to initialize image cache");
+            let image_cache =
+                ImageCache::new(app.handle()).expect("Failed to initialize image cache");
             app.manage(ImageCacheState {
-                cache: Mutex::new(image_cache),
+                cache: Arc::new(image_cache),
             });
             Ok(())
         })
@@ -61,6 +73,17 @@ pub fn run() {
             get_history,
             search_channels,
             invalidate_channel_cache,
+            invalidate_search_cache,
+            get_cache_stats,
+            warm_cache_with_common_searches,
+            // Async channel commands
+            get_channels_async,
+            get_groups_async,
+            search_channels_async,
+            add_favorite_async,
+            remove_favorite_async,
+            get_favorites_async,
+            get_history_async,
             // Settings commands
             get_player_command,
             set_player_command,
@@ -82,10 +105,22 @@ pub fn run() {
             validate_and_add_channel_list,
             delete_channel_list,
             update_channel_list,
-            // Image cache commands
+            start_channel_list_selection,
+            // Async playlist commands
+            refresh_channel_list_async,
+            validate_and_add_channel_list_async,
+            get_playlist_fetch_status,
+            get_all_playlist_fetch_status,
+            // Image cache commands (sync)
             get_cached_image,
             clear_image_cache,
             get_image_cache_size,
+            // Async image cache commands
+            get_cached_image_async,
+            clear_image_cache_async,
+            get_image_cache_size_async,
+            get_image_download_status,
+            preload_images,
             // Group commands
             get_enabled_groups,
             update_group_selection,

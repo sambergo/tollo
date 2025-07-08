@@ -1,5 +1,5 @@
 {
-  "name": "gui-tollo",
+  "name": "tollo",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -7,7 +7,18 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "dev:tauri": "tauri dev",
+    "build:tauri": "tauri build",
+    "check:tauri": "tauri check",
+    "start": "tauri dev",
+    "clean": "rm -rf dist src-tauri/target",
+    "clean:full": "pnpm clean && rm -rf node_modules src-tauri/target pnpm-lock.yaml Cargo.lock",
+    "install:all": "pnpm install && cd src-tauri && cargo build",
+    "type-check": "tsc --noEmit",
+    "lint": "tsc --noEmit",
+    "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\""
   },
   "dependencies": {
     "@tauri-apps/api": "^2",

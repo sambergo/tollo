@@ -3,11 +3,11 @@ import { useSettingsStore } from "../../stores";
 import { ClockIcon } from "./SettingsIcons";
 
 export function CacheSettings() {
-  const { 
-    cacheDuration, 
-    setCacheDuration, 
-    saveCacheDuration, 
-    fetchCacheDuration 
+  const {
+    cacheDuration,
+    setCacheDuration,
+    saveCacheDuration,
+    fetchCacheDuration,
   } = useSettingsStore();
 
   useEffect(() => {
@@ -40,9 +40,11 @@ export function CacheSettings() {
               Save
             </button>
           </div>
-          <p className="form-help">How long to cache channel data before refreshing</p>
+          <p className="form-help">
+            How long to cache channel data before refreshing
+          </p>
         </div>
       </div>
     </div>
   );
-} 
+}
