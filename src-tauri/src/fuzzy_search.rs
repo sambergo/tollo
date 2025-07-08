@@ -9,12 +9,21 @@ pub struct SearchMatch {
 
 pub struct FuzzyMatcher {
     case_sensitive: bool,
+    min_score_threshold: i32,
 }
 
 impl FuzzyMatcher {
     pub fn new() -> Self {
         Self {
             case_sensitive: false,
+            min_score_threshold: 20, // Minimum score to include in results
+        }
+    }
+
+    pub fn with_min_score_threshold(min_score_threshold: i32) -> Self {
+        Self {
+            case_sensitive: false,
+            min_score_threshold,
         }
     }
 
@@ -29,6 +38,7 @@ impl FuzzyMatcher {
         let mut matches: Vec<SearchMatch> = channels
             .iter()
             .filter_map(|channel| self.score_channel_multiword(channel, &query_words))
+            .filter(|search_match| search_match.score >= self.min_score_threshold)
             .collect();
 
         // Sort by score (highest first)
@@ -245,6 +255,28 @@ mod tests {
     fn test_fuzzy_matcher_new() {
         let matcher = FuzzyMatcher::new();
         assert!(!matcher.case_sensitive);
+        assert_eq!(matcher.min_score_threshold, 20);
+    }
+
+    #[test]
+    fn test_fuzzy_matcher_with_min_score_threshold() {
+        let matcher = FuzzyMatcher::with_min_score_threshold(50);
+        assert!(!matcher.case_sensitive);
+        assert_eq!(matcher.min_score_threshold, 50);
+    }
+
+    #[test]
+    fn test_min_score_threshold_filtering() {
+        let matcher = FuzzyMatcher::with_min_score_threshold(100);
+        let channels = create_test_channels();
+        
+        // This should return fewer results than the default threshold
+        // because only very good matches will exceed the high threshold
+        let results = matcher.search_channels(&channels, "z");
+        
+        // With a high threshold, very weak matches should be filtered out
+        // The exact count depends on the scoring, but it should be fewer than all channels
+        assert!(results.len() < channels.len());
     }
 
     #[test]
