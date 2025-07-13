@@ -68,7 +68,7 @@ pub async fn refresh_channel_list_async(
     let response = client
         .get(&source)
         .header("User-Agent", "Mozilla/5.0")
-        .timeout(std::time::Duration::from_secs(30))
+        .timeout(std::time::Duration::from_secs(120))
         .send()
         .await
         .map_err(|e| format!("Failed to fetch: {}", e))?;
@@ -265,7 +265,7 @@ pub async fn validate_and_add_channel_list_async(
         let response = client
             .get(clean_source)
             .header("User-Agent", "Mozilla/5.0")
-            .timeout(std::time::Duration::from_secs(30))
+            .timeout(std::time::Duration::from_secs(120))
             .send()
             .await
             .map_err(|e| format!("Failed to connect: {}", e))?;

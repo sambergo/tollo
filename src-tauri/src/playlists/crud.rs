@@ -1,6 +1,8 @@
 use crate::channels::invalidate_channel_cache;
+use crate::playlists::fetch::refresh_channel_list_async;
+use crate::playlists::types::FetchState;
 use crate::state::{ChannelCacheState, ChannelList, DbState};
-use tauri::State;
+use tauri::{AppHandle, State};
 
 #[tauri::command]
 pub fn get_channel_lists(state: State<DbState>) -> Result<Vec<ChannelList>, String> {
@@ -89,4 +91,17 @@ pub fn update_channel_list(
 pub fn start_channel_list_selection(cache_state: State<ChannelCacheState>) -> Result<(), String> {
     invalidate_channel_cache(cache_state)?;
     Ok(())
+}
+
+#[tauri::command]
+pub async fn start_channel_list_selection_async(
+    app_handle: AppHandle,
+    db_state: State<'_, DbState>,
+    cache_state: State<'_, ChannelCacheState>,
+    fetch_state: State<'_, FetchState>,
+    id: i32,
+) -> Result<(), String> {
+    // Just download the specific playlist without changing default status
+    // Use the existing refresh logic to ensure the playlist is properly downloaded
+    refresh_channel_list_async(app_handle, db_state, cache_state, fetch_state, id).await
 }

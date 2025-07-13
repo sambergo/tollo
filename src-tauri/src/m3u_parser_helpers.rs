@@ -50,7 +50,15 @@ pub fn get_m3u_content(conn: &mut rusqlite::Connection, id: Option<i32>) -> Resu
 
         // Fetch from source
         if source.starts_with("http") {
-            let content = reqwest::blocking::get(&source)
+            let client = reqwest::blocking::Client::builder()
+                .timeout(std::time::Duration::from_secs(120))
+                .build()
+                .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
+            
+            let content = client
+                .get(&source)
+                .header("User-Agent", "Mozilla/5.0")
+                .send()
                 .map_err(|e| format!("Failed to fetch playlist: {}", e))?
                 .text()
                 .map_err(|e| format!("Failed to read response: {}", e))?;

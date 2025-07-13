@@ -135,6 +135,7 @@ pub fn run() {
             delete_channel_list,
             update_channel_list,
             start_channel_list_selection,
+            start_channel_list_selection_async,
             // Async playlist commands
             refresh_channel_list_async,
             validate_and_add_channel_list_async,
