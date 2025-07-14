@@ -95,9 +95,29 @@ export function useKeyboardNavigation({
       }
 
       if (e.key === "j" || e.key === "ArrowDown") {
-        setFocusedIndex((prev) => Math.min(prev + 1, listItems.length - 1));
+        setFocusedIndex((prev) => {
+          const newIndex = Math.min(prev + 1, listItems.length - 1);
+          // Auto-select channel when navigating in channel-related tabs
+          if (
+            (activeTab === "channels" || activeTab === "favorites" || activeTab === "history") &&
+            listItems[newIndex]
+          ) {
+            setSelectedChannel(listItems[newIndex] as Channel);
+          }
+          return newIndex;
+        });
       } else if (e.key === "k" || e.key === "ArrowUp") {
-        setFocusedIndex((prev) => Math.max(prev - 1, 0));
+        setFocusedIndex((prev) => {
+          const newIndex = Math.max(prev - 1, 0);
+          // Auto-select channel when navigating in channel-related tabs
+          if (
+            (activeTab === "channels" || activeTab === "favorites" || activeTab === "history") &&
+            listItems[newIndex]
+          ) {
+            setSelectedChannel(listItems[newIndex] as Channel);
+          }
+          return newIndex;
+        });
       } else if (e.key === "Enter") {
         if (
           activeTab === "channels" ||
