@@ -98,13 +98,10 @@ export function useKeyboardNavigation({
       // Handle jk combination to unfocus search fields when input is focused
       if (focusedElement && focusedElement.tagName === 'INPUT') {
         if (e.key === 'j' || e.key === 'k') {
-          console.log('JK Debug: Key pressed:', e.key, 'Current sequence:', jkSequence);
-          
           // Prevent the key from being typed in the input field while we track the sequence
           e.preventDefault();
           
           jkSequence += e.key;
-          console.log('JK Debug: New sequence:', jkSequence);
           
           // Reset timeout on each key press
           if (jkTimeout) {
@@ -116,7 +113,6 @@ export function useKeyboardNavigation({
           
           // Check if we have the jk sequence
           if (jkSequence === 'jk') {
-            console.log('JK Debug: jk sequence detected! Unfocusing input');
             (focusedElement as HTMLInputElement).blur();
             resetJkSequence();
             return;
@@ -124,7 +120,6 @@ export function useKeyboardNavigation({
           
           // If sequence is getting too long or doesn't match, reset
           if (jkSequence.length > 2 || (jkSequence.length === 2 && jkSequence !== 'jk')) {
-            console.log('JK Debug: Resetting sequence due to length or mismatch');
             resetJkSequence();
           }
           
