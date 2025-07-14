@@ -3,12 +3,13 @@ import {
   HeartIcon,
   UsersIcon,
   HistoryIcon,
+  HelpIcon,
   SettingsIcon,
 } from "./Icons";
 import SavedFilters from "./SavedFilters";
 import { useUIStore, useChannelStore } from "../stores";
 
-type Tab = "channels" | "favorites" | "groups" | "history" | "settings";
+type Tab = "channels" | "favorites" | "groups" | "history" | "help" | "settings";
 
 export default function NavigationSidebar() {
   const { activeTab, setActiveTab } = useUIStore();
@@ -49,6 +50,13 @@ export default function NavigationSidebar() {
           >
             <HistoryIcon />
             History
+          </button>
+          <button
+            className={`nav-button ${activeTab === "help" ? "active" : ""}`}
+            onClick={() => setActiveTab("help")}
+          >
+            <HelpIcon />
+            Help
           </button>
           <button
             className={`nav-button ${activeTab === "settings" ? "active" : ""}`}

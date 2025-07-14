@@ -51,6 +51,26 @@ export const HistoryIcon = () => (
   </svg>
 );
 
+export const HelpIcon = () => (
+  <svg
+    className="nav-icon"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    viewBox="0 0 24 24"
+  >
+    <rect x="2" y="6" width="20" height="12" rx="2" />
+    <path d="M6 10h.01" />
+    <path d="M10 10h.01" />
+    <path d="M14 10h.01" />
+    <path d="M18 10h.01" />
+    <path d="M6 14h.01" />
+    <path d="M10 14h.01" />
+    <path d="M14 14h.01" />
+    <path d="M18 14h.01" />
+  </svg>
+);
+
 export const SettingsIcon = () => (
   <svg
     className="nav-icon"

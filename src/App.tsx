@@ -6,6 +6,7 @@ import MainContent from "./components/MainContent";
 import VideoPlayer from "./components/VideoPlayer";
 import ChannelDetails from "./components/ChannelDetails";
 import Settings from "./components/Settings";
+import Help from "./components/Help";
 
 import { useKeyboardNavigation } from "./hooks/useKeyboardNavigation";
 import { useChannelSearch } from "./hooks/useChannelSearch";
@@ -485,6 +486,16 @@ function App() {
             </div>
             <div className="settings-container">
               <Settings />
+            </div>
+          </div>
+        ) : activeTab === "help" ? (
+          <div className="settings-full-width">
+            <div className="section-header">
+              <h2 className="section-title">Help</h2>
+              <p className="section-subtitle">Keyboard shortcuts and keybindings</p>
+            </div>
+            <div className="settings-container">
+              <Help />
             </div>
           </div>
         ) : (

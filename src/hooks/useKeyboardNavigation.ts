@@ -15,7 +15,7 @@ interface UseKeyboardNavigationProps {
   listItems: any[];
   searchQuery: string;
   setFocusedIndex: (value: number | ((prev: number) => number)) => void;
-  setSelectedChannel: (channel: Channel) => void;
+  setSelectedChannel: (channel: Channel | null) => void;
   setActiveTab: (tab: Tab) => void;
   handleSelectGroup: (group: string | null) => void;
   handleToggleFavorite: (channel: Channel) => void;
@@ -136,20 +136,30 @@ export function useKeyboardNavigation({
         return;
       }
 
-      // Handle Tab key separately to prevent conflicts
-      if (e.key === "Tab" && !e.ctrlKey && !e.altKey && !e.shiftKey) {
+      // Handle Tab key navigation separately to prevent conflicts
+      if (e.key === "Tab" && !e.ctrlKey && !e.altKey) {
         e.preventDefault();
         const tabs: Tab[] = [
           "channels",
           "favorites",
           "groups",
           "history",
+          "help",
           "settings",
         ];
         const currentIndex = tabs.indexOf(activeTab);
-        const nextIndex = (currentIndex + 1) % tabs.length;
-        setActiveTab(tabs[nextIndex]);
+        
+        if (e.shiftKey) {
+          // Shift+Tab - Previous tab
+          const prevIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+          setActiveTab(tabs[prevIndex]);
+        } else {
+          // Tab - Next tab
+          const nextIndex = (currentIndex + 1) % tabs.length;
+          setActiveTab(tabs[nextIndex]);
+        }
         setFocusedIndex(0);
+        setSelectedChannel(null);
         return;
       }
 
@@ -180,7 +190,7 @@ export function useKeyboardNavigation({
         });
       }
 
-      // Tab navigation
+      // Tab navigation with J and K keys
       else if (e.key === "J") {
         e.preventDefault(); // Prevent default tab behavior
         const tabs: Tab[] = [
@@ -188,25 +198,29 @@ export function useKeyboardNavigation({
           "favorites",
           "groups",
           "history",
+          "help",
           "settings",
         ];
         const currentIndex = tabs.indexOf(activeTab);
         const nextIndex = (currentIndex + 1) % tabs.length;
         setActiveTab(tabs[nextIndex]);
         setFocusedIndex(0);
-      } else if (e.key === "K" || (e.key === "Tab" && e.shiftKey)) {
+        setSelectedChannel(null);
+      } else if (e.key === "K") {
         e.preventDefault(); // Prevent default tab behavior
         const tabs: Tab[] = [
           "channels",
           "favorites",
           "groups",
           "history",
+          "help",
           "settings",
         ];
         const currentIndex = tabs.indexOf(activeTab);
         const prevIndex = (currentIndex - 1 + tabs.length) % tabs.length;
         setActiveTab(tabs[prevIndex]);
         setFocusedIndex(0);
+        setSelectedChannel(null);
       }
 
       // Selection and interaction
@@ -385,6 +399,12 @@ export function useKeyboardNavigation({
         // Toggle fullscreen
         toggleFullscreen();
       }
+
+      // Clear selected channel
+      else if (e.key === "h" || e.key === "Backspace") {
+        // Clear selected channel to return to "Select a channel to start watching" state
+        setSelectedChannel(null);
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
@@ -416,5 +436,6 @@ export function useKeyboardNavigation({
     toggleMute,
     toggleFullscreen,
     togglePlayPause,
+    setSelectedChannel,
   ]);
 }

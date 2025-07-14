@@ -1,0 +1,88 @@
+/* Help component styles - compact grid layout */
+.help-layout {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.help-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: start;
+}
+
+.help-grid .settings-card {
+  margin-bottom: 0;
+  flex: 0 0 calc(50% - 0.5rem);
+  max-width: calc(50% - 0.5rem);
+}
+
+.help-grid .card-content {
+  padding: 1rem;
+}
+
+.keybinding {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  padding: 0.25rem 0;
+  min-height: 28px;
+}
+
+.keybinding .keys {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+  min-width: 80px;
+}
+
+.keybinding .key {
+  background: var(--background-secondary);
+  color: var(--text-color);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: monospace;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border: 1px solid var(--border-color);
+  min-width: 24px;
+  text-align: center;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.keybinding .description {
+  color: var(--text-color-secondary);
+  font-size: 0.9rem;
+  line-height: 1.3;
+}
+
+/* Responsive design */
+@media (max-width: 1024px) {
+  .help-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .help-layout {
+    padding: 0 0.5rem;
+  }
+  
+  .help-grid {
+    gap: 0.75rem;
+  }
+  
+  .keybinding {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+  
+  .keybinding .keys {
+    min-width: auto;
+  }
+}
