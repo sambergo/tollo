@@ -45,6 +45,7 @@ interface UseKeyboardNavigationProps {
   // Video controls
   toggleMute: () => void;
   toggleFullscreen: () => void;
+  togglePlayPause: () => void;
 }
 
 export function useKeyboardNavigation({
@@ -76,6 +77,7 @@ export function useKeyboardNavigation({
   toggleCurrentGroupSelection,
   toggleMute,
   toggleFullscreen,
+  togglePlayPause,
 }: UseKeyboardNavigationProps) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -133,7 +135,7 @@ export function useKeyboardNavigation({
       }
       
       // Handle Tab key separately to prevent conflicts
-      if (e.key === "Tab" && !e.shiftKey && !e.ctrlKey && !e.altKey) {
+      if (e.key === "Tab" && !e.ctrlKey && !e.altKey) {
         e.preventDefault();
         const tabs: Tab[] = [
           "channels",
@@ -143,8 +145,17 @@ export function useKeyboardNavigation({
           "settings",
         ];
         const currentIndex = tabs.indexOf(activeTab);
-        const nextIndex = (currentIndex + 1) % tabs.length;
-        setActiveTab(tabs[nextIndex]);
+        
+        if (e.shiftKey) {
+          // Shift+Tab - Previous tab
+          const prevIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+          setActiveTab(tabs[prevIndex]);
+        } else {
+          // Tab - Next tab
+          const nextIndex = (currentIndex + 1) % tabs.length;
+          setActiveTab(tabs[nextIndex]);
+        }
+        
         setFocusedIndex(0);
         return;
       }
@@ -206,15 +217,8 @@ export function useKeyboardNavigation({
       
       // Selection and interaction
       else if (e.key === "l" || e.key === "ArrowRight") {
-        if (
-          activeTab === "channels" ||
-          activeTab === "favorites" ||
-          activeTab === "history"
-        ) {
-          setSelectedChannel(listItems[focusedIndex] as Channel);
-        } else if (activeTab === "groups") {
-          handleSelectGroup(listItems[focusedIndex] as string);
-        }
+        // Play/pause video preview
+        togglePlayPause();
       } else if (e.key === "Enter" || e.key === "o") {
         if (
           activeTab === "channels" ||
@@ -342,7 +346,7 @@ export function useKeyboardNavigation({
       }
       
       // Channel actions
-      else if (e.key === "f") {
+      else if (e.key === "F") {
         if (activeTab === "channels") {
           handleToggleFavorite(listItems[focusedIndex] as Channel);
         }
@@ -376,7 +380,7 @@ export function useKeyboardNavigation({
       else if (e.key === "m") {
         // Toggle mute
         toggleMute();
-      } else if (e.key === "F") {
+      } else if (e.key === "f") {
         // Toggle fullscreen
         toggleFullscreen();
       }
@@ -410,5 +414,6 @@ export function useKeyboardNavigation({
     toggleCurrentGroupSelection,
     toggleMute,
     toggleFullscreen,
+    togglePlayPause,
   ]);
 }

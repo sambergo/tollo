@@ -430,6 +430,16 @@ function App() {
     }
   };
 
+  const handleTogglePlayPause = () => {
+    if (videoRef.current) {
+      if (videoRef.current.paused) {
+        videoRef.current.play();
+      } else {
+        videoRef.current.pause();
+      }
+    }
+  };
+
   useKeyboardNavigation({
     activeTab,
     channels,
@@ -459,6 +469,7 @@ function App() {
     toggleCurrentGroupSelection: handleToggleCurrentGroupSelection,
     toggleMute: handleToggleMute,
     toggleFullscreen: handleToggleFullscreen,
+    togglePlayPause: handleTogglePlayPause,
   });
 
   return (
