@@ -6,6 +6,7 @@ export default function GroupList() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const groupListRef = useRef<HTMLUListElement>(null);
 
   // Get state and actions from stores
   const {
@@ -47,6 +48,18 @@ export default function GroupList() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [dropdownOpen]);
+
+  // Scroll focused item into view
+  useEffect(() => {
+    const focusedElement = groupListRef.current?.querySelector('.group-item.focused');
+    if (focusedElement) {
+      focusedElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+        inline: 'nearest'
+      });
+    }
+  }, [focusedIndex]);
 
   const handleClearSearch = () => {
     setSearchTerm("");
@@ -145,7 +158,7 @@ export default function GroupList() {
         )}
       </div>
 
-      <ul className="group-list">
+      <ul className="group-list" ref={groupListRef}>
         {/* All Groups option for AllGroups mode */}
         {groupDisplayMode === GroupDisplayMode.AllGroups && (
           <li

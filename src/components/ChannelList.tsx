@@ -49,7 +49,7 @@ export default function ChannelList({ channels }: ChannelListProps) {
     if (focusedElement) {
       focusedElement.scrollIntoView({
         behavior: 'smooth',
-        block: 'nearest',
+        block: 'center',
         inline: 'nearest'
       });
     }
