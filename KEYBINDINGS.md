@@ -19,6 +19,8 @@
 - `Ctrl+d` / `PageDown` - Page down (scroll down by 10 items)
 - `Home` - Go to first item in current page
 - `End` - Go to last item in current page
+- `H` - Previous page
+- `L` - Next page
 
 ### Search & Filtering
 

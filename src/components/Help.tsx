@@ -100,6 +100,18 @@ export default function Help() {
               </div>
               <span className="description">Go to last item in current page</span>
             </div>
+            <div className="keybinding">
+              <div className="keys">
+                <span className="key">H</span>
+              </div>
+              <span className="description">Previous page</span>
+            </div>
+            <div className="keybinding">
+              <div className="keys">
+                <span className="key">L</span>
+              </div>
+              <span className="description">Next page</span>
+            </div>
           </div>
         </div>
 

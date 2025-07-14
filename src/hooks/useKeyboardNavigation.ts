@@ -347,6 +347,41 @@ export function useKeyboardNavigation({
         });
       }
 
+      // Pagination controls - H/L for previous/next page
+      else if (e.key === "H") {
+        // Previous page
+        e.preventDefault();
+        const ITEMS_PER_PAGE = 200;
+        const currentPage = Math.floor(focusedIndex / ITEMS_PER_PAGE);
+        if (currentPage > 0) {
+          const newIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+          setFocusedIndex(newIndex);
+          if (
+            (activeTab === "channels" || activeTab === "favorites" || activeTab === "history") &&
+            listItems[newIndex]
+          ) {
+            setSelectedChannel(listItems[newIndex] as Channel);
+          }
+        }
+      } else if (e.key === "L") {
+        // Next page
+        e.preventDefault();
+        const ITEMS_PER_PAGE = 200;
+        const currentPage = Math.floor(focusedIndex / ITEMS_PER_PAGE);
+        const totalPages = Math.ceil(listItems.length / ITEMS_PER_PAGE);
+        if (currentPage < totalPages - 1) {
+          const newIndex = (currentPage + 1) * ITEMS_PER_PAGE;
+          const maxIndex = Math.min(newIndex, listItems.length - 1);
+          setFocusedIndex(maxIndex);
+          if (
+            (activeTab === "channels" || activeTab === "favorites" || activeTab === "history") &&
+            listItems[maxIndex]
+          ) {
+            setSelectedChannel(listItems[maxIndex] as Channel);
+          }
+        }
+      }
+
       // Search and filtering
       else if (e.key === "/" || e.key === "i") {
         // Focus search input
