@@ -82,25 +82,77 @@ export function useKeyboardNavigation({
   togglePlayPause,
 }: UseKeyboardNavigationProps) {
   useEffect(() => {
+    let jkSequence = '';
+    let jkTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    const resetJkSequence = () => {
+      jkSequence = '';
+      if (jkTimeout) {
+        clearTimeout(jkTimeout);
+        jkTimeout = null;
+      }
+    };
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Handle escape key even when input fields are focused
-      if (e.key === "Escape") {
-        const focusedElement = document.activeElement;
-        if (focusedElement && focusedElement.tagName === 'INPUT') {
-          // If search input is focused, just unfocus it without clearing
-          (focusedElement as HTMLInputElement).blur();
-        } else {
-          // If search input is not focused, clear the search based on current tab
-          if (activeTab === "channels") {
-            clearSearch();
-          } else if (activeTab === "groups") {
-            clearGroupSearch();
+      const focusedElement = document.activeElement;
+      
+      // Handle jk combination to unfocus search fields when input is focused
+      if (focusedElement && focusedElement.tagName === 'INPUT') {
+        if (e.key === 'j' || e.key === 'k') {
+          console.log('JK Debug: Key pressed:', e.key, 'Current sequence:', jkSequence);
+          
+          // Prevent the key from being typed in the input field while we track the sequence
+          e.preventDefault();
+          
+          jkSequence += e.key;
+          console.log('JK Debug: New sequence:', jkSequence);
+          
+          // Reset timeout on each key press
+          if (jkTimeout) {
+            clearTimeout(jkTimeout);
           }
+          
+          // Set timeout to reset sequence after 500ms
+          jkTimeout = setTimeout(resetJkSequence, 500);
+          
+          // Check if we have the jk sequence
+          if (jkSequence === 'jk') {
+            console.log('JK Debug: jk sequence detected! Unfocusing input');
+            (focusedElement as HTMLInputElement).blur();
+            resetJkSequence();
+            return;
+          }
+          
+          // If sequence is getting too long or doesn't match, reset
+          if (jkSequence.length > 2 || (jkSequence.length === 2 && jkSequence !== 'jk')) {
+            console.log('JK Debug: Resetting sequence due to length or mismatch');
+            resetJkSequence();
+          }
+          
+          return;
+        } else if (e.key === "Escape") {
+          // Handle escape key when input fields are focused
+          e.preventDefault();
+          (focusedElement as HTMLInputElement).blur();
+          resetJkSequence();
+          return;
+        } else {
+          // Reset sequence on any other key and let input handle it normally
+          resetJkSequence();
+          return;
         }
-        return;
+      } else {
+        // Reset sequence when not in input field
+        resetJkSequence();
       }
 
-      if (e.target instanceof HTMLInputElement) {
+      // Handle escape key when input fields are NOT focused
+      if (e.key === "Escape") {
+        // If search input is not focused, clear the search based on current tab
+        if (activeTab === "channels") {
+          clearSearch();
+        } else if (activeTab === "groups") {
+          clearGroupSearch();
+        }
         return;
       }
 
@@ -465,6 +517,7 @@ export function useKeyboardNavigation({
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
+      resetJkSequence();
     };
   }, [
     activeTab,

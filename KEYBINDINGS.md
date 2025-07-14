@@ -26,6 +26,7 @@
 
 - `/` / `i` - Focus search input
 - `Escape` - Unfocus search field (if focused) or clear search (if not focused)
+- `jk` - Unfocus search field (when input is focused)
 - `d` - Clear search
 - `D` - Clear all filters (search + group)
 
