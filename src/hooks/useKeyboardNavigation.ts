@@ -225,7 +225,14 @@ export function useKeyboardNavigation({
 
       // Selection and interaction
       else if (e.key === "l" || e.key === "ArrowRight") {
-        // Play/pause video preview
+        // Set selected channel if null, then play/pause video preview
+        if (
+          !selectedChannel &&
+          (activeTab === "channels" || activeTab === "favorites" || activeTab === "history") &&
+          listItems[focusedIndex]
+        ) {
+          setSelectedChannel(listItems[focusedIndex] as Channel);
+        }
         togglePlayPause();
       } else if (e.key === "Enter" || e.key === "o") {
         if (
@@ -387,6 +394,10 @@ export function useKeyboardNavigation({
         if (activeTab === "groups") {
           toggleCurrentGroupSelection();
         } else if (activeTab === "channels" || activeTab === "favorites" || activeTab === "history") {
+          // Set selected channel if null, then play/pause video preview
+          if (!selectedChannel && listItems[focusedIndex]) {
+            setSelectedChannel(listItems[focusedIndex] as Channel);
+          }
           togglePlayPause();
         }
       }
