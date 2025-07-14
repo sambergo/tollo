@@ -13,12 +13,12 @@
 
 ### Enhanced Navigation
 
-- `g` - Go to first item in current page
-- `G` - Go to last item in current page
-- `Ctrl+u` / `PageUp` - Page up (scroll up by 10 items)
-- `Ctrl+d` / `PageDown` - Page down (scroll down by 10 items)
-- `Home` - Go to first item in current page
-- `End` - Go to last item in current page
+- `g` - Go to first item in current list
+- `G` - Go to last item in current list
+- `Ctrl+u` - Page up (scroll up by 10 items)
+- `Ctrl+d` - Page down (scroll down by 10 items)
+- `Home` - Go to first item in current list
+- `End` - Go to last item in current list
 
 ### Search & Filtering
 

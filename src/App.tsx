@@ -58,7 +58,7 @@ function App() {
     fetchEnabledGroups,
   } = useUIStore();
 
-  const { searchQuery, setSearchQuery } = useSearchStore();
+  const { searchQuery, setSearchQuery, clearSearch } = useSearchStore();
 
   // Get settings
   const { enablePreview, fetchEnablePreview, autoplay } = useSettingsStore();
@@ -361,6 +361,18 @@ function App() {
     setFocusedIndex(0);
   };
 
+  const handleClearAllFilters = () => {
+    // Clear search query
+    clearSearch();
+    // Clear group selection
+    setSelectedGroup(null);
+    // Reset to enabled groups mode
+    setGroupDisplayMode(GroupDisplayMode.EnabledGroups);
+    // Switch to channels tab
+    setActiveTab("channels");
+    setFocusedIndex(0);
+  };
+
   useKeyboardNavigation({
     activeTab,
     channels,
@@ -381,6 +393,8 @@ function App() {
     savedFilters,
     onSaveFilter: handleSaveFilter,
     onApplyFilter: handleApplyFilter,
+    clearSearch,
+    clearAllFilters: handleClearAllFilters,
   });
 
   return (
