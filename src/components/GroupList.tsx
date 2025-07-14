@@ -18,6 +18,7 @@ export default function GroupList() {
     groupDisplayMode,
     groupSearchTerm,
     setSelectedGroup,
+    setFocusedIndex,
     toggleGroupEnabled,
     setGroupDisplayMode,
     setGroupSearchTerm,
@@ -136,6 +137,9 @@ export default function GroupList() {
   // Pagination handlers
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+    // Update focused index to first item of new page to maintain consistency
+    const newFocusedIndex = (page - 1) * GROUPS_PER_PAGE;
+    setFocusedIndex(newFocusedIndex);
   };
 
   const getPageNumbers = () => {
