@@ -502,7 +502,7 @@ export function useKeyboardNavigation({
       }
 
       // Clear selected channel
-      else if (e.key === "h" || e.key === "Backspace") {
+      else if (e.key === "h" || e.key === "ArrowLeft" || e.key === "Backspace") {
         // Clear selected channel to return to "Select a channel to start watching" state
         setSelectedChannel(null);
       }
