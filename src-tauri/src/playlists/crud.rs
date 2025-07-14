@@ -101,7 +101,81 @@ pub async fn start_channel_list_selection_async(
     fetch_state: State<'_, FetchState>,
     id: i32,
 ) -> Result<(), String> {
-    // Just download the specific playlist without changing default status
-    // Use the existing refresh logic to ensure the playlist is properly downloaded
-    refresh_channel_list_async(app_handle, db_state, cache_state, fetch_state, id).await
+    // Check if the playlist needs to be refreshed based on cache settings
+    let needs_refresh = {
+        let db = db_state.db.lock().unwrap();
+        
+        // Get cache duration and current time
+        let cache_duration_hours: i64 = db
+            .query_row(
+                "SELECT cache_duration_hours FROM settings WHERE id = 1",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap_or(24);
+        
+        let now = chrono::Utc::now().timestamp();
+        
+        // Check if playlist exists and when it was last fetched
+        let (last_fetched, source, filepath): (Option<i64>, String, Option<String>) = db
+            .query_row(
+                "SELECT last_fetched, source, filepath FROM channel_lists WHERE id = ?1",
+                [id],
+                |row| Ok((row.get(0).ok(), row.get(1)?, row.get(2).ok())),
+            )
+            .map_err(|e| format!("Failed to get playlist info: {}", e))?;
+        
+        // Only HTTP sources can be refreshed
+        if !source.starts_with("http") {
+            return Err("Only HTTP sources can be refreshed".to_string());
+        }
+        
+        // Check if cache is expired or invalid
+        match (last_fetched, filepath) {
+            (Some(last_fetch_time), Some(cached_file)) => {
+                // Check if cache is expired
+                let cache_expired = (now - last_fetch_time) >= (cache_duration_hours * 3600);
+                
+                if cache_expired {
+                    true // Cache is expired, need refresh
+                } else {
+                    // Cache is not expired, but validate the cached file
+                    let data_dir = dirs::data_dir().unwrap().join("tollo");
+                    let channel_lists_dir = data_dir.join("channel_lists");
+                    let cached_file_path = channel_lists_dir.join(&cached_file);
+                    
+                    // Check if cached file exists and is not empty
+                    match std::fs::metadata(&cached_file_path) {
+                        Ok(metadata) => {
+                            if metadata.len() == 0 {
+                                // File is empty, need refresh
+                                true
+                            } else {
+                                // File exists and has content, check if it's valid M3U
+                                match std::fs::read_to_string(&cached_file_path) {
+                                    Ok(content) => {
+                                        // Consider it invalid if it's too short or doesn't contain M3U markers
+                                        content.trim().is_empty() 
+                                            || content.len() < 10 
+                                            || (!content.contains("#EXTINF") && !content.contains("#EXTM3U"))
+                                    }
+                                    Err(_) => true, // Can't read file, need refresh
+                                }
+                            }
+                        }
+                        Err(_) => true, // File doesn't exist, need refresh
+                    }
+                }
+            }
+            _ => true, // Never fetched or no cached file, needs refresh
+        }
+    };
+    
+    // Only refresh if cache is expired or never fetched
+    if needs_refresh {
+        refresh_channel_list_async(app_handle, db_state, cache_state, fetch_state, id).await
+    } else {
+        // Cache is still valid, no need to refresh
+        Ok(())
+    }
 }
