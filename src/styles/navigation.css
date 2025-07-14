@@ -71,6 +71,10 @@
   color: var(--text-primary);
 }
 
+.nav-button:focus {
+  outline: none;
+}
+
 .nav-icon {
   width: 20px;
   height: 20px;

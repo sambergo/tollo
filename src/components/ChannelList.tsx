@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import CachedImage from "./CachedImage";
 import { useChannelStore, useUIStore } from "../stores";
 
@@ -20,17 +20,40 @@ const CHANNELS_PER_PAGE = 200; // Reasonable number for performance
 
 export default function ChannelList({ channels }: ChannelListProps) {
   const [currentPage, setCurrentPage] = useState(1);
+  const channelListRef = useRef<HTMLUListElement>(null);
 
   // Get state and actions from stores
   const { selectedChannel, favorites, setSelectedChannel, toggleFavorite } =
     useChannelStore();
 
-  const { focusedIndex, selectedGroup, clearGroupFilter } = useUIStore();
+  const { focusedIndex, selectedGroup, clearGroupFilter, setFocusedIndex } = useUIStore();
 
   // Reset to first page when channels change
   useEffect(() => {
     setCurrentPage(1);
   }, [channels.length, selectedGroup]);
+
+  // Handle pagination and scrolling when focusedIndex changes
+  useEffect(() => {
+    if (channels.length === 0) return;
+
+    const requiredPage = Math.ceil((focusedIndex + 1) / CHANNELS_PER_PAGE);
+    
+    // Change page if focused item is on a different page
+    if (requiredPage !== currentPage) {
+      setCurrentPage(requiredPage);
+    }
+
+    // Scroll focused item into view
+    const focusedElement = channelListRef.current?.querySelector('.channel-item.focused');
+    if (focusedElement) {
+      focusedElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+        inline: 'nearest'
+      });
+    }
+  }, [focusedIndex, channels.length, currentPage]);
 
   const totalPages = Math.ceil(channels.length / CHANNELS_PER_PAGE);
   const startIndex = (currentPage - 1) * CHANNELS_PER_PAGE;
@@ -118,14 +141,18 @@ export default function ChannelList({ channels }: ChannelListProps) {
         </span>
       </div>
 
-      <ul className="channel-list">
+      <ul className="channel-list" ref={channelListRef}>
         {currentChannels.map((channel, index) => {
           const globalIndex = startIndex + index;
           return (
             <li
               key={`${channel.name}-${globalIndex}`}
               className={`channel-item ${selectedChannel?.name === channel.name ? "selected" : ""} ${focusedIndex === globalIndex ? "focused" : ""}`}
-              onClick={() => setSelectedChannel(channel)}
+              onClick={() => {
+                setSelectedChannel(channel);
+                // Sync focusedIndex with clicked channel
+                setFocusedIndex(globalIndex);
+              }}
             >
               <div className="channel-content">
                 <div className="channel-logo-container">

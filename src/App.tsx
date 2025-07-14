@@ -6,6 +6,7 @@ import MainContent from "./components/MainContent";
 import VideoPlayer from "./components/VideoPlayer";
 import ChannelDetails from "./components/ChannelDetails";
 import Settings from "./components/Settings";
+import Help from "./components/Help";
 
 import { useKeyboardNavigation } from "./hooks/useKeyboardNavigation";
 import { useChannelSearch } from "./hooks/useChannelSearch";
@@ -18,6 +19,7 @@ import {
   GroupDisplayMode,
   type SavedFilter,
 } from "./stores";
+import { asyncPlaylistStore } from "./stores/asyncPlaylistStore";
 import type { Channel } from "./components/ChannelList";
 import "./App.css";
 
@@ -49,16 +51,21 @@ function App() {
     selectedGroup,
     groupDisplayMode,
     enabledGroups,
+    groupSearchTerm,
     skipSearchEffect,
     setActiveTab,
     setFocusedIndex,
     setSelectedGroup,
     setGroupDisplayMode,
+    setGroupSearchTerm,
     setSkipSearchEffect,
     fetchEnabledGroups,
+    selectAllGroups,
+    unselectAllGroups,
+    toggleGroupEnabled,
   } = useUIStore();
 
-  const { searchQuery, setSearchQuery } = useSearchStore();
+  const { searchQuery, setSearchQuery, clearSearch } = useSearchStore();
 
   // Get settings
   const { enablePreview, fetchEnablePreview, autoplay } = useSettingsStore();
@@ -303,8 +310,18 @@ function App() {
     return filtered;
   })();
 
-  // Show all groups in the groups tab for both Enabled Groups and All Groups modes
-  const displayedGroups = groups;
+  // Filter groups based on search term for keyboard navigation
+  const filteredDisplayedGroups = groups.filter((group: string) =>
+    group.toLowerCase().includes(groupSearchTerm.toLowerCase()),
+  );
+
+  // Include "All Groups" option for AllGroups mode in keyboard navigation
+  const displayedGroups = (() => {
+    if (groupDisplayMode === GroupDisplayMode.AllGroups) {
+      return [null, ...filteredDisplayedGroups]; // null represents "All Groups"
+    }
+    return filteredDisplayedGroups;
+  })();
 
   const listItems = (() => {
     switch (activeTab) {
@@ -361,6 +378,87 @@ function App() {
     setFocusedIndex(0);
   };
 
+  const handleClearGroupSearch = () => {
+    setGroupSearchTerm("");
+    setFocusedIndex(0); // Reset focus when clearing search
+  };
+
+  const handleClearAllFilters = () => {
+    // Clear search query
+    clearSearch();
+    // Clear group selection
+    setSelectedGroup(null);
+    // Reset to enabled groups mode
+    setGroupDisplayMode(GroupDisplayMode.EnabledGroups);
+    // Switch to channels tab
+    setActiveTab("channels");
+    setFocusedIndex(0);
+  };
+
+  // Channel list management
+  const handleRefreshCurrentChannelList = () => {
+    if (selectedChannelListId !== null) {
+      asyncPlaylistStore.refreshPlaylistAsync(selectedChannelListId);
+    }
+  };
+
+  // Group management handlers
+  const handleSelectAllGroups = () => {
+    if (selectedChannelListId !== null) {
+      selectAllGroups(groups, selectedChannelListId);
+    }
+  };
+
+  const handleUnselectAllGroups = () => {
+    if (selectedChannelListId !== null) {
+      unselectAllGroups(groups, selectedChannelListId);
+    }
+  };
+
+  const handleToggleGroupDisplayMode = () => {
+    const newMode = groupDisplayMode === GroupDisplayMode.EnabledGroups 
+      ? GroupDisplayMode.AllGroups 
+      : GroupDisplayMode.EnabledGroups;
+    setGroupDisplayMode(newMode);
+    setFocusedIndex(0); // Reset focus when switching modes
+  };
+
+  const handleToggleCurrentGroupSelection = () => {
+    if (activeTab === "groups" && selectedChannelListId !== null) {
+      const currentGroup = listItems[focusedIndex] as string | null;
+      if (currentGroup) {
+        toggleGroupEnabled(currentGroup, selectedChannelListId);
+      }
+    }
+  };
+
+  // Video control handlers
+  const handleToggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !videoRef.current.muted;
+    }
+  };
+
+  const handleToggleFullscreen = () => {
+    if (videoRef.current) {
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      } else {
+        videoRef.current.requestFullscreen();
+      }
+    }
+  };
+
+  const handleTogglePlayPause = () => {
+    if (videoRef.current) {
+      if (videoRef.current.paused) {
+        videoRef.current.play();
+      } else {
+        videoRef.current.pause();
+      }
+    }
+  };
+
   useKeyboardNavigation({
     activeTab,
     channels,
@@ -381,6 +479,17 @@ function App() {
     savedFilters,
     onSaveFilter: handleSaveFilter,
     onApplyFilter: handleApplyFilter,
+    clearSearch,
+    clearGroupSearch: handleClearGroupSearch,
+    clearAllFilters: handleClearAllFilters,
+    refreshCurrentChannelList: handleRefreshCurrentChannelList,
+    selectAllGroups: handleSelectAllGroups,
+    unselectAllGroups: handleUnselectAllGroups,
+    toggleGroupDisplayMode: handleToggleGroupDisplayMode,
+    toggleCurrentGroupSelection: handleToggleCurrentGroupSelection,
+    toggleMute: handleToggleMute,
+    toggleFullscreen: handleToggleFullscreen,
+    togglePlayPause: handleTogglePlayPause,
   });
 
   return (
@@ -396,6 +505,16 @@ function App() {
             </div>
             <div className="settings-container">
               <Settings />
+            </div>
+          </div>
+        ) : activeTab === "help" ? (
+          <div className="settings-full-width">
+            <div className="section-header">
+              <h2 className="section-title">Help</h2>
+              <p className="section-subtitle">Keyboard shortcuts and keybindings</p>
+            </div>
+            <div className="settings-container">
+              <Help />
             </div>
           </div>
         ) : (

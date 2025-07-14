@@ -1,44 +1,55 @@
-# Keyboard Bindings
+# Töllö IPTV Player - Keybindings Reference
 
-This document outlines the keyboard shortcuts available in the application.
+## Current Keybindings
 
-## Global
+### Navigation
 
-| Key(s) | Action |
-| --- | --- |
-| `h` or `ArrowLeft` | Switch to the previous tab |
-| `l` or `ArrowRight` | Switch to the next tab |
+- `K` / `Shift+Tab` - Previous tab
+- `J` / `Tab` - Next tab
+- `j` / `↓` - Navigate down in lists
+- `k` / `↑` - Navigate up in lists
+- `l` / `→` / `Space` - Play/pause video preview
+- `Enter` / `o` - Play in external player
 
-## Saved Filters
+### Enhanced Navigation
 
-| Key(s) | Action |
-| --- | --- |
-| `0-9` | Apply saved filter from slot (0-9) |
-| `Alt+0-9` | Save current search and group filter to slot (0-9) |
+- `g` - Go to first item in current page
+- `G` - Go to last item in current page
+- `Ctrl+u` / `PageUp` - Page up (scroll up by 10 items)
+- `Ctrl+d` / `PageDown` - Page down (scroll down by 10 items)
+- `Home` - Go to first item in current page
+- `End` - Go to last item in current page
+- `H` - Previous page
+- `L` - Next page
 
-## Lists (Channels, Favorites, Groups, History)
+### Search & Filtering
 
-| Key(s) | Action |
-| --- | --- |
-| `j` or `ArrowDown` | Move focus down |
-| `k` or `ArrowUp` | Move focus up |
-| `Enter` | Select the focused item |
+- `/` / `i` - Focus search input
+- `Escape` - Unfocus search field (if focused) or clear search (if not focused)
+- `d` - Clear search
+- `D` - Clear all filters (search + group)
 
-## Channels Tab
+### Channel Actions
 
-| Key(s) | Action |
-| --- | --- |
-| `f` | Toggle favorite status of the focused channel |
-| `p` | Play the focused channel in MPV |
+- `F` - Toggle favorite (in channels tab)
 
-## Favorites Tab
+### Saved Filters
 
-| Key(s) | Action |
-| --- | --- |
-| `p` | Play the focused channel in MPV |
+- `0-9` - Apply saved filter from slot (0-9)
+- `Alt+0-9` - Save current search + group filter to slot (0-9)
 
-## History Tab
+### Channel List Management
 
-| Key(s) | Action |
-| --- | --- |
-| `p` | Play the focused channel in MPV |
+- `R` - Refresh current channel list
+
+### Group Management
+
+- `A` - Select all groups
+- `U` - Unselect all groups
+- `t` - Toggle group display mode (enabled/all)
+- `Space` - Toggle current group selection (in groups tab) / Play/pause video preview (in channels tab)
+
+### Video & Preview
+
+- `m` - Toggle mute
+- `f` - Toggle fullscreen (if preview enabled)

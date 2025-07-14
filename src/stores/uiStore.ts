@@ -16,6 +16,7 @@ interface UIState {
   selectedGroup: string | null;
   groupDisplayMode: GroupDisplayMode;
   enabledGroups: Set<string>;
+  groupSearchTerm: string;
 
   // Control flags
   skipSearchEffect: boolean;
@@ -26,6 +27,7 @@ interface UIState {
   setSelectedGroup: (group: string | null) => void;
   setGroupDisplayMode: (mode: GroupDisplayMode) => void;
   setEnabledGroups: (groups: Set<string>) => void;
+  setGroupSearchTerm: (term: string) => void;
   setSkipSearchEffect: (skip: boolean) => void;
 
   // Group management actions
@@ -46,6 +48,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   selectedGroup: null,
   groupDisplayMode: GroupDisplayMode.EnabledGroups,
   enabledGroups: new Set(),
+  groupSearchTerm: "",
   skipSearchEffect: false,
 
   // Basic setters
@@ -60,6 +63,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   setSelectedGroup: (selectedGroup) => set({ selectedGroup }),
   setGroupDisplayMode: (groupDisplayMode) => set({ groupDisplayMode }),
   setEnabledGroups: (enabledGroups) => set({ enabledGroups }),
+  setGroupSearchTerm: (groupSearchTerm) => set({ groupSearchTerm }),
   setSkipSearchEffect: (skipSearchEffect) => set({ skipSearchEffect }),
 
   // Group management actions
@@ -132,6 +136,7 @@ export const useUIStore = create<UIState>((set, get) => ({
     set({
       selectedGroup: null,
       groupDisplayMode: GroupDisplayMode.EnabledGroups,
+      groupSearchTerm: "",
     });
   },
 }));
