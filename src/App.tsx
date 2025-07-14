@@ -18,6 +18,7 @@ import {
   GroupDisplayMode,
   type SavedFilter,
 } from "./stores";
+import { asyncPlaylistStore } from "./stores/asyncPlaylistStore";
 import type { Channel } from "./components/ChannelList";
 import "./App.css";
 
@@ -56,6 +57,9 @@ function App() {
     setGroupDisplayMode,
     setSkipSearchEffect,
     fetchEnabledGroups,
+    selectAllGroups,
+    unselectAllGroups,
+    toggleGroupEnabled,
   } = useUIStore();
 
   const { searchQuery, setSearchQuery, clearSearch } = useSearchStore();
@@ -373,6 +377,59 @@ function App() {
     setFocusedIndex(0);
   };
 
+  // Channel list management
+  const handleRefreshCurrentChannelList = () => {
+    if (selectedChannelListId !== null) {
+      asyncPlaylistStore.refreshPlaylistAsync(selectedChannelListId);
+    }
+  };
+
+  // Group management handlers
+  const handleSelectAllGroups = () => {
+    if (selectedChannelListId !== null) {
+      selectAllGroups(groups, selectedChannelListId);
+    }
+  };
+
+  const handleUnselectAllGroups = () => {
+    if (selectedChannelListId !== null) {
+      unselectAllGroups(groups, selectedChannelListId);
+    }
+  };
+
+  const handleToggleGroupDisplayMode = () => {
+    const newMode = groupDisplayMode === GroupDisplayMode.EnabledGroups 
+      ? GroupDisplayMode.AllGroups 
+      : GroupDisplayMode.EnabledGroups;
+    setGroupDisplayMode(newMode);
+  };
+
+  const handleToggleCurrentGroupSelection = () => {
+    if (activeTab === "groups" && selectedChannelListId !== null) {
+      const currentGroup = listItems[focusedIndex] as string;
+      if (currentGroup) {
+        toggleGroupEnabled(currentGroup, selectedChannelListId);
+      }
+    }
+  };
+
+  // Video control handlers
+  const handleToggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !videoRef.current.muted;
+    }
+  };
+
+  const handleToggleFullscreen = () => {
+    if (videoRef.current) {
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      } else {
+        videoRef.current.requestFullscreen();
+      }
+    }
+  };
+
   useKeyboardNavigation({
     activeTab,
     channels,
@@ -395,6 +452,13 @@ function App() {
     onApplyFilter: handleApplyFilter,
     clearSearch,
     clearAllFilters: handleClearAllFilters,
+    refreshCurrentChannelList: handleRefreshCurrentChannelList,
+    selectAllGroups: handleSelectAllGroups,
+    unselectAllGroups: handleUnselectAllGroups,
+    toggleGroupDisplayMode: handleToggleGroupDisplayMode,
+    toggleCurrentGroupSelection: handleToggleCurrentGroupSelection,
+    toggleMute: handleToggleMute,
+    toggleFullscreen: handleToggleFullscreen,
   });
 
   return (

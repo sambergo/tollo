@@ -36,6 +36,22 @@
 - `0-9` - Apply saved filter from slot (0-9)
 - `Alt+0-9` - Save current search + group filter to slot (0-9)
 
+### Channel List Management
+
+- `R` - Refresh current channel list
+
+### Group Management
+
+- `A` - Select all groups
+- `U` - Unselect all groups
+- `t` - Toggle group display mode (enabled/all)
+- `Space` - Toggle current group selection (in groups tab)
+
+### Video & Preview
+
+- `m` - Toggle mute
+- `F` - Toggle fullscreen (if preview enabled)
+
 ---
 
 ## Suggested Extended Keybindings
@@ -50,27 +66,20 @@
 
 ### Channel List Management
 
-- `r` - Refresh current channel list
-- `R` - Refresh all channel lists
+- `r` - Refresh current channel list (alternative to R)
 - `a` - Add new channel list
 - `d` - Delete current channel list
 - `e` - Edit current channel list
 
 ### Group Management
 
-- `A` - Select all groups
-- `u` - Unselect all groups
-- `t` - Toggle group display mode (enabled/all)
-- `Space` - Toggle current group selection
 - `Ctrl+g` - Clear group filter
 
 ### Video & Preview
 
 - `v` - Toggle video preview on/off
-- `m` - Toggle mute
 - `Ctrl+p` - Toggle video controls visibility
 - `Ctrl+a` - Toggle autoplay
-- `F` - Toggle fullscreen (if preview enabled)
 
 ### Favorites & History
 

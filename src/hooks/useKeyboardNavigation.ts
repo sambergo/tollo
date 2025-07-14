@@ -32,6 +32,19 @@ interface UseKeyboardNavigationProps {
   // Search and filter actions
   clearSearch: () => void;
   clearAllFilters: () => void;
+  
+  // Channel list management
+  refreshCurrentChannelList: () => void;
+  
+  // Group management
+  selectAllGroups: () => void;
+  unselectAllGroups: () => void;
+  toggleGroupDisplayMode: () => void;
+  toggleCurrentGroupSelection: () => void;
+  
+  // Video controls
+  toggleMute: () => void;
+  toggleFullscreen: () => void;
 }
 
 export function useKeyboardNavigation({
@@ -56,6 +69,13 @@ export function useKeyboardNavigation({
   onApplyFilter,
   clearSearch,
   clearAllFilters,
+  refreshCurrentChannelList,
+  selectAllGroups,
+  unselectAllGroups,
+  toggleGroupDisplayMode,
+  toggleCurrentGroupSelection,
+  toggleMute,
+  toggleFullscreen,
 }: UseKeyboardNavigationProps) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -327,6 +347,39 @@ export function useKeyboardNavigation({
           handleToggleFavorite(listItems[focusedIndex] as Channel);
         }
       }
+      
+      // Channel list management
+      else if (e.key === "R") {
+        // Refresh current channel list
+        refreshCurrentChannelList();
+      }
+      
+      // Group management
+      else if (e.key === "A") {
+        // Select all groups
+        selectAllGroups();
+      } else if (e.key === "U") {
+        // Unselect all groups
+        unselectAllGroups();
+      } else if (e.key === "t") {
+        // Toggle group display mode
+        toggleGroupDisplayMode();
+      } else if (e.key === " ") {
+        // Toggle current group selection
+        e.preventDefault(); // Prevent page scroll
+        if (activeTab === "groups") {
+          toggleCurrentGroupSelection();
+        }
+      }
+      
+      // Video controls
+      else if (e.key === "m") {
+        // Toggle mute
+        toggleMute();
+      } else if (e.key === "F") {
+        // Toggle fullscreen
+        toggleFullscreen();
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
@@ -350,5 +403,12 @@ export function useKeyboardNavigation({
     onApplyFilter,
     clearSearch,
     clearAllFilters,
+    refreshCurrentChannelList,
+    selectAllGroups,
+    unselectAllGroups,
+    toggleGroupDisplayMode,
+    toggleCurrentGroupSelection,
+    toggleMute,
+    toggleFullscreen,
   ]);
 }
