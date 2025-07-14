@@ -211,7 +211,7 @@ export default function Help() {
           <div className="card-content">
             <div className="keybinding">
               <div className="keys">
-                <span className="key">F</span>
+                <span className="key">f</span>
               </div>
               <span className="description">Toggle favorite (in channels tab)</span>
             </div>
@@ -229,7 +229,7 @@ export default function Help() {
             </div>
             <div className="keybinding">
               <div className="keys">
-                <span className="key">f</span>
+                <span className="key">F</span>
               </div>
               <span className="description">Toggle fullscreen (if preview enabled)</span>
             </div>
