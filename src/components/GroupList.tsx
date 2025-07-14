@@ -2,9 +2,11 @@ import { useState, useEffect, useRef } from "react";
 import { useUIStore, useChannelStore } from "../stores";
 import { GroupDisplayMode } from "../stores/uiStore";
 
+const GROUPS_PER_PAGE = 200; // Match channels paging for consistency
+
 export default function GroupList() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const groupListRef = useRef<HTMLUListElement>(null);
 
@@ -14,9 +16,11 @@ export default function GroupList() {
     focusedIndex,
     enabledGroups,
     groupDisplayMode,
+    groupSearchTerm,
     setSelectedGroup,
     toggleGroupEnabled,
     setGroupDisplayMode,
+    setGroupSearchTerm,
     selectAllGroups,
     unselectAllGroups,
     setActiveTab,
@@ -26,8 +30,52 @@ export default function GroupList() {
 
   // Filter groups based on search term
   const filteredGroups = groups.filter((group: string) =>
-    group.toLowerCase().includes(searchTerm.toLowerCase()),
+    group.toLowerCase().includes(groupSearchTerm.toLowerCase()),
   );
+
+  // Reset to first page when search term or mode changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [groupSearchTerm, groupDisplayMode]);
+
+  // Auto-change page if focused item is on a different page
+  useEffect(() => {
+    if (filteredGroups.length === 0) return;
+    
+    // Calculate total items including "All Groups" option if in AllGroups mode
+    const totalItems = groupDisplayMode === GroupDisplayMode.AllGroups 
+      ? filteredGroups.length + 1 
+      : filteredGroups.length;
+    
+    const requiredPage = Math.ceil((focusedIndex + 1) / GROUPS_PER_PAGE);
+    
+    // Change page if focused item is on a different page
+    if (requiredPage !== currentPage && requiredPage <= Math.ceil(totalItems / GROUPS_PER_PAGE)) {
+      setCurrentPage(requiredPage);
+    }
+  }, [focusedIndex, filteredGroups.length, currentPage, groupDisplayMode]);
+
+  // Calculate pagination
+  const totalPages = Math.ceil(
+    (groupDisplayMode === GroupDisplayMode.AllGroups 
+      ? filteredGroups.length + 1 
+      : filteredGroups.length) / GROUPS_PER_PAGE
+  );
+  const startIndex = (currentPage - 1) * GROUPS_PER_PAGE;
+  const endIndex = startIndex + GROUPS_PER_PAGE;
+
+  // Slice groups for current page, handling "All Groups" option
+  const getPagedGroups = () => {
+    if (groupDisplayMode === GroupDisplayMode.AllGroups) {
+      // Include "All Groups" as first item, then filtered groups
+      const allItems = [null, ...filteredGroups]; // null represents "All Groups"
+      return allItems.slice(startIndex, endIndex);
+    } else {
+      return filteredGroups.slice(startIndex, endIndex);
+    }
+  };
+
+  const currentGroups = getPagedGroups();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -62,7 +110,7 @@ export default function GroupList() {
   }, [focusedIndex]);
 
   const handleClearSearch = () => {
-    setSearchTerm("");
+    setGroupSearchTerm("");
   };
 
   const handleSelectAllGroups = () => {
@@ -85,6 +133,27 @@ export default function GroupList() {
     }
   };
 
+  // Pagination handlers
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisible = 5;
+    let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    let end = Math.min(totalPages, start + maxVisible - 1);
+    
+    if (end - start + 1 < maxVisible) {
+      start = Math.max(1, end - maxVisible + 1);
+    }
+    
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
+  };
+
   return (
     <div className="group-list-container">
       {/* Search Input */}
@@ -94,10 +163,10 @@ export default function GroupList() {
             type="text"
             className="search-input"
             placeholder="Search groups..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            value={groupSearchTerm}
+            onChange={(e) => setGroupSearchTerm(e.target.value)}
           />
-          {searchTerm && (
+          {groupSearchTerm && (
             <button
               className="clear-search-btn"
               onClick={handleClearSearch}
@@ -107,11 +176,20 @@ export default function GroupList() {
             </button>
           )}
         </div>
-        {searchTerm && (
+        {groupSearchTerm && (
           <div className="search-results-count">
             Showing {filteredGroups.length} of {groups.length} groups
           </div>
         )}
+      </div>
+
+      {/* Pagination Info */}
+      <div className="pagination-info">
+        <span className="group-count">
+          Showing {startIndex + 1}-{Math.min(endIndex, groupDisplayMode === GroupDisplayMode.AllGroups ? filteredGroups.length + 1 : filteredGroups.length)} of{" "}
+          {groupDisplayMode === GroupDisplayMode.AllGroups ? filteredGroups.length + 1 : filteredGroups.length} groups
+          {totalPages > 1 && ` (Page ${currentPage} of ${totalPages})`}
+        </span>
       </div>
 
       {/* Mode Toggle Buttons */}
@@ -159,26 +237,28 @@ export default function GroupList() {
       </div>
 
       <ul className="group-list" ref={groupListRef}>
-        {/* All Groups option for AllGroups mode */}
-        {groupDisplayMode === GroupDisplayMode.AllGroups && (
-          <li
-            className={`group-item ${selectedGroup === null ? "selected" : ""} ${focusedIndex === 0 ? "focused" : ""}`}
-            onClick={() => {
-              setSelectedGroup(null);
-              setActiveTab("channels");
-            }}
-          >
-            All Groups
-          </li>
-        )}
+        {currentGroups.map((group: string | null, index: number) => {
+          if (group === null) {
+            // "All Groups" option
+            const globalIndex = startIndex + index;
+            return (
+              <li
+                key="all-groups"
+                className={`group-item ${selectedGroup === null ? "selected" : ""} ${focusedIndex === globalIndex ? "focused" : ""}`}
+                onClick={() => {
+                  setSelectedGroup(null);
+                  setActiveTab("channels");
+                }}
+              >
+                All Groups
+              </li>
+            );
+          }
 
-        {filteredGroups.map((group: string, index: number) => {
+          // Regular group
+          const globalIndex = startIndex + index;
           const isSelected = selectedGroup === group;
-          const adjustedIndex =
-            groupDisplayMode === GroupDisplayMode.EnabledGroups
-              ? index
-              : index + 1;
-          const isFocused = focusedIndex === adjustedIndex;
+          const isFocused = focusedIndex === globalIndex;
           const isEnabled = enabledGroups.has(group);
 
           return (
@@ -218,6 +298,53 @@ export default function GroupList() {
           );
         })}
       </ul>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="pagination-controls">
+          <button
+            className="pagination-btn"
+            onClick={() => handlePageChange(1)}
+            disabled={currentPage === 1}
+            title="First page"
+          >
+            ««
+          </button>
+          <button
+            className="pagination-btn"
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            title="Previous page"
+          >
+            ‹
+          </button>
+          {getPageNumbers().map((page) => (
+            <button
+              key={page}
+              className={`pagination-btn ${page === currentPage ? "active" : ""}`}
+              onClick={() => handlePageChange(page)}
+            >
+              {page}
+            </button>
+          ))}
+          <button
+            className="pagination-btn"
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            title="Next page"
+          >
+            ›
+          </button>
+          <button
+            className="pagination-btn"
+            onClick={() => handlePageChange(totalPages)}
+            disabled={currentPage === totalPages}
+            title="Last page"
+          >
+            »»
+          </button>
+        </div>
+      )}
     </div>
   );
 }

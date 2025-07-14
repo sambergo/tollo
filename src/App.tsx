@@ -51,11 +51,13 @@ function App() {
     selectedGroup,
     groupDisplayMode,
     enabledGroups,
+    groupSearchTerm,
     skipSearchEffect,
     setActiveTab,
     setFocusedIndex,
     setSelectedGroup,
     setGroupDisplayMode,
+    setGroupSearchTerm,
     setSkipSearchEffect,
     fetchEnabledGroups,
     selectAllGroups,
@@ -308,8 +310,18 @@ function App() {
     return filtered;
   })();
 
-  // Show all groups in the groups tab for both Enabled Groups and All Groups modes
-  const displayedGroups = groups;
+  // Filter groups based on search term for keyboard navigation
+  const filteredDisplayedGroups = groups.filter((group: string) =>
+    group.toLowerCase().includes(groupSearchTerm.toLowerCase()),
+  );
+
+  // Include "All Groups" option for AllGroups mode in keyboard navigation
+  const displayedGroups = (() => {
+    if (groupDisplayMode === GroupDisplayMode.AllGroups) {
+      return [null, ...filteredDisplayedGroups]; // null represents "All Groups"
+    }
+    return filteredDisplayedGroups;
+  })();
 
   const listItems = (() => {
     switch (activeTab) {
@@ -366,6 +378,11 @@ function App() {
     setFocusedIndex(0);
   };
 
+  const handleClearGroupSearch = () => {
+    setGroupSearchTerm("");
+    setFocusedIndex(0); // Reset focus when clearing search
+  };
+
   const handleClearAllFilters = () => {
     // Clear search query
     clearSearch();
@@ -403,11 +420,12 @@ function App() {
       ? GroupDisplayMode.AllGroups 
       : GroupDisplayMode.EnabledGroups;
     setGroupDisplayMode(newMode);
+    setFocusedIndex(0); // Reset focus when switching modes
   };
 
   const handleToggleCurrentGroupSelection = () => {
     if (activeTab === "groups" && selectedChannelListId !== null) {
-      const currentGroup = listItems[focusedIndex] as string;
+      const currentGroup = listItems[focusedIndex] as string | null;
       if (currentGroup) {
         toggleGroupEnabled(currentGroup, selectedChannelListId);
       }
@@ -462,6 +480,7 @@ function App() {
     onSaveFilter: handleSaveFilter,
     onApplyFilter: handleApplyFilter,
     clearSearch,
+    clearGroupSearch: handleClearGroupSearch,
     clearAllFilters: handleClearAllFilters,
     refreshCurrentChannelList: handleRefreshCurrentChannelList,
     selectAllGroups: handleSelectAllGroups,

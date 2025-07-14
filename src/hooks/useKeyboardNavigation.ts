@@ -31,6 +31,7 @@ interface UseKeyboardNavigationProps {
   onApplyFilter: (filter: SavedFilter) => void;
   // Search and filter actions
   clearSearch: () => void;
+  clearGroupSearch: () => void;
   clearAllFilters: () => void;
 
   // Channel list management
@@ -69,6 +70,7 @@ export function useKeyboardNavigation({
   onSaveFilter,
   onApplyFilter,
   clearSearch,
+  clearGroupSearch,
   clearAllFilters,
   refreshCurrentChannelList,
   selectAllGroups,
@@ -88,9 +90,11 @@ export function useKeyboardNavigation({
           // If search input is focused, just unfocus it without clearing
           (focusedElement as HTMLInputElement).blur();
         } else {
-          // If search input is not focused, clear the search (only on channels tab)
+          // If search input is not focused, clear the search based on current tab
           if (activeTab === "channels") {
             clearSearch();
+          } else if (activeTab === "groups") {
+            clearGroupSearch();
           }
         }
         return;
@@ -352,16 +356,20 @@ export function useKeyboardNavigation({
           searchInput.focus();
         }
       } else if (e.key === "d" && !e.ctrlKey && !e.altKey && !e.shiftKey) {
-        // Clear search (only on channels tab where search is available)
+        // Clear search based on current tab
         if (activeTab === "channels") {
           clearSearch();
+        } else if (activeTab === "groups") {
+          clearGroupSearch();
         }
       } else if (e.key === "D") {
-        // Clear all filters (search + group) - only on channels tab where filters are visible
+        // Clear all filters based on current tab
         e.preventDefault();
         if (activeTab === "channels") {
           clearSearch();
           clearAllFilters();
+        } else if (activeTab === "groups") {
+          clearGroupSearch();
         }
       }
 
@@ -438,6 +446,7 @@ export function useKeyboardNavigation({
     onSaveFilter,
     onApplyFilter,
     clearSearch,
+    clearGroupSearch,
     clearAllFilters,
     refreshCurrentChannelList,
     selectAllGroups,
