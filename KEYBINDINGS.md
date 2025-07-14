@@ -8,7 +8,7 @@
 - `J` / `Tab` - Next tab
 - `j` / `↓` - Navigate down in lists
 - `k` / `↑` - Navigate up in lists
-- `l` / `→` - Play/pause video preview
+- `l` / `→` / `Space` - Play/pause video preview
 - `Enter` / `o` - Play in external player
 
 ### Enhanced Navigation
@@ -45,7 +45,7 @@
 - `A` - Select all groups
 - `U` - Unselect all groups
 - `t` - Toggle group display mode (enabled/all)
-- `Space` - Toggle current group selection (in groups tab)
+- `Space` - Toggle current group selection (in groups tab) / Play/pause video preview (in channels tab)
 
 ### Video & Preview
 

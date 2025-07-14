@@ -32,16 +32,16 @@ interface UseKeyboardNavigationProps {
   // Search and filter actions
   clearSearch: () => void;
   clearAllFilters: () => void;
-  
+
   // Channel list management
   refreshCurrentChannelList: () => void;
-  
+
   // Group management
   selectAllGroups: () => void;
   unselectAllGroups: () => void;
   toggleGroupDisplayMode: () => void;
   toggleCurrentGroupSelection: () => void;
-  
+
   // Video controls
   toggleMute: () => void;
   toggleFullscreen: () => void;
@@ -88,8 +88,10 @@ export function useKeyboardNavigation({
           // If search input is focused, just unfocus it without clearing
           (focusedElement as HTMLInputElement).blur();
         } else {
-          // If search input is not focused, clear the search
-          clearSearch();
+          // If search input is not focused, clear the search (only on channels tab)
+          if (activeTab === "channels") {
+            clearSearch();
+          }
         }
         return;
       }
@@ -133,9 +135,9 @@ export function useKeyboardNavigation({
         onSaveFilter(slotNumber, searchQuery, selectedGroup, filterName);
         return;
       }
-      
+
       // Handle Tab key separately to prevent conflicts
-      if (e.key === "Tab" && !e.ctrlKey && !e.altKey) {
+      if (e.key === "Tab" && !e.ctrlKey && !e.altKey && !e.shiftKey) {
         e.preventDefault();
         const tabs: Tab[] = [
           "channels",
@@ -145,17 +147,8 @@ export function useKeyboardNavigation({
           "settings",
         ];
         const currentIndex = tabs.indexOf(activeTab);
-        
-        if (e.shiftKey) {
-          // Shift+Tab - Previous tab
-          const prevIndex = (currentIndex - 1 + tabs.length) % tabs.length;
-          setActiveTab(tabs[prevIndex]);
-        } else {
-          // Tab - Next tab
-          const nextIndex = (currentIndex + 1) % tabs.length;
-          setActiveTab(tabs[nextIndex]);
-        }
-        
+        const nextIndex = (currentIndex + 1) % tabs.length;
+        setActiveTab(tabs[nextIndex]);
         setFocusedIndex(0);
         return;
       }
@@ -186,9 +179,9 @@ export function useKeyboardNavigation({
           return newIndex;
         });
       }
-      
+
       // Tab navigation
-      else if (e.key === "J" || e.key === "Tab") {
+      else if (e.key === "J") {
         e.preventDefault(); // Prevent default tab behavior
         const tabs: Tab[] = [
           "channels",
@@ -201,7 +194,8 @@ export function useKeyboardNavigation({
         const nextIndex = (currentIndex + 1) % tabs.length;
         setActiveTab(tabs[nextIndex]);
         setFocusedIndex(0);
-      } else if (e.key === "K") {
+      } else if (e.key === "K" || (e.key === "Tab" && e.shiftKey)) {
+        e.preventDefault(); // Prevent default tab behavior
         const tabs: Tab[] = [
           "channels",
           "favorites",
@@ -214,7 +208,7 @@ export function useKeyboardNavigation({
         setActiveTab(tabs[prevIndex]);
         setFocusedIndex(0);
       }
-      
+
       // Selection and interaction
       else if (e.key === "l" || e.key === "ArrowRight") {
         // Play/pause video preview
@@ -230,7 +224,7 @@ export function useKeyboardNavigation({
           handleSelectGroup(listItems[focusedIndex] as string);
         }
       }
-      
+
       // Enhanced Navigation
       else if (e.key === "g" && !e.shiftKey && !e.ctrlKey && !e.altKey) {
         // Go to first item in current view
@@ -327,7 +321,7 @@ export function useKeyboardNavigation({
           return newIndex;
         });
       }
-      
+
       // Search and filtering
       else if (e.key === "/" || e.key === "i") {
         // Focus search input
@@ -337,27 +331,32 @@ export function useKeyboardNavigation({
           searchInput.focus();
         }
       } else if (e.key === "d" && !e.ctrlKey && !e.altKey && !e.shiftKey) {
-        // Clear search
-        clearSearch();
+        // Clear search (only on channels tab where search is available)
+        if (activeTab === "channels") {
+          clearSearch();
+        }
       } else if (e.key === "D") {
-        // Clear all filters (search + group)
+        // Clear all filters (search + group) - only on channels tab where filters are visible
         e.preventDefault();
-        clearAllFilters();
+        if (activeTab === "channels") {
+          clearSearch();
+          clearAllFilters();
+        }
       }
-      
+
       // Channel actions
       else if (e.key === "F") {
         if (activeTab === "channels") {
           handleToggleFavorite(listItems[focusedIndex] as Channel);
         }
       }
-      
+
       // Channel list management
       else if (e.key === "R") {
         // Refresh current channel list
         refreshCurrentChannelList();
       }
-      
+
       // Group management
       else if (e.key === "A") {
         // Select all groups
@@ -369,13 +368,15 @@ export function useKeyboardNavigation({
         // Toggle group display mode
         toggleGroupDisplayMode();
       } else if (e.key === " ") {
-        // Toggle current group selection
+        // Toggle current group selection or play/pause video preview
         e.preventDefault(); // Prevent page scroll
         if (activeTab === "groups") {
           toggleCurrentGroupSelection();
+        } else if (activeTab === "channels" || activeTab === "favorites" || activeTab === "history") {
+          togglePlayPause();
         }
       }
-      
+
       // Video controls
       else if (e.key === "m") {
         // Toggle mute
