@@ -137,13 +137,14 @@ export function ChannelListsSettings({
     // Use setTimeout to ensure the UI updates before starting the operation
     setTimeout(async () => {
       try {
-        // Call the new backend command to prepare for selection
-        await invoke("start_channel_list_selection");
-
-        // Then call the original select handler (it's not async)
+        // First call the async backend command to properly download the playlist
+        await invoke("start_channel_list_selection_async", { id });
+        
+        // Only after download completes, set the selected list ID and navigate to channels
         onSelectList(id);
       } catch (error) {
         console.error("Failed to select channel list:", error);
+        alert(`Failed to select channel list: ${error}`);
       } finally {
         setSelectingList(null);
         onSelectingChange?.(false);

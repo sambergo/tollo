@@ -1,20 +1,25 @@
 mod channels;
-mod database;
+pub mod database;
+mod error;
 mod favorites;
 mod filters;
-mod fuzzy_search;
+pub mod fuzzy_search;
 mod groups;
 mod history;
-mod image_cache;
+pub mod image_cache;
 mod image_cache_api;
-mod m3u_parser;
+pub mod m3u_parser;
 mod m3u_parser_helpers;
 mod playlists;
-mod search;
+pub mod search;
 mod settings;
 mod state;
 mod utils;
 
+#[cfg(test)]
+mod integration_tests;
+
+use error::{Result, TolloError};
 use image_cache::ImageCache;
 use playlists::FetchState;
 use state::{ChannelCacheState, DbState, ImageCacheState};
@@ -32,9 +37,9 @@ use playlists::*;
 use search::*;
 use settings::*;
 
-#[cfg_attr(mobile, tauri::mobile_entry_point)]
-pub fn run() {
-    let mut db_connection = database::initialize_database().expect("Failed to initialize database");
+fn initialize_application() -> Result<(rusqlite::Connection, Vec<m3u_parser::Channel>)> {
+    let mut db_connection = database::initialize_database()
+        .map_err(|e| TolloError::database_init(format!("Database initialization failed: {}", e)))?;
 
     // Run cleanup on startup to remove orphaned channel list files
     if let Err(e) = utils::cleanup_orphaned_channel_files(&db_connection) {
@@ -43,7 +48,26 @@ pub fn run() {
 
     let channels = m3u_parser::get_channels(&mut db_connection, None);
     database::populate_channels(&mut db_connection, &channels)
-        .expect("Failed to populate channels");
+        .map_err(|e| TolloError::database_init(format!("Failed to populate channels: {}", e)))?;
+
+    Ok((db_connection, channels))
+}
+
+fn setup_image_cache(app: &tauri::App) -> Result<ImageCache> {
+    ImageCache::new(app.handle())
+        .map_err(|e| TolloError::internal(format!("Failed to initialize image cache: {}", e)))
+}
+
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
+pub fn run() {
+    let (db_connection, _channels) = match initialize_application() {
+        Ok(result) => result,
+        Err(e) => {
+            eprintln!("Fatal error during application initialization: {}", e);
+            eprintln!("Error details: {}", e);
+            std::process::exit(1);
+        }
+    };
 
     tauri::Builder::default()
         .manage(DbState {
@@ -54,8 +78,13 @@ pub fn run() {
         })
         .manage(FetchState::new())
         .setup(|app| {
-            let image_cache =
-                ImageCache::new(app.handle()).expect("Failed to initialize image cache");
+            let image_cache = match setup_image_cache(app) {
+                Ok(cache) => cache,
+                Err(e) => {
+                    eprintln!("Failed to initialize image cache: {}", e);
+                    return Err(Box::new(e));
+                }
+            };
             app.manage(ImageCacheState {
                 cache: Arc::new(image_cache),
             });
@@ -106,6 +135,7 @@ pub fn run() {
             delete_channel_list,
             update_channel_list,
             start_channel_list_selection,
+            start_channel_list_selection_async,
             // Async playlist commands
             refresh_channel_list_async,
             validate_and_add_channel_list_async,
@@ -132,5 +162,9 @@ pub fn run() {
             delete_saved_filter,
         ])
         .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .map_err(|e| {
+            eprintln!("Failed to run Tauri application: {}", e);
+            std::process::exit(1);
+        })
+        .unwrap();
 }

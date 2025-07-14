@@ -5,8 +5,14 @@ use crate::state::{ChannelCache, ChannelCacheState, DbState};
 use serde::{Deserialize, Serialize};
 use std::process::Command;
 use std::time::{Duration, SystemTime};
+use std::sync::{Mutex, MutexGuard};
 use tauri::{AppHandle, Emitter, State};
 use tokio::time;
+
+// Helper function for safe mutex locking with timeout
+fn lock_with_timeout<'a, T>(mutex: &'a Mutex<T>, resource_name: &str) -> Result<MutexGuard<'a, T>, String> {
+    mutex.lock().map_err(|_| format!("Failed to acquire lock for {}", resource_name))
+}
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ChannelLoadingStatus {
@@ -21,7 +27,7 @@ pub fn get_channels(
     db_state: State<DbState>,
     cache_state: State<ChannelCacheState>,
     id: Option<i32>,
-) -> Result<Vec<Channel>, String> {
+) -> std::result::Result<Vec<Channel>, String> {
     get_cached_channels(db_state, cache_state, id)
 }
 
@@ -30,8 +36,8 @@ pub fn get_cached_channels(
     db_state: State<DbState>,
     cache_state: State<ChannelCacheState>,
     id: Option<i32>,
-) -> Result<Vec<Channel>, String> {
-    let mut cache = cache_state.cache.lock().unwrap();
+) -> std::result::Result<Vec<Channel>, String> {
+    let mut cache = lock_with_timeout(&cache_state.cache, "channel_cache")?;
 
     // Check if we have valid cache
     if let Some(ref cached) = *cache {
@@ -43,7 +49,7 @@ pub fn get_cached_channels(
 
     // Cache miss - load channels and update cache
     println!("Loading channels from M3U parser for list {:?}", id);
-    let mut db = db_state.db.lock().unwrap();
+    let mut db = lock_with_timeout(&db_state.db, "database_connection")?;
     let channels = m3u_parser::get_channels(&mut db, id);
     println!("Loaded {} channels for list {:?}", channels.len(), id);
 

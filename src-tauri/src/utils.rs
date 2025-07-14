@@ -1,10 +1,13 @@
+use crate::error::{Result as TolloResult, TolloError};
 use std::fs;
 use rusqlite::Connection;
 use dirs;
 
 // Add cleanup function near the top with other utility functions
-pub fn cleanup_orphaned_channel_files(db_connection: &Connection) -> Result<(), String> {
-    let data_dir = dirs::data_dir().unwrap().join("tollo");
+pub fn cleanup_orphaned_channel_files(db_connection: &Connection) -> TolloResult<()> {
+    let data_dir = dirs::data_dir()
+        .ok_or_else(|| TolloError::DataDirectoryAccess)?
+        .join("tollo");
     let channel_lists_dir = data_dir.join("channel_lists");
     
     // Create channel_lists directory if it doesn't exist
@@ -42,7 +45,7 @@ pub fn cleanup_orphaned_channel_files(db_connection: &Connection) -> Result<(), 
         }
     };
     
-    let db_files: Result<Vec<String>, _> = stmt.query_map([], |row| {
+    let db_files: Result<Vec<String>, rusqlite::Error> = stmt.query_map([], |row| {
         Ok(row.get::<_, String>(0)?)
     }).and_then(|iter| iter.collect());
     

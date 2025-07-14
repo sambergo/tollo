@@ -33,3 +33,33 @@ sha2 = "0.10"
 
 # Add smart caching dependencies
 dashmap = "6.1"
+
+# Error handling dependencies
+thiserror = "1.0"
+anyhow = "1.0"
+
+[dev-dependencies]
+# Testing dependencies
+tokio-test = "0.4"
+tempfile = "3.10"
+serial_test = "3.0"
+proptest = "1.4"
+criterion = { version = "0.5", features = ["html_reports"] }
+mockall = "0.12"
+rstest = "0.19"
+
+[[bench]]
+name = "fuzzy_search_bench"
+harness = false
+
+[[bench]]
+name = "database_bench"
+harness = false
+
+[[bench]]
+name = "m3u_parser_bench"
+harness = false
+
+[[bench]]
+name = "cache_bench"
+harness = false
