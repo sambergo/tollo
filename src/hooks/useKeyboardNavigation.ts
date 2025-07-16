@@ -394,6 +394,18 @@ export function useKeyboardNavigation({
         if (searchInput) {
           searchInput.focus();
         }
+      } else if (e.key === "c" && !e.ctrlKey && !e.altKey && !e.shiftKey) {
+        // Clear search and focus search input (combination of d and i)
+        e.preventDefault();
+        if (activeTab === "channels") {
+          clearSearch();
+        } else if (activeTab === "groups") {
+          clearGroupSearch();
+        }
+        const searchInput = document.querySelector('.search-input') as HTMLInputElement;
+        if (searchInput) {
+          searchInput.focus();
+        }
       } else if (e.key === "d" && !e.ctrlKey && !e.altKey && !e.shiftKey) {
         // Clear search based on current tab
         if (activeTab === "channels") {

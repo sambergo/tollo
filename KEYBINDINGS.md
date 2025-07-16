@@ -25,6 +25,7 @@
 ### Search & Filtering
 
 - `/` / `i` - Focus search input
+- `c` - Clear search and focus search input
 - `Escape` - Unfocus search field (if focused) or clear search (if not focused)
 - `d` - Clear search
 - `D` - Clear all filters (search + group)

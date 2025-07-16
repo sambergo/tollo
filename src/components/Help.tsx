@@ -130,6 +130,12 @@ export default function Help() {
             </div>
             <div className="keybinding">
               <div className="keys">
+                <span className="key">c</span>
+              </div>
+              <span className="description">Clear search and focus search input</span>
+            </div>
+            <div className="keybinding">
+              <div className="keys">
                 <span className="key">Escape</span>
               </div>
               <span className="description">Unfocus search field (if focused) or clear search</span>
