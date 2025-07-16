@@ -82,62 +82,19 @@ export function useKeyboardNavigation({
   togglePlayPause,
 }: UseKeyboardNavigationProps) {
   useEffect(() => {
-    let jkSequence = '';
-    let jkTimeout: ReturnType<typeof setTimeout> | null = null;
-
-    const resetJkSequence = () => {
-      jkSequence = '';
-      if (jkTimeout) {
-        clearTimeout(jkTimeout);
-        jkTimeout = null;
-      }
-    };
     const handleKeyDown = (e: KeyboardEvent) => {
       const focusedElement = document.activeElement;
       
-      // Handle jk combination to unfocus search fields when input is focused
+      // Handle escape key when input fields are focused
       if (focusedElement && focusedElement.tagName === 'INPUT') {
-        if (e.key === 'j' || e.key === 'k') {
-          // Prevent the key from being typed in the input field while we track the sequence
-          e.preventDefault();
-          
-          jkSequence += e.key;
-          
-          // Reset timeout on each key press
-          if (jkTimeout) {
-            clearTimeout(jkTimeout);
-          }
-          
-          // Set timeout to reset sequence after 500ms
-          jkTimeout = setTimeout(resetJkSequence, 500);
-          
-          // Check if we have the jk sequence
-          if (jkSequence === 'jk') {
-            (focusedElement as HTMLInputElement).blur();
-            resetJkSequence();
-            return;
-          }
-          
-          // If sequence is getting too long or doesn't match, reset
-          if (jkSequence.length > 2 || (jkSequence.length === 2 && jkSequence !== 'jk')) {
-            resetJkSequence();
-          }
-          
-          return;
-        } else if (e.key === "Escape") {
-          // Handle escape key when input fields are focused
+        if (e.key === "Escape") {
           e.preventDefault();
           (focusedElement as HTMLInputElement).blur();
-          resetJkSequence();
           return;
         } else {
-          // Reset sequence on any other key and let input handle it normally
-          resetJkSequence();
+          // Let input handle the key normally
           return;
         }
-      } else {
-        // Reset sequence when not in input field
-        resetJkSequence();
       }
 
       // Handle escape key when input fields are NOT focused
@@ -512,7 +469,6 @@ export function useKeyboardNavigation({
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
-      resetJkSequence();
     };
   }, [
     activeTab,
