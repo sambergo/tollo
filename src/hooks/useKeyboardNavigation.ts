@@ -83,24 +83,28 @@ export function useKeyboardNavigation({
 }: UseKeyboardNavigationProps) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Handle escape key even when input fields are focused
-      if (e.key === "Escape") {
-        const focusedElement = document.activeElement;
-        if (focusedElement && focusedElement.tagName === 'INPUT') {
-          // If search input is focused, just unfocus it without clearing
+      const focusedElement = document.activeElement;
+      
+      // Handle escape key when input fields are focused
+      if (focusedElement && focusedElement.tagName === 'INPUT') {
+        if (e.key === "Escape") {
+          e.preventDefault();
           (focusedElement as HTMLInputElement).blur();
+          return;
         } else {
-          // If search input is not focused, clear the search based on current tab
-          if (activeTab === "channels") {
-            clearSearch();
-          } else if (activeTab === "groups") {
-            clearGroupSearch();
-          }
+          // Let input handle the key normally
+          return;
         }
-        return;
       }
 
-      if (e.target instanceof HTMLInputElement) {
+      // Handle escape key when input fields are NOT focused
+      if (e.key === "Escape") {
+        // If search input is not focused, clear the search based on current tab
+        if (activeTab === "channels") {
+          clearSearch();
+        } else if (activeTab === "groups") {
+          clearGroupSearch();
+        }
         return;
       }
 
@@ -390,6 +394,18 @@ export function useKeyboardNavigation({
         if (searchInput) {
           searchInput.focus();
         }
+      } else if (e.key === "c" && !e.ctrlKey && !e.altKey && !e.shiftKey) {
+        // Clear search and focus search input (combination of d and i)
+        e.preventDefault();
+        if (activeTab === "channels") {
+          clearSearch();
+        } else if (activeTab === "groups") {
+          clearGroupSearch();
+        }
+        const searchInput = document.querySelector('.search-input') as HTMLInputElement;
+        if (searchInput) {
+          searchInput.focus();
+        }
       } else if (e.key === "d" && !e.ctrlKey && !e.altKey && !e.shiftKey) {
         // Clear search based on current tab
         if (activeTab === "channels") {
@@ -455,7 +471,7 @@ export function useKeyboardNavigation({
       }
 
       // Clear selected channel
-      else if (e.key === "h" || e.key === "Backspace") {
+      else if (e.key === "h" || e.key === "ArrowLeft" || e.key === "Backspace") {
         // Clear selected channel to return to "Select a channel to start watching" state
         setSelectedChannel(null);
       }

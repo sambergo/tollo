@@ -58,6 +58,47 @@ export default function MainContent({ filteredChannels }: MainContentProps) {
     setSearchQuery("");
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.ctrlKey) {
+      switch (e.key) {
+        case 'w':
+          e.preventDefault();
+          // Remove last word
+          const input = e.currentTarget;
+          const value = input.value;
+          const cursorPos = input.selectionStart || 0;
+          const beforeCursor = value.substring(0, cursorPos);
+          const afterCursor = value.substring(cursorPos);
+          
+          // Find the start of the last word before cursor
+          const words = beforeCursor.trimEnd();
+          const lastSpaceIndex = words.lastIndexOf(' ');
+          const newBeforeCursor = lastSpaceIndex >= 0 ? words.substring(0, lastSpaceIndex + 1) : '';
+          
+          const newValue = newBeforeCursor + afterCursor;
+          setSearchQuery(newValue);
+          
+          // Set cursor position after the removed word
+          setTimeout(() => {
+            input.setSelectionRange(newBeforeCursor.length, newBeforeCursor.length);
+          }, 0);
+          break;
+          
+        case 'u':
+          e.preventDefault();
+          // Clear entire input
+          setSearchQuery("");
+          break;
+          
+        case 'c':
+          e.preventDefault();
+          // Unfocus the input
+          e.currentTarget.blur();
+          break;
+      }
+    }
+  };
+
   const getTabTitle = () => {
     switch (activeTab) {
       case "channels":
@@ -117,6 +158,7 @@ export default function MainContent({ filteredChannels }: MainContentProps) {
                   placeholder="Search channels (min 3 characters)..."
                   value={searchQuery}
                   onChange={handleSearch}
+                  onKeyDown={handleKeyDown}
                 />
                 {searchQuery && (
                   <button
