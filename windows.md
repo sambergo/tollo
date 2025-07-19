@@ -85,11 +85,36 @@ The `tauri.conf.json` includes Windows-specific bundle settings for MSI generati
 
 ## Troubleshooting
 
-### "Entrypoint not found" Error
-This error typically occurs when the binary target is not properly defined. Ensure:
-1. The `[[bin]]` section exists in `src-tauri/Cargo.toml`
-2. The `main.rs` file exists and calls `tollo_lib::run()`
-3. Clean and rebuild: `pnpm clean && pnpm build:tauri`
+### "Entrypoint not found" Error (STATUS_ENTRYPOINT_NOT_FOUND)
+This error typically occurs due to missing runtime dependencies or DLL issues. Try these solutions in order:
+
+1. **Install Visual C++ Redistributable**:
+   - Download and install "Microsoft Visual C++ Redistributable for Visual Studio 2015-2022"
+   - Available from Microsoft's official website
+   - This provides essential runtime libraries
+
+2. **Clean and rebuild completely**:
+   ```cmd
+   pnpm clean
+   cd src-tauri
+   cargo clean
+   cd ..
+   pnpm install
+   pnpm build:tauri
+   ```
+
+3. **Check binary target configuration**:
+   - Ensure the `[[bin]]` section exists in `src-tauri/Cargo.toml`
+   - Verify `main.rs` file exists and calls `tollo_lib::run()`
+
+4. **Use static linking for reqwest** (already configured):
+   - The project uses `rustls-tls` instead of system OpenSSL to avoid DLL dependencies
+
+5. **Alternative: Use cargo run directly**:
+   ```cmd
+   cd src-tauri
+   cargo run
+   ```
 
 ### WebView2 Issues
 If the application fails to start due to WebView2:
