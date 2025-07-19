@@ -4,6 +4,8 @@ use crate::search::clear_advanced_cache;
 use crate::state::{ChannelCache, ChannelCacheState, DbState};
 use serde::{Deserialize, Serialize};
 use std::process::Command;
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
 use std::time::{Duration, SystemTime};
 use std::sync::{Mutex, MutexGuard};
 use tauri::{AppHandle, Emitter, State};
@@ -103,7 +105,20 @@ pub async fn play_channel(state: State<'_, DbState>, channel: Channel) -> Result
     let args = command_parts.collect::<Vec<&str>>();
 
     // Try to spawn the external player
-    match Command::new(command).args(args).arg(&channel.url).spawn() {
+    #[cfg(target_os = "windows")]
+    let spawn_result = Command::new(command)
+        .args(args)
+        .arg(&channel.url)
+        .creation_flags(0x08000000) // CREATE_NO_WINDOW flag to hide CMD window
+        .spawn();
+    
+    #[cfg(not(target_os = "windows"))]
+    let spawn_result = Command::new(command)
+        .args(args)
+        .arg(&channel.url)
+        .spawn();
+    
+    match spawn_result {
         Ok(mut child) => {
             println!("Successfully launched player for channel: {}", channel.name);
 
