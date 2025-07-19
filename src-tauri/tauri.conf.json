@@ -13,8 +13,8 @@
     "windows": [
       {
         "title": "Töllö",
-        "width": 1024,
-        "height": 768,
+        "width": 1400,
+        "height": 900,
         "fullscreen": false,
         "maximized": true
       }
