@@ -1,7 +1,20 @@
-# Töllö
+# Töllö - IPTV Player
 
-A modern IPTV player built with Tauri, React, and TypeScript.
+⚠️ **Development Phase** - This application is currently under active development and may be unstable.
 
-## Recommended IDE Setup
+A modern IPTV player built with Tauri (Rust + React/TypeScript) for managing playlists, browsing channels, and playing media through external players.
 
-- [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
+## Features
+
+- IPTV playlist management
+- Channel browsing with fuzzy search
+- External player integration (MPV)
+- Vim-like keyboard navigation
+- Favorites and history
+
+## Development
+
+```bash
+pnpm install
+pnpm dev:tauri
+```
