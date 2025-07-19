@@ -94,11 +94,12 @@ pub async fn play_channel(state: State<'_, DbState>, channel: Channel) -> Result
             [],
             |row| row.get(0),
         )
-        .unwrap_or_else(|_| "mpv".to_string())
+        .unwrap_or_else(|_| crate::settings::detect_default_player())
     }; // Release the database lock here
 
     let mut command_parts = player_command.split_whitespace();
-    let command = command_parts.next().unwrap_or("mpv");
+    let default_player = crate::settings::detect_default_player();
+    let command = command_parts.next().unwrap_or(&default_player);
     let args = command_parts.collect::<Vec<&str>>();
 
     // Try to spawn the external player

@@ -4,27 +4,27 @@ import { useChannelStore } from "../stores";
 import { useSettingsStore } from "../stores";
 
 const VideoPlayer = forwardRef<HTMLVideoElement, {}>((_, ref) => {
-  const { selectedChannel, isMpvPlaying, setIsMpvPlaying } = useChannelStore();
+  const { selectedChannel, isExternalPlayerPlaying, setIsExternalPlayerPlaying } = useChannelStore();
   const { muteOnStart, showControls, autoplay } = useSettingsStore();
   const previousChannelRef = useRef(selectedChannel);
 
-  // Reset MPV playing state when a different channel is selected
+  // Reset external player playing state when a different channel is selected
   useEffect(() => {
     if (
       selectedChannel &&
       previousChannelRef.current &&
       selectedChannel.name !== previousChannelRef.current.name &&
-      isMpvPlaying
+      isExternalPlayerPlaying
     ) {
-      setIsMpvPlaying(false);
+      setIsExternalPlayerPlaying(false);
     }
     previousChannelRef.current = selectedChannel;
-  }, [selectedChannel, isMpvPlaying, setIsMpvPlaying]);
+  }, [selectedChannel, isExternalPlayerPlaying, setIsExternalPlayerPlaying]);
 
   return (
     <div className="video-preview">
       <div className="video-container">
-        {selectedChannel && !isMpvPlaying ? (
+        {selectedChannel && !isExternalPlayerPlaying ? (
           <>
             <video
               ref={ref}

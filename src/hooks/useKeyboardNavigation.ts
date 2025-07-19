@@ -19,7 +19,7 @@ interface UseKeyboardNavigationProps {
   setActiveTab: (tab: Tab) => void;
   handleSelectGroup: (group: string | null) => void;
   handleToggleFavorite: (channel: Channel) => void;
-  handlePlayInMpv: (channel: Channel) => void;
+  handlePlayInExternalPlayer: (channel: Channel) => void;
   // Saved filters functionality
   savedFilters: SavedFilter[];
   onSaveFilter: (
@@ -65,7 +65,7 @@ export function useKeyboardNavigation({
   setActiveTab,
   handleSelectGroup,
   handleToggleFavorite,
-  handlePlayInMpv,
+  handlePlayInExternalPlayer,
   savedFilters,
   onSaveFilter,
   onApplyFilter,
@@ -248,7 +248,7 @@ export function useKeyboardNavigation({
           activeTab === "favorites" ||
           activeTab === "history"
         ) {
-          handlePlayInMpv(listItems[focusedIndex] as Channel);
+          handlePlayInExternalPlayer(listItems[focusedIndex] as Channel);
         } else if (activeTab === "groups") {
           handleSelectGroup(listItems[focusedIndex] as string);
         }

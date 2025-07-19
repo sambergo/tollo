@@ -3,7 +3,7 @@ import { SignalIcon, StarIcon } from "./Icons";
 import { useChannelStore } from "../stores";
 
 export default function ChannelDetails() {
-  const { selectedChannel, channels, favorites, toggleFavorite, playInMpv } =
+  const { selectedChannel, channels, favorites, toggleFavorite, playInExternalPlayer } =
     useChannelStore();
 
   if (!selectedChannel) {
@@ -55,9 +55,9 @@ export default function ChannelDetails() {
         <div className="actions-section">
           <button
             className="primary-button"
-            onClick={() => playInMpv(selectedChannel)}
+            onClick={() => playInExternalPlayer(selectedChannel)}
           >
-            Play in MPV
+            Play in External Player
           </button>
           <button
             className="secondary-button"

@@ -37,7 +37,7 @@ function App() {
     setSelectedChannelListId,
     setIsLoadingChannelList,
     toggleFavorite,
-    playInMpv,
+    playInExternalPlayer,
     // NEW: Async operations
     fetchChannelsAsync,
     fetchFavoritesAsync,
@@ -283,8 +283,8 @@ function App() {
     await toggleFavorite(channel);
   };
 
-  const handlePlayInMpv = (channel: Channel) => {
-    playInMpv(channel);
+  const handlePlayInExternalPlayer = (channel: Channel) => {
+    playInExternalPlayer(channel);
   };
 
   const filteredChannels = (() => {
@@ -475,7 +475,7 @@ function App() {
     setActiveTab,
     handleSelectGroup,
     handleToggleFavorite,
-    handlePlayInMpv,
+    handlePlayInExternalPlayer,
     savedFilters,
     onSaveFilter: handleSaveFilter,
     onApplyFilter: handleApplyFilter,

@@ -21,7 +21,7 @@ interface ChannelState {
 
   // Loading states
   isLoadingChannelList: boolean;
-  isMpvPlaying: boolean;
+  isExternalPlayerPlaying: boolean;
   
   // NEW: Progress tracking
   loadingProgress: ChannelLoadingStatus | null;
@@ -35,7 +35,7 @@ interface ChannelState {
   setSelectedChannel: (channel: Channel | null) => void;
   setSelectedChannelListId: (id: number | null) => void;
   setIsLoadingChannelList: (loading: boolean) => void;
-  setIsMpvPlaying: (playing: boolean) => void;
+  setIsExternalPlayerPlaying: (playing: boolean) => void;
   
   // NEW: Progress actions
   setLoadingProgress: (progress: ChannelLoadingStatus | null) => void;
@@ -47,7 +47,7 @@ interface ChannelState {
   fetchGroups: (id?: number | null) => Promise<void>;
   fetchHistory: () => Promise<void>;
   toggleFavorite: (channel: Channel) => Promise<void>;
-  playInMpv: (channel: Channel) => Promise<void>;
+  playInExternalPlayer: (channel: Channel) => Promise<void>;
   
   // NEW: Async API actions
   fetchChannelsAsync: (id?: number | null) => Promise<void>;
@@ -55,7 +55,7 @@ interface ChannelState {
   fetchGroupsAsync: (id?: number | null) => Promise<void>;
   fetchHistoryAsync: () => Promise<void>;
   toggleFavoriteAsync: (channel: Channel) => Promise<void>;
-  playInMpvAsync: (channel: Channel) => Promise<void>;
+  playInExternalPlayerAsync: (channel: Channel) => Promise<void>;
 }
 
 export const useChannelStore = create<ChannelState>((set, get) => ({
@@ -67,7 +67,7 @@ export const useChannelStore = create<ChannelState>((set, get) => ({
   selectedChannel: null,
   selectedChannelListId: null,
   isLoadingChannelList: false,
-  isMpvPlaying: false,
+  isExternalPlayerPlaying: false,
   loadingProgress: null,
   isAsyncLoading: false,
 
@@ -81,7 +81,7 @@ export const useChannelStore = create<ChannelState>((set, get) => ({
     set({ selectedChannelListId }),
   setIsLoadingChannelList: (isLoadingChannelList) =>
     set({ isLoadingChannelList }),
-  setIsMpvPlaying: (isMpvPlaying) => set({ isMpvPlaying }),
+  setIsExternalPlayerPlaying: (isExternalPlayerPlaying) => set({ isExternalPlayerPlaying }),
   setLoadingProgress: (loadingProgress) => set({ loadingProgress }),
   setIsAsyncLoading: (isAsyncLoading) => set({ isAsyncLoading }),
 
@@ -127,20 +127,20 @@ export const useChannelStore = create<ChannelState>((set, get) => ({
     get().fetchFavorites();
   },
 
-  playInMpv: async (channel) => {
-    set({ isMpvPlaying: true });
+  playInExternalPlayer: async (channel) => {
+    set({ isExternalPlayerPlaying: true });
     try {
       await invoke("play_channel", { channel });
       // Refresh history only on successful playback
       get().fetchHistory();
       // Reset loading state after successful playback verification
-      set({ isMpvPlaying: false });
+      set({ isExternalPlayerPlaying: false });
     } catch (error) {
       console.error("Failed to play channel:", error);
       // Reset loading state on error
-      set({ isMpvPlaying: false });
+      set({ isExternalPlayerPlaying: false });
       // Notify user about the failure
-      alert(`Failed to play channel "${channel.name}". The media player couldn't play this channel.`);
+      alert(`Failed to play channel "${channel.name}". The external player couldn't play this channel.`);
     }
   },
 
@@ -210,20 +210,20 @@ export const useChannelStore = create<ChannelState>((set, get) => ({
     }
   },
 
-  playInMpvAsync: async (channel) => {
-    set({ isMpvPlaying: true });
+  playInExternalPlayerAsync: async (channel) => {
+    set({ isExternalPlayerPlaying: true });
     try {
       await invoke("play_channel", { channel });
       // Refresh history only on successful playback
       await get().fetchHistoryAsync();
       // Reset loading state after successful playback verification
-      set({ isMpvPlaying: false });
+      set({ isExternalPlayerPlaying: false });
     } catch (error) {
       console.error("Failed to play channel:", error);
       // Reset loading state on error
-      set({ isMpvPlaying: false });
+      set({ isExternalPlayerPlaying: false });
       // Notify user about the failure
-      alert(`Failed to play channel "${channel.name}". The media player couldn't play this channel - it may be offline or geo-blocked.`);
+      alert(`Failed to play channel "${channel.name}". The external player couldn't play this channel - it may be offline or geo-blocked.`);
     }
   },
 }));
