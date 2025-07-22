@@ -2,7 +2,9 @@
 name = "tollo"
 version = "0.1.0"
 description = "Tollo - A modern IPTV player"
-authors = ["you"]
+authors = ["sambergo"]
+license = "MIT"
+repository = "https://github.com/sambergo/tollo"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -30,7 +32,11 @@ serde_json = "1"
 rusqlite = { version = "0.30.0", features = ["bundled"] }
 dirs = "5.0.1"
 regex = "1.10.5"
-reqwest = { version = "0.12.5", features = ["blocking", "json", "rustls-tls"], default-features = false }
+reqwest = { version = "0.12.5", features = [
+  "blocking",
+  "json",
+  "rustls-tls",
+], default-features = false }
 chrono = { version = "0.4.38", features = ["serde"] }
 uuid = { version = "1.8.0", features = ["v4"] }
 tokio = { version = "1", features = ["full"] }
@@ -68,4 +74,3 @@ harness = false
 [[bench]]
 name = "cache_bench"
 harness = false
-

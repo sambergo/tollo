@@ -3,6 +3,10 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sambergo/tollo.git"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
