@@ -4,23 +4,16 @@ export default function Help() {
   return (
     <div className="help-layout">
       <div className="help-grid">
+        <div className="help-left-column">
 
         <div className="settings-card">
           <div className="card-header">
             <HelpIcon />
-            <h3>Navigation</h3>
+            <h3>General</h3>
           </div>
           <div className="card-content">
             <div className="keybinding">
               <div className="keys">
-                <span className="key">K</span>
-                <span className="key">Shift+Tab</span>
-              </div>
-              <span className="description">Previous tab</span>
-            </div>
-            <div className="keybinding">
-              <div className="keys">
-                <span className="key">J</span>
                 <span className="key">Tab</span>
               </div>
               <span className="description">Next tab</span>
@@ -41,36 +34,15 @@ export default function Help() {
             </div>
             <div className="keybinding">
               <div className="keys">
-                <span className="key">l</span>
-                <span className="key">Space</span>
-              </div>
-              <span className="description">Play/pause video preview</span>
-            </div>
-            <div className="keybinding">
-              <div className="keys">
-                <span className="key">Enter</span>
-                <span className="key">o</span>
-              </div>
-              <span className="description">Play in external player</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="settings-card">
-          <div className="card-header">
-            <HelpIcon />
-            <h3>Enhanced Navigation</h3>
-          </div>
-          <div className="card-content">
-            <div className="keybinding">
-              <div className="keys">
                 <span className="key">g</span>
+                <span className="key">Home</span>
               </div>
               <span className="description">Go to first item in current page</span>
             </div>
             <div className="keybinding">
               <div className="keys">
                 <span className="key">G</span>
+                <span className="key">End</span>
               </div>
               <span className="description">Go to last item in current page</span>
             </div>
@@ -90,18 +62,6 @@ export default function Help() {
             </div>
             <div className="keybinding">
               <div className="keys">
-                <span className="key">Home</span>
-              </div>
-              <span className="description">Go to first item in current page</span>
-            </div>
-            <div className="keybinding">
-              <div className="keys">
-                <span className="key">End</span>
-              </div>
-              <span className="description">Go to last item in current page</span>
-            </div>
-            <div className="keybinding">
-              <div className="keys">
                 <span className="key">H</span>
               </div>
               <span className="description">Previous page</span>
@@ -112,15 +72,20 @@ export default function Help() {
               </div>
               <span className="description">Next page</span>
             </div>
-          </div>
-        </div>
-
-        <div className="settings-card">
-          <div className="card-header">
-            <HelpIcon />
-            <h3>Search & Filtering</h3>
-          </div>
-          <div className="card-content">
+            <div className="keybinding">
+              <div className="keys">
+                <span className="key">l</span>
+                <span className="key">Space</span>
+              </div>
+              <span className="description">Play/pause video preview</span>
+            </div>
+            <div className="keybinding">
+              <div className="keys">
+                <span className="key">Enter</span>
+                <span className="key">o</span>
+              </div>
+              <span className="description">Play in external player</span>
+            </div>
             <div className="keybinding">
               <div className="keys">
                 <span className="key">/</span>
@@ -152,9 +117,35 @@ export default function Help() {
               </div>
               <span className="description">Clear all filters (search + group)</span>
             </div>
+            <div className="keybinding">
+              <div className="keys">
+                <span className="key">f</span>
+              </div>
+              <span className="description">Toggle favorite (in channels tab)</span>
+            </div>
+            <div className="keybinding">
+              <div className="keys">
+                <span className="key">R</span>
+              </div>
+              <span className="description">Refresh current channel list</span>
+            </div>
+            <div className="keybinding">
+              <div className="keys">
+                <span className="key">m</span>
+              </div>
+              <span className="description">Toggle mute</span>
+            </div>
+            <div className="keybinding">
+              <div className="keys">
+                <span className="key">F</span>
+              </div>
+              <span className="description">Toggle fullscreen (if preview enabled)</span>
+            </div>
           </div>
         </div>
+        </div>
 
+        <div className="help-right-column">
         <div className="settings-card">
           <div className="card-header">
             <HelpIcon />
@@ -208,39 +199,8 @@ export default function Help() {
             </div>
           </div>
         </div>
-
-        <div className="settings-card">
-          <div className="card-header">
-            <HelpIcon />
-            <h3>Miscellaneous</h3>
-          </div>
-          <div className="card-content">
-            <div className="keybinding">
-              <div className="keys">
-                <span className="key">f</span>
-              </div>
-              <span className="description">Toggle favorite (in channels tab)</span>
-            </div>
-            <div className="keybinding">
-              <div className="keys">
-                <span className="key">R</span>
-              </div>
-              <span className="description">Refresh current channel list</span>
-            </div>
-            <div className="keybinding">
-              <div className="keys">
-                <span className="key">m</span>
-              </div>
-              <span className="description">Toggle mute</span>
-            </div>
-            <div className="keybinding">
-              <div className="keys">
-                <span className="key">F</span>
-              </div>
-              <span className="description">Toggle fullscreen (if preview enabled)</span>
-            </div>
-          </div>
         </div>
+
       </div>
     </div>
   );
