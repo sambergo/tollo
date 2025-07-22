@@ -156,6 +156,7 @@ pub fn run() {
             update_group_selection,
             sync_channel_list_groups,
             enable_all_groups,
+            disable_all_groups,
             // Filter commands
             save_filter,
             get_saved_filters,

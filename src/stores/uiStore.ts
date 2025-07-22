@@ -89,36 +89,22 @@ export const useUIStore = create<UIState>((set, get) => ({
   },
 
   selectAllGroups: async (groups, channelListId) => {
-    const { enabledGroups } = get();
-
-    // Enable all groups that aren't already enabled
-    for (const group of groups) {
-      if (!enabledGroups.has(group)) {
-        await invoke("update_group_selection", {
-          channelListId,
-          groupName: group,
-          enabled: true,
-        });
-      }
-    }
+    // Enable all groups in bulk using the optimized backend command
+    await invoke("enable_all_groups", {
+      channelListId,
+      groups,
+    });
 
     // Update local state to include all groups
     set({ enabledGroups: new Set(groups) });
   },
 
   unselectAllGroups: async (groups, channelListId) => {
-    const { enabledGroups } = get();
-
-    // Disable all groups that are currently enabled
-    for (const group of groups) {
-      if (enabledGroups.has(group)) {
-        await invoke("update_group_selection", {
-          channelListId,
-          groupName: group,
-          enabled: false,
-        });
-      }
-    }
+    // Disable all groups in bulk using the optimized backend command
+    await invoke("disable_all_groups", {
+      channelListId,
+      groups,
+    });
 
     // Update local state to empty set
     set({ enabledGroups: new Set() });

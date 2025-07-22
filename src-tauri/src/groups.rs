@@ -24,4 +24,10 @@ pub fn sync_channel_list_groups(state: State<DbState>, channel_list_id: i64, gro
 pub fn enable_all_groups(state: State<DbState>, channel_list_id: i64, groups: Vec<String>) -> Result<(), String> {
     let mut db = state.db.lock().unwrap();
     database::enable_all_groups(&mut db, channel_list_id, groups).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn disable_all_groups(state: State<DbState>, channel_list_id: i64, groups: Vec<String>) -> Result<(), String> {
+    let mut db = state.db.lock().unwrap();
+    database::disable_all_groups(&mut db, channel_list_id, groups).map_err(|e| e.to_string())
 } 
