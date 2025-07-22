@@ -5,6 +5,7 @@
 A modern IPTV player built with Tauri (Rust + React/TypeScript) for managing playlists, browsing channels, and playing media through external players.
 
 ## Features
+
 - IPTV playlist management
 - Channel browsing with fuzzy search
 - External player integration (MPV)
@@ -12,6 +13,7 @@ A modern IPTV player built with Tauri (Rust + React/TypeScript) for managing pla
 - Favorites and history
 
 ## Development
+
 ```bash
 pnpm install
 pnpm dev:tauri
