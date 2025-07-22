@@ -112,7 +112,7 @@ export default function Help() {
               </div>
               <div className="keybinding">
                 <div className="keys">
-                  <span className="key">R</span>
+                  <span className="key">Ctrl+r</span>
                 </div>
                 <span className="description">Refresh current channel list</span>
               </div>
