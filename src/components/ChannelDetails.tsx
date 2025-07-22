@@ -79,13 +79,16 @@ export default function ChannelDetails() {
         <div className="details-grid">
           <div className="detail-item">
             <div className="detail-label">Group</div>
-            <div className="detail-value">
-              {selectedChannel.group_title}
+            <div className="detail-value-with-action">
+              <span className="detail-text">{selectedChannel.group_title}</span>
               <button
                 className="detail-action-button"
                 onClick={handleFilterByGroup}
                 title="Filter channels by this group"
               >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/>
+                </svg>
                 Filter
               </button>
             </div>
