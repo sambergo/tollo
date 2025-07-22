@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { useChannelStore, useSettingsStore } from "../../stores";
-import { asyncPlaylistStore, PlaylistFetchStatus } from "../../stores/asyncPlaylistStore";
+import {
+  asyncPlaylistStore,
+  PlaylistFetchStatus,
+} from "../../stores/asyncPlaylistStore";
 import type { ChannelList } from "../../types/settings";
 import {
   ListIcon,
@@ -37,7 +40,9 @@ export function ChannelListsSettings({
   const [refreshingList, setRefreshingList] = useState<number | null>(null);
 
   // Async operation tracking
-  const [asyncStatuses, setAsyncStatuses] = useState<Map<number, PlaylistFetchStatus>>(new Map());
+  const [asyncStatuses, setAsyncStatuses] = useState<
+    Map<number, PlaylistFetchStatus>
+  >(new Map());
 
   // Get data from stores
   const { channelLists } = useSettingsStore();
@@ -46,16 +51,16 @@ export function ChannelListsSettings({
   // Subscribe to async playlist status updates
   useEffect(() => {
     const unsubscribe = asyncPlaylistStore.onStatusUpdate((status) => {
-      setAsyncStatuses(prev => {
+      setAsyncStatuses((prev) => {
         const newMap = new Map(prev);
         newMap.set(status.id, status);
 
         // Auto-refresh lists when operations complete
-        if (status.status === 'completed') {
+        if (status.status === "completed") {
           onRefreshLists();
           // Clean up after a delay
           setTimeout(() => {
-            setAsyncStatuses(curr => {
+            setAsyncStatuses((curr) => {
               const updated = new Map(curr);
               updated.delete(status.id);
               return updated;
@@ -74,14 +79,19 @@ export function ChannelListsSettings({
     if (newListName && newListSource) {
       setIsAddingList(true);
       try {
-        const listId = await asyncPlaylistStore.addPlaylistAsync(newListName, newListSource);
+        const listId = await asyncPlaylistStore.addPlaylistAsync(
+          newListName,
+          newListSource,
+        );
         console.log("Started async playlist addition with ID:", listId);
         setNewListName("");
         setNewListSource("");
       } catch (error) {
         console.error("Failed to add channel list:", error);
         const errorMsg = error instanceof Error ? error.message : String(error);
-        alert(`Failed to add channel list "${newListName}".\n\nError: ${errorMsg}`);
+        alert(
+          `Failed to add channel list "${newListName}".\n\nError: ${errorMsg}`,
+        );
       } finally {
         setIsAddingList(false);
       }
@@ -139,7 +149,7 @@ export function ChannelListsSettings({
       try {
         // First call the async backend command to properly download the playlist
         await invoke("start_channel_list_selection_async", { id });
-        
+
         // Only after download completes, set the selected list ID and navigate to channels
         onSelectList(id);
       } catch (error) {
@@ -154,12 +164,18 @@ export function ChannelListsSettings({
 
   const getStatusColor = (status: string): string => {
     switch (status) {
-      case 'completed': return '#4CAF50';
-      case 'error': return '#F44336';
-      case 'fetching': return '#2196F3';
-      case 'processing': return '#FF9800';
-      case 'saving': return '#9C27B0';
-      default: return '#757575';
+      case "completed":
+        return "#4CAF50";
+      case "error":
+        return "#F44336";
+      case "fetching":
+        return "#2196F3";
+      case "processing":
+        return "#FF9800";
+      case "saving":
+        return "#9C27B0";
+      default:
+        return "#757575";
     }
   };
 
@@ -201,7 +217,12 @@ export function ChannelListsSettings({
         <div className="channel-lists">
           {channelLists.map((list) => {
             const asyncStatus = asyncStatuses.get(list.id);
-            const isAsyncOperation = asyncStatus && (asyncStatus.status === 'starting' || asyncStatus.status === 'fetching' || asyncStatus.status === 'processing' || asyncStatus.status === 'saving');
+            const isAsyncOperation =
+              asyncStatus &&
+              (asyncStatus.status === "starting" ||
+                asyncStatus.status === "fetching" ||
+                asyncStatus.status === "processing" ||
+                asyncStatus.status === "saving");
 
             return (
               <div
@@ -213,19 +234,28 @@ export function ChannelListsSettings({
                   <div className="async-progress-overlay">
                     <div className="async-progress-content">
                       <div className="async-progress-info">
-                        <span className="async-progress-message">{asyncStatus.message}</span>
-                        <span className="async-progress-percentage">{Math.round(asyncStatus.progress * 100)}%</span>
+                        <span className="async-progress-message">
+                          {asyncStatus.message}
+                        </span>
+                        <span className="async-progress-percentage">
+                          {Math.round(asyncStatus.progress * 100)}%
+                        </span>
                       </div>
                       <div className="async-progress-bar">
                         <div
                           className="async-progress-fill"
                           style={{
                             width: `${asyncStatus.progress * 100}%`,
-                            backgroundColor: getStatusColor(asyncStatus.status)
+                            backgroundColor: getStatusColor(asyncStatus.status),
                           }}
                         />
                       </div>
-                      <div className="async-status-badge" style={{ backgroundColor: getStatusColor(asyncStatus.status) }}>
+                      <div
+                        className="async-status-badge"
+                        style={{
+                          backgroundColor: getStatusColor(asyncStatus.status),
+                        }}
+                      >
                         {asyncStatus.status.toUpperCase()}
                       </div>
                     </div>
@@ -251,7 +281,10 @@ export function ChannelListsSettings({
                         className="form-input"
                         value={editingList.name}
                         onChange={(e) =>
-                          setEditingList({ ...editingList, name: e.target.value })
+                          setEditingList({
+                            ...editingList,
+                            name: e.target.value,
+                          })
                         }
                       />
                       <input
@@ -294,13 +327,20 @@ export function ChannelListsSettings({
                               <span className="loading-text">Fetching...</span>
                             </span>
                           )}
-                          {asyncStatus && asyncStatus.status === 'completed' && (
-                            <span className="async-success-badge">
-                              ✓ {asyncStatus.channel_count ? `${asyncStatus.channel_count} channels` : 'Completed'}
-                            </span>
-                          )}
-                          {asyncStatus && asyncStatus.status === 'error' && (
-                            <span className="async-error-badge" title={asyncStatus.error}>
+                          {asyncStatus &&
+                            asyncStatus.status === "completed" && (
+                              <span className="async-success-badge">
+                                ✓{" "}
+                                {asyncStatus.channel_count
+                                  ? `${asyncStatus.channel_count} channels`
+                                  : "Completed"}
+                              </span>
+                            )}
+                          {asyncStatus && asyncStatus.status === "error" && (
+                            <span
+                              className="async-error-badge"
+                              title={asyncStatus.error}
+                            >
                               ✗ Failed
                             </span>
                           )}
@@ -345,9 +385,11 @@ export function ChannelListsSettings({
                           isAsyncOperation
                         }
                         title={
-                          isAsyncOperation ? "Operation in progress..." :
-                            refreshingList === list.id ? "Refreshing..." :
-                              "Refresh channel list data"
+                          isAsyncOperation
+                            ? "Operation in progress..."
+                            : refreshingList === list.id
+                              ? "Refreshing..."
+                              : "Refresh channel list data"
                         }
                       >
                         <RefreshIcon />

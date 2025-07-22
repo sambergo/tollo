@@ -5,7 +5,6 @@ export default function Help() {
     <div className="help-layout">
       <div className="help-grid">
         <div className="help-left-column">
-
           <div className="settings-card">
             <div className="card-header">
               <HelpIcon />
@@ -44,28 +43,36 @@ export default function Help() {
                   <span className="key">g</span>
                   <span className="key">Home</span>
                 </div>
-                <span className="description">Go to first item in current page</span>
+                <span className="description">
+                  Go to first item in current page
+                </span>
               </div>
               <div className="keybinding">
                 <div className="keys">
                   <span className="key">G</span>
                   <span className="key">End</span>
                 </div>
-                <span className="description">Go to last item in current page</span>
+                <span className="description">
+                  Go to last item in current page
+                </span>
               </div>
               <div className="keybinding">
                 <div className="keys">
                   <span className="key">Ctrl+u</span>
                   <span className="key">PageUp</span>
                 </div>
-                <span className="description">Page up (scroll up by 10 items)</span>
+                <span className="description">
+                  Page up (scroll up by 10 items)
+                </span>
               </div>
               <div className="keybinding">
                 <div className="keys">
                   <span className="key">Ctrl+d</span>
                   <span className="key">PageDown</span>
                 </div>
-                <span className="description">Page down (scroll down by 10 items)</span>
+                <span className="description">
+                  Page down (scroll down by 10 items)
+                </span>
               </div>
               <div className="keybinding">
                 <div className="keys">
@@ -90,7 +97,9 @@ export default function Help() {
                 <div className="keys">
                   <span className="key">Escape</span>
                 </div>
-                <span className="description">Unfocus search field (if focused) or clear search</span>
+                <span className="description">
+                  Unfocus search field (if focused) or clear search
+                </span>
               </div>
               <div className="keybinding">
                 <div className="keys">
@@ -102,25 +111,33 @@ export default function Help() {
                 <div className="keys">
                   <span className="key">D</span>
                 </div>
-                <span className="description">Clear all filters (search + group)</span>
+                <span className="description">
+                  Clear all filters (search + group)
+                </span>
               </div>
               <div className="keybinding">
                 <div className="keys">
                   <span className="key">c</span>
                 </div>
-                <span className="description">Clear search and focus search input</span>
+                <span className="description">
+                  Clear search and focus search input
+                </span>
               </div>
               <div className="keybinding">
                 <div className="keys">
                   <span className="key">Ctrl+r</span>
                 </div>
-                <span className="description">Refresh current channel list</span>
+                <span className="description">
+                  Refresh current channel list
+                </span>
               </div>
               <div className="keybinding">
                 <div className="keys">
                   <span className="key">F</span>
                 </div>
-                <span className="description">Toggle favorite (in channels tab)</span>
+                <span className="description">
+                  Toggle favorite (in channels tab)
+                </span>
               </div>
               <div className="keybinding">
                 <div className="keys">
@@ -181,13 +198,17 @@ export default function Help() {
                 <div className="keys">
                   <span className="key">Alt+0-9</span>
                 </div>
-                <span className="description">Save current search + group filter to slot (0-9)</span>
+                <span className="description">
+                  Save current search + group filter to slot (0-9)
+                </span>
               </div>
               <div className="keybinding">
                 <div className="keys">
                   <span className="key">0-9</span>
                 </div>
-                <span className="description">Apply saved filter from slot (0-9)</span>
+                <span className="description">
+                  Apply saved filter from slot (0-9)
+                </span>
               </div>
             </div>
           </div>
@@ -214,18 +235,22 @@ export default function Help() {
                 <div className="keys">
                   <span className="key">t</span>
                 </div>
-                <span className="description">Toggle group display mode (enabled/all)</span>
+                <span className="description">
+                  Toggle group display mode (enabled/all)
+                </span>
               </div>
               <div className="keybinding">
                 <div className="keys">
                   <span className="key">Space</span>
                 </div>
-                <span className="description">Toggle current group selection (in groups tab) / Play/pause video preview (in channels tab)</span>
+                <span className="description">
+                  Toggle current group selection (in groups tab) / Play/pause
+                  video preview (in channels tab)
+                </span>
               </div>
             </div>
           </div>
         </div>
-
       </div>
     </div>
   );

@@ -83,7 +83,7 @@ export function PlayerSettings() {
               className="form-input"
               value={playerCommand}
               onChange={(e) => setPlayerCommand(e.target.value)}
-              placeholder={`e.g., ${playerCommand || 'mpv'}`}
+              placeholder={`e.g., ${playerCommand || "mpv"}`}
             />
             <button className="btn-primary" onClick={handleSavePlayerCommand}>
               Save

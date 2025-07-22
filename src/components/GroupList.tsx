@@ -42,25 +42,29 @@ export default function GroupList() {
   // Auto-change page if focused item is on a different page
   useEffect(() => {
     if (filteredGroups.length === 0) return;
-    
+
     // Calculate total items including "All Groups" option if in AllGroups mode
-    const totalItems = groupDisplayMode === GroupDisplayMode.AllGroups 
-      ? filteredGroups.length + 1 
-      : filteredGroups.length;
-    
+    const totalItems =
+      groupDisplayMode === GroupDisplayMode.AllGroups
+        ? filteredGroups.length + 1
+        : filteredGroups.length;
+
     const requiredPage = Math.ceil((focusedIndex + 1) / GROUPS_PER_PAGE);
-    
+
     // Change page if focused item is on a different page
-    if (requiredPage !== currentPage && requiredPage <= Math.ceil(totalItems / GROUPS_PER_PAGE)) {
+    if (
+      requiredPage !== currentPage &&
+      requiredPage <= Math.ceil(totalItems / GROUPS_PER_PAGE)
+    ) {
       setCurrentPage(requiredPage);
     }
   }, [focusedIndex, filteredGroups.length, currentPage, groupDisplayMode]);
 
   // Calculate pagination
   const totalPages = Math.ceil(
-    (groupDisplayMode === GroupDisplayMode.AllGroups 
-      ? filteredGroups.length + 1 
-      : filteredGroups.length) / GROUPS_PER_PAGE
+    (groupDisplayMode === GroupDisplayMode.AllGroups
+      ? filteredGroups.length + 1
+      : filteredGroups.length) / GROUPS_PER_PAGE,
   );
   const startIndex = (currentPage - 1) * GROUPS_PER_PAGE;
   const endIndex = startIndex + GROUPS_PER_PAGE;
@@ -100,12 +104,14 @@ export default function GroupList() {
 
   // Scroll focused item into view
   useEffect(() => {
-    const focusedElement = groupListRef.current?.querySelector('.group-item.focused');
+    const focusedElement = groupListRef.current?.querySelector(
+      ".group-item.focused",
+    );
     if (focusedElement) {
       focusedElement.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center',
-        inline: 'nearest'
+        behavior: "smooth",
+        block: "center",
+        inline: "nearest",
       });
     }
   }, [focusedIndex]);
@@ -117,7 +123,7 @@ export default function GroupList() {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.ctrlKey) {
       switch (e.key) {
-        case 'w':
+        case "w":
           e.preventDefault();
           // Remove last word
           const input = e.currentTarget;
@@ -125,28 +131,32 @@ export default function GroupList() {
           const cursorPos = input.selectionStart || 0;
           const beforeCursor = value.substring(0, cursorPos);
           const afterCursor = value.substring(cursorPos);
-          
+
           // Find the start of the last word before cursor
           const words = beforeCursor.trimEnd();
-          const lastSpaceIndex = words.lastIndexOf(' ');
-          const newBeforeCursor = lastSpaceIndex >= 0 ? words.substring(0, lastSpaceIndex + 1) : '';
-          
+          const lastSpaceIndex = words.lastIndexOf(" ");
+          const newBeforeCursor =
+            lastSpaceIndex >= 0 ? words.substring(0, lastSpaceIndex + 1) : "";
+
           const newValue = newBeforeCursor + afterCursor;
           setGroupSearchTerm(newValue);
-          
+
           // Set cursor position after the removed word
           setTimeout(() => {
-            input.setSelectionRange(newBeforeCursor.length, newBeforeCursor.length);
+            input.setSelectionRange(
+              newBeforeCursor.length,
+              newBeforeCursor.length,
+            );
           }, 0);
           break;
-          
-        case 'u':
+
+        case "u":
           e.preventDefault();
           // Clear entire input
           setGroupSearchTerm("");
           break;
-          
-        case 'c':
+
+        case "c":
           e.preventDefault();
           // Unfocus the input
           e.currentTarget.blur();
@@ -188,11 +198,11 @@ export default function GroupList() {
     const maxVisible = 5;
     let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
     let end = Math.min(totalPages, start + maxVisible - 1);
-    
+
     if (end - start + 1 < maxVisible) {
       start = Math.max(1, end - maxVisible + 1);
     }
-    
+
     for (let i = start; i <= end; i++) {
       pages.push(i);
     }
@@ -232,8 +242,18 @@ export default function GroupList() {
       {/* Pagination Info */}
       <div className="pagination-info">
         <span className="group-count">
-          Showing {startIndex + 1}-{Math.min(endIndex, groupDisplayMode === GroupDisplayMode.AllGroups ? filteredGroups.length + 1 : filteredGroups.length)} of{" "}
-          {groupDisplayMode === GroupDisplayMode.AllGroups ? filteredGroups.length + 1 : filteredGroups.length} groups
+          Showing {startIndex + 1}-
+          {Math.min(
+            endIndex,
+            groupDisplayMode === GroupDisplayMode.AllGroups
+              ? filteredGroups.length + 1
+              : filteredGroups.length,
+          )}{" "}
+          of{" "}
+          {groupDisplayMode === GroupDisplayMode.AllGroups
+            ? filteredGroups.length + 1
+            : filteredGroups.length}{" "}
+          groups
           {totalPages > 1 && ` (Page ${currentPage} of ${totalPages})`}
         </span>
       </div>

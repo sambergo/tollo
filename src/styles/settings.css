@@ -316,13 +316,17 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Status badges in list header */
 .async-success-badge {
-  background: #4CAF50;
+  background: #4caf50;
   color: white;
   padding: 0.25rem 0.5rem;
   border-radius: 6px;
@@ -334,7 +338,7 @@
 }
 
 .async-error-badge {
-  background: #F44336;
+  background: #f44336;
   color: white;
   padding: 0.25rem 0.5rem;
   border-radius: 6px;

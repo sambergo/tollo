@@ -22,7 +22,7 @@ interface ChannelState {
   // Loading states
   isLoadingChannelList: boolean;
   isExternalPlayerPlaying: boolean;
-  
+
   // NEW: Progress tracking
   loadingProgress: ChannelLoadingStatus | null;
   isAsyncLoading: boolean;
@@ -36,7 +36,7 @@ interface ChannelState {
   setSelectedChannelListId: (id: number | null) => void;
   setIsLoadingChannelList: (loading: boolean) => void;
   setIsExternalPlayerPlaying: (playing: boolean) => void;
-  
+
   // NEW: Progress actions
   setLoadingProgress: (progress: ChannelLoadingStatus | null) => void;
   setIsAsyncLoading: (loading: boolean) => void;
@@ -48,7 +48,7 @@ interface ChannelState {
   fetchHistory: () => Promise<void>;
   toggleFavorite: (channel: Channel) => Promise<void>;
   playInExternalPlayer: (channel: Channel) => Promise<void>;
-  
+
   // NEW: Async API actions
   fetchChannelsAsync: (id?: number | null) => Promise<void>;
   fetchFavoritesAsync: () => Promise<void>;
@@ -81,7 +81,8 @@ export const useChannelStore = create<ChannelState>((set, get) => ({
     set({ selectedChannelListId }),
   setIsLoadingChannelList: (isLoadingChannelList) =>
     set({ isLoadingChannelList }),
-  setIsExternalPlayerPlaying: (isExternalPlayerPlaying) => set({ isExternalPlayerPlaying }),
+  setIsExternalPlayerPlaying: (isExternalPlayerPlaying) =>
+    set({ isExternalPlayerPlaying }),
   setLoadingProgress: (loadingProgress) => set({ loadingProgress }),
   setIsAsyncLoading: (isAsyncLoading) => set({ isAsyncLoading }),
 
@@ -140,25 +141,29 @@ export const useChannelStore = create<ChannelState>((set, get) => ({
       // Reset loading state on error
       set({ isExternalPlayerPlaying: false });
       // Notify user about the failure
-      alert(`Failed to play channel "${channel.name}". The external player couldn't play this channel.`);
+      alert(
+        `Failed to play channel "${channel.name}". The external player couldn't play this channel.`,
+      );
     }
   },
 
   // NEW: Async API actions with progress tracking
   fetchChannelsAsync: async (id = null) => {
     set({ isAsyncLoading: true, loadingProgress: null });
-    
+
     try {
-      const fetchedChannels = await invoke<Channel[]>("get_channels_async", { id });
+      const fetchedChannels = await invoke<Channel[]>("get_channels_async", {
+        id,
+      });
       set({ channels: fetchedChannels });
     } catch (error) {
       console.error("Failed to fetch channels async:", error);
-      set({ 
-        loadingProgress: { 
-          progress: 0, 
-          message: `Error: ${error}`, 
-          is_complete: true 
-        } 
+      set({
+        loadingProgress: {
+          progress: 0,
+          message: `Error: ${error}`,
+          is_complete: true,
+        },
       });
     } finally {
       set({ isAsyncLoading: false });
@@ -223,19 +228,21 @@ export const useChannelStore = create<ChannelState>((set, get) => ({
       // Reset loading state on error
       set({ isExternalPlayerPlaying: false });
       // Notify user about the failure
-      alert(`Failed to play channel "${channel.name}". The external player couldn't play this channel - it may be offline or geo-blocked.`);
+      alert(
+        `Failed to play channel "${channel.name}". The external player couldn't play this channel - it may be offline or geo-blocked.`,
+      );
     }
   },
 }));
 
 // Setup event listeners for progress updates
 // This runs once when the module is loaded
-listen<ChannelLoadingStatus>('channel_loading', (event) => {
+listen<ChannelLoadingStatus>("channel_loading", (event) => {
   const status = event.payload;
-  console.log('Channel loading progress:', status);
-  
+  console.log("Channel loading progress:", status);
+
   useChannelStore.getState().setLoadingProgress(status);
-  
+
   // Clear progress when complete
   if (status.is_complete) {
     setTimeout(() => {
@@ -245,16 +252,16 @@ listen<ChannelLoadingStatus>('channel_loading', (event) => {
 });
 
 // Listen for favorite operation updates
-listen<string>('favorite_operation', (event) => {
-  console.log('Favorite operation:', event.payload);
+listen<string>("favorite_operation", (event) => {
+  console.log("Favorite operation:", event.payload);
   // Could add UI feedback here if needed
 });
 
 // Listen for history/favorites loading updates
-listen<string>('favorites_loading', (event) => {
-  console.log('Favorites loading:', event.payload);
+listen<string>("favorites_loading", (event) => {
+  console.log("Favorites loading:", event.payload);
 });
 
-listen<string>('history_loading', (event) => {
-  console.log('History loading:', event.payload);
+listen<string>("history_loading", (event) => {
+  console.log("History loading:", event.payload);
 });

@@ -9,7 +9,13 @@ import {
 import SavedFilters from "./SavedFilters";
 import { useUIStore, useChannelStore } from "../stores";
 
-type Tab = "channels" | "favorites" | "groups" | "history" | "help" | "settings";
+type Tab =
+  | "channels"
+  | "favorites"
+  | "groups"
+  | "history"
+  | "help"
+  | "settings";
 
 export default function NavigationSidebar() {
   const { activeTab, setActiveTab } = useUIStore();

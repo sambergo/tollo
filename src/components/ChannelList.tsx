@@ -26,7 +26,8 @@ export default function ChannelList({ channels }: ChannelListProps) {
   const { selectedChannel, favorites, setSelectedChannel, toggleFavorite } =
     useChannelStore();
 
-  const { focusedIndex, selectedGroup, clearGroupFilter, setFocusedIndex } = useUIStore();
+  const { focusedIndex, selectedGroup, clearGroupFilter, setFocusedIndex } =
+    useUIStore();
 
   // Reset to first page when channels change
   useEffect(() => {
@@ -38,19 +39,21 @@ export default function ChannelList({ channels }: ChannelListProps) {
     if (channels.length === 0) return;
 
     const requiredPage = Math.ceil((focusedIndex + 1) / CHANNELS_PER_PAGE);
-    
+
     // Change page if focused item is on a different page
     if (requiredPage !== currentPage) {
       setCurrentPage(requiredPage);
     }
 
     // Scroll focused item into view
-    const focusedElement = channelListRef.current?.querySelector('.channel-item.focused');
+    const focusedElement = channelListRef.current?.querySelector(
+      ".channel-item.focused",
+    );
     if (focusedElement) {
       focusedElement.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center',
-        inline: 'nearest'
+        behavior: "smooth",
+        block: "center",
+        inline: "nearest",
       });
     }
   }, [focusedIndex, channels.length, currentPage]);

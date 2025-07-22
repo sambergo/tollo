@@ -55,7 +55,9 @@ export const useImageCache = (): ImageCacheHook => {
     }
   };
 
-  const getCachedImageUrlAsync = async (originalUrl: string): Promise<string> => {
+  const getCachedImageUrlAsync = async (
+    originalUrl: string,
+  ): Promise<string> => {
     try {
       if (!originalUrl || originalUrl.trim() === "") {
         return "";
@@ -72,7 +74,10 @@ export const useImageCache = (): ImageCacheHook => {
       // Convert the file path to a URL that the webview can display
       return convertFileSrc(cachedPath);
     } catch (error) {
-      console.warn("Failed to get cached image async, using original URL:", error);
+      console.warn(
+        "Failed to get cached image async, using original URL:",
+        error,
+      );
       return originalUrl;
     }
   };
@@ -109,7 +114,7 @@ export const useImageCache = (): ImageCacheHook => {
   const preloadImages = async (urls: string[]): Promise<string[]> => {
     try {
       const results = await invoke<string[]>("preload_images", { urls });
-      return results.map(path => convertFileSrc(path));
+      return results.map((path) => convertFileSrc(path));
     } catch (error) {
       console.error("Failed to preload images:", error);
       return urls; // Return original URLs as fallback

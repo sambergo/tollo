@@ -89,16 +89,15 @@ function App() {
   useEffect(() => {
     const loadDefaultChannelList = async () => {
       try {
-        const channelLists =
-          await invoke<
-            {
-              id: number;
-              name: string;
-              source: string;
-              is_default: boolean;
-              last_fetched: number | null;
-            }[]
-          >("get_channel_lists");
+        const channelLists = await invoke<
+          {
+            id: number;
+            name: string;
+            source: string;
+            is_default: boolean;
+            last_fetched: number | null;
+          }[]
+        >("get_channel_lists");
         const defaultList = channelLists.find((list) => list.is_default);
         if (defaultList && selectedChannelListId === null) {
           // Set loading state immediately for initial app load
@@ -416,9 +415,10 @@ function App() {
   };
 
   const handleToggleGroupDisplayMode = () => {
-    const newMode = groupDisplayMode === GroupDisplayMode.EnabledGroups 
-      ? GroupDisplayMode.AllGroups 
-      : GroupDisplayMode.EnabledGroups;
+    const newMode =
+      groupDisplayMode === GroupDisplayMode.EnabledGroups
+        ? GroupDisplayMode.AllGroups
+        : GroupDisplayMode.EnabledGroups;
     setGroupDisplayMode(newMode);
     setFocusedIndex(0); // Reset focus when switching modes
   };
@@ -511,7 +511,9 @@ function App() {
           <div className="settings-full-width">
             <div className="section-header">
               <h2 className="section-title">Help</h2>
-              <p className="section-subtitle">Keyboard shortcuts and keybindings</p>
+              <p className="section-subtitle">
+                Keyboard shortcuts and keybindings
+              </p>
             </div>
             <div className="settings-container">
               <Help />

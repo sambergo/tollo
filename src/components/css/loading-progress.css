@@ -56,7 +56,7 @@
 }
 
 .loading-progress-bar:not(.complete)::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: -100%;
@@ -142,7 +142,7 @@
   .channel-loading-progress {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   }
-  
+
   .loading-progress-percentage {
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
   }
@@ -153,12 +153,12 @@
   .channel-loading-progress {
     padding: 12px;
   }
-  
+
   .loading-progress-message {
     font-size: 13px;
   }
-  
+
   .channel-count {
     font-size: 11px;
   }
-} 
+}

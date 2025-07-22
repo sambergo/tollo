@@ -4,7 +4,11 @@ import { useChannelStore } from "../stores";
 import { useSettingsStore } from "../stores";
 
 const VideoPlayer = forwardRef<HTMLVideoElement, {}>((_, ref) => {
-  const { selectedChannel, isExternalPlayerPlaying, setIsExternalPlayerPlaying } = useChannelStore();
+  const {
+    selectedChannel,
+    isExternalPlayerPlaying,
+    setIsExternalPlayerPlaying,
+  } = useChannelStore();
   const { muteOnStart, showControls, autoplay } = useSettingsStore();
   const previousChannelRef = useRef(selectedChannel);
 

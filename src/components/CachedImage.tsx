@@ -44,7 +44,10 @@ const CachedImage: React.FC<CachedImageProps> = ({
   }, [lazy, rootMargin]);
 
   // Use the new async hook for non-blocking image caching
-  const { cachedUrl, loading, error } = useCachedImageAsync(src, isIntersecting);
+  const { cachedUrl, loading, error } = useCachedImageAsync(
+    src,
+    isIntersecting,
+  );
 
   // Show placeholder for empty URLs
   if (!src || src.trim() === "") {

@@ -81,16 +81,16 @@
   .help-layout {
     padding: 0 0.5rem;
   }
-  
+
   .help-grid {
     gap: 0.75rem;
   }
-  
+
   .keybinding {
     grid-template-columns: 1fr;
     gap: 0.5rem;
   }
-  
+
   .keybinding .keys {
     min-width: auto;
   }

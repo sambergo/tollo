@@ -3,8 +3,13 @@ import { SignalIcon, StarIcon } from "./Icons";
 import { useChannelStore, useUIStore, GroupDisplayMode } from "../stores";
 
 export default function ChannelDetails() {
-  const { selectedChannel, channels, favorites, toggleFavorite, playInExternalPlayer } =
-    useChannelStore();
+  const {
+    selectedChannel,
+    channels,
+    favorites,
+    toggleFavorite,
+    playInExternalPlayer,
+  } = useChannelStore();
   const { setSelectedGroup, setActiveTab, setGroupDisplayMode } = useUIStore();
 
   if (!selectedChannel) {
@@ -18,7 +23,7 @@ export default function ChannelDetails() {
   }
 
   const isFavorite = favorites.some((fav) => fav.name === selectedChannel.name);
-  
+
   const handleFilterByGroup = () => {
     if (selectedChannel?.group_title) {
       setGroupDisplayMode(GroupDisplayMode.AllGroups);
@@ -86,8 +91,13 @@ export default function ChannelDetails() {
                 onClick={handleFilterByGroup}
                 title="Filter channels by this group"
               >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/>
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z" />
                 </svg>
                 Filter
               </button>

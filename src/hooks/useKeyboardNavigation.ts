@@ -84,9 +84,9 @@ export function useKeyboardNavigation({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const focusedElement = document.activeElement;
-      
+
       // Handle escape key when input fields are focused
-      if (focusedElement && focusedElement.tagName === 'INPUT') {
+      if (focusedElement && focusedElement.tagName === "INPUT") {
         if (e.key === "Escape") {
           e.preventDefault();
           (focusedElement as HTMLInputElement).blur();
@@ -156,7 +156,7 @@ export function useKeyboardNavigation({
           "settings",
         ];
         const currentIndex = tabs.indexOf(activeTab);
-        
+
         // Tab - Next tab
         const nextIndex = (currentIndex + 1) % tabs.length;
         setActiveTab(tabs[nextIndex]);
@@ -183,7 +183,7 @@ export function useKeyboardNavigation({
         setSelectedChannel(null);
         return;
       }
-      
+
       if (e.ctrlKey && e.key === "k" && !e.altKey && !e.shiftKey) {
         e.preventDefault(); // Prevent default tab behavior
         const tabs: Tab[] = [
@@ -208,7 +208,9 @@ export function useKeyboardNavigation({
           const newIndex = Math.min(prev + 1, listItems.length - 1);
           // Auto-select channel when navigating in channel-related tabs
           if (
-            (activeTab === "channels" || activeTab === "favorites" || activeTab === "history") &&
+            (activeTab === "channels" ||
+              activeTab === "favorites" ||
+              activeTab === "history") &&
             listItems[newIndex]
           ) {
             setSelectedChannel(listItems[newIndex] as Channel);
@@ -220,7 +222,9 @@ export function useKeyboardNavigation({
           const newIndex = Math.max(prev - 1, 0);
           // Auto-select channel when navigating in channel-related tabs
           if (
-            (activeTab === "channels" || activeTab === "favorites" || activeTab === "history") &&
+            (activeTab === "channels" ||
+              activeTab === "favorites" ||
+              activeTab === "history") &&
             listItems[newIndex]
           ) {
             setSelectedChannel(listItems[newIndex] as Channel);
@@ -229,13 +233,14 @@ export function useKeyboardNavigation({
         });
       }
 
-
       // Selection and interaction
       else if (e.key === "l" || e.key === "ArrowRight") {
         // Set selected channel if null, then play/pause video preview
         if (
           !selectedChannel &&
-          (activeTab === "channels" || activeTab === "favorites" || activeTab === "history") &&
+          (activeTab === "channels" ||
+            activeTab === "favorites" ||
+            activeTab === "history") &&
           listItems[focusedIndex]
         ) {
           setSelectedChannel(listItems[focusedIndex] as Channel);
@@ -259,7 +264,9 @@ export function useKeyboardNavigation({
         const firstVisibleIndex = Math.floor(focusedIndex / 200) * 200;
         setFocusedIndex(firstVisibleIndex);
         if (
-          (activeTab === "channels" || activeTab === "favorites" || activeTab === "history") &&
+          (activeTab === "channels" ||
+            activeTab === "favorites" ||
+            activeTab === "history") &&
           listItems[firstVisibleIndex]
         ) {
           setSelectedChannel(listItems[firstVisibleIndex] as Channel);
@@ -267,10 +274,15 @@ export function useKeyboardNavigation({
       } else if (e.key === "G" && !e.ctrlKey && !e.altKey) {
         // Go to last item in current view
         const currentPage = Math.floor(focusedIndex / 200);
-        const lastVisibleIndex = Math.min((currentPage + 1) * 200 - 1, listItems.length - 1);
+        const lastVisibleIndex = Math.min(
+          (currentPage + 1) * 200 - 1,
+          listItems.length - 1,
+        );
         setFocusedIndex(lastVisibleIndex);
         if (
-          (activeTab === "channels" || activeTab === "favorites" || activeTab === "history") &&
+          (activeTab === "channels" ||
+            activeTab === "favorites" ||
+            activeTab === "history") &&
           listItems[lastVisibleIndex]
         ) {
           setSelectedChannel(listItems[lastVisibleIndex] as Channel);
@@ -280,7 +292,9 @@ export function useKeyboardNavigation({
         const firstVisibleIndex = Math.floor(focusedIndex / 200) * 200;
         setFocusedIndex(firstVisibleIndex);
         if (
-          (activeTab === "channels" || activeTab === "favorites" || activeTab === "history") &&
+          (activeTab === "channels" ||
+            activeTab === "favorites" ||
+            activeTab === "history") &&
           listItems[firstVisibleIndex]
         ) {
           setSelectedChannel(listItems[firstVisibleIndex] as Channel);
@@ -288,10 +302,15 @@ export function useKeyboardNavigation({
       } else if (e.key === "End") {
         // Go to last item in current view
         const currentPage = Math.floor(focusedIndex / 200);
-        const lastVisibleIndex = Math.min((currentPage + 1) * 200 - 1, listItems.length - 1);
+        const lastVisibleIndex = Math.min(
+          (currentPage + 1) * 200 - 1,
+          listItems.length - 1,
+        );
         setFocusedIndex(lastVisibleIndex);
         if (
-          (activeTab === "channels" || activeTab === "favorites" || activeTab === "history") &&
+          (activeTab === "channels" ||
+            activeTab === "favorites" ||
+            activeTab === "history") &&
           listItems[lastVisibleIndex]
         ) {
           setSelectedChannel(listItems[lastVisibleIndex] as Channel);
@@ -302,7 +321,9 @@ export function useKeyboardNavigation({
         setFocusedIndex((prev) => {
           const newIndex = Math.max(prev - 10, 0);
           if (
-            (activeTab === "channels" || activeTab === "favorites" || activeTab === "history") &&
+            (activeTab === "channels" ||
+              activeTab === "favorites" ||
+              activeTab === "history") &&
             listItems[newIndex]
           ) {
             setSelectedChannel(listItems[newIndex] as Channel);
@@ -315,7 +336,9 @@ export function useKeyboardNavigation({
         setFocusedIndex((prev) => {
           const newIndex = Math.min(prev + 10, listItems.length - 1);
           if (
-            (activeTab === "channels" || activeTab === "favorites" || activeTab === "history") &&
+            (activeTab === "channels" ||
+              activeTab === "favorites" ||
+              activeTab === "history") &&
             listItems[newIndex]
           ) {
             setSelectedChannel(listItems[newIndex] as Channel);
@@ -328,7 +351,9 @@ export function useKeyboardNavigation({
         setFocusedIndex((prev) => {
           const newIndex = Math.max(prev - 10, 0);
           if (
-            (activeTab === "channels" || activeTab === "favorites" || activeTab === "history") &&
+            (activeTab === "channels" ||
+              activeTab === "favorites" ||
+              activeTab === "history") &&
             listItems[newIndex]
           ) {
             setSelectedChannel(listItems[newIndex] as Channel);
@@ -341,7 +366,9 @@ export function useKeyboardNavigation({
         setFocusedIndex((prev) => {
           const newIndex = Math.min(prev + 10, listItems.length - 1);
           if (
-            (activeTab === "channels" || activeTab === "favorites" || activeTab === "history") &&
+            (activeTab === "channels" ||
+              activeTab === "favorites" ||
+              activeTab === "history") &&
             listItems[newIndex]
           ) {
             setSelectedChannel(listItems[newIndex] as Channel);
@@ -360,7 +387,9 @@ export function useKeyboardNavigation({
           const newIndex = (currentPage - 1) * ITEMS_PER_PAGE;
           setFocusedIndex(newIndex);
           if (
-            (activeTab === "channels" || activeTab === "favorites" || activeTab === "history") &&
+            (activeTab === "channels" ||
+              activeTab === "favorites" ||
+              activeTab === "history") &&
             listItems[newIndex]
           ) {
             setSelectedChannel(listItems[newIndex] as Channel);
@@ -377,7 +406,9 @@ export function useKeyboardNavigation({
           const maxIndex = Math.min(newIndex, listItems.length - 1);
           setFocusedIndex(maxIndex);
           if (
-            (activeTab === "channels" || activeTab === "favorites" || activeTab === "history") &&
+            (activeTab === "channels" ||
+              activeTab === "favorites" ||
+              activeTab === "history") &&
             listItems[maxIndex]
           ) {
             setSelectedChannel(listItems[maxIndex] as Channel);
@@ -389,7 +420,9 @@ export function useKeyboardNavigation({
       else if (e.key === "/" || e.key === "i") {
         // Focus search input
         e.preventDefault(); // Prevent the key from being inserted
-        const searchInput = document.querySelector('.search-input') as HTMLInputElement;
+        const searchInput = document.querySelector(
+          ".search-input",
+        ) as HTMLInputElement;
         if (searchInput) {
           searchInput.focus();
         }
@@ -401,7 +434,9 @@ export function useKeyboardNavigation({
         } else if (activeTab === "groups") {
           clearGroupSearch();
         }
-        const searchInput = document.querySelector('.search-input') as HTMLInputElement;
+        const searchInput = document.querySelector(
+          ".search-input",
+        ) as HTMLInputElement;
         if (searchInput) {
           searchInput.focus();
         }
@@ -451,7 +486,11 @@ export function useKeyboardNavigation({
         e.preventDefault(); // Prevent page scroll
         if (activeTab === "groups") {
           toggleCurrentGroupSelection();
-        } else if (activeTab === "channels" || activeTab === "favorites" || activeTab === "history") {
+        } else if (
+          activeTab === "channels" ||
+          activeTab === "favorites" ||
+          activeTab === "history"
+        ) {
           // Set selected channel if null, then play/pause video preview
           if (!selectedChannel && listItems[focusedIndex]) {
             setSelectedChannel(listItems[focusedIndex] as Channel);
@@ -470,7 +509,11 @@ export function useKeyboardNavigation({
       }
 
       // Clear selected channel
-      else if (e.key === "h" || e.key === "ArrowLeft" || e.key === "Backspace") {
+      else if (
+        e.key === "h" ||
+        e.key === "ArrowLeft" ||
+        e.key === "Backspace"
+      ) {
         // Clear selected channel to return to "Select a channel to start watching" state
         setSelectedChannel(null);
       }

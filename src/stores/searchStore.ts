@@ -86,15 +86,19 @@ export const useSearchStore = create<SearchState>((set, get) => ({
         return searchedChannels;
       } catch (error) {
         // Handle search cancellation gracefully
-        if (error && typeof error === 'string' && error.includes("Search cancelled")) {
+        if (
+          error &&
+          typeof error === "string" &&
+          error.includes("Search cancelled")
+        ) {
           console.log("Search was cancelled - ignoring result");
           // Return empty array for cancelled searches instead of fallback
           // This prevents showing stale results
           return [];
         }
-        
+
         console.error("Search failed:", error);
-        
+
         // For other errors, fall back to returning all channels
         const fetchedChannels = await invoke<Channel[]>("get_channels", {
           id: channelListId,

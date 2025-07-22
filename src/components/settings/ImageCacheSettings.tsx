@@ -95,7 +95,9 @@ export function ImageCacheSettings() {
             <div className="cache-stat">
               <span className="stat-label">Cache Size:</span>
               <span className="stat-value">
-                {isLoadingCacheSize ? "Loading..." : formatBytes(imageCacheSize)}
+                {isLoadingCacheSize
+                  ? "Loading..."
+                  : formatBytes(imageCacheSize)}
               </span>
             </div>
           </div>
