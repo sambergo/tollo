@@ -125,45 +125,83 @@ pub async fn start_channel_list_selection_async(
             )
             .map_err(|e| format!("Failed to get playlist info: {}", e))?;
         
-        // Only HTTP sources can be refreshed
+        // Handle both HTTP and file sources
         if !source.starts_with("http") {
-            return Err("Only HTTP sources can be refreshed".to_string());
+            // For file sources, check if the file exists and is valid
+            if !std::path::Path::new(&source).exists() {
+                return Err(format!("Playlist file '{}' not found", source));
+            }
+            
+            // Read and validate the file
+            match std::fs::read_to_string(&source) {
+                Ok(content) => {
+                    if content.trim().is_empty() || !content.trim_start().starts_with("#EXTM3U") {
+                        return Err("Invalid M3U playlist file".to_string());
+                    }
+                    // File is valid, we can proceed with refresh
+                }
+                Err(e) => {
+                    return Err(format!("Failed to read file '{}': {}", source, e));
+                }
+            }
         }
         
         // Check if cache is expired or invalid
         match (last_fetched, filepath) {
             (Some(last_fetch_time), Some(cached_file)) => {
-                // Check if cache is expired
-                let cache_expired = (now - last_fetch_time) >= (cache_duration_hours * 3600);
-                
-                if cache_expired {
-                    true // Cache is expired, need refresh
-                } else {
-                    // Cache is not expired, but validate the cached file
-                    let data_dir = dirs::data_dir().unwrap().join("tollo");
-                    let channel_lists_dir = data_dir.join("channel_lists");
-                    let cached_file_path = channel_lists_dir.join(&cached_file);
-                    
-                    // Check if cached file exists and is not empty
-                    match std::fs::metadata(&cached_file_path) {
-                        Ok(metadata) => {
-                            if metadata.len() == 0 {
-                                // File is empty, need refresh
-                                true
+                // For file sources, check if the source file is newer than our cached version
+                if !source.starts_with("http") {
+                    match std::fs::metadata(&source) {
+                        Ok(file_metadata) => {
+                            if let Ok(modified_time) = file_metadata.modified() {
+                                let file_timestamp = modified_time.duration_since(std::time::UNIX_EPOCH)
+                                    .unwrap_or_default().as_secs() as i64;
+                                // If source file is newer than our last fetch, refresh
+                                file_timestamp > last_fetch_time
                             } else {
-                                // File exists and has content, check if it's valid M3U
-                                match std::fs::read_to_string(&cached_file_path) {
-                                    Ok(content) => {
-                                        // Consider it invalid if it's too short or doesn't contain M3U markers
-                                        content.trim().is_empty() 
-                                            || content.len() < 10 
-                                            || (!content.contains("#EXTINF") && !content.contains("#EXTM3U"))
-                                    }
-                                    Err(_) => true, // Can't read file, need refresh
-                                }
+                                // Can't get modification time, refresh to be safe
+                                true
                             }
                         }
-                        Err(_) => true, // File doesn't exist, need refresh
+                        Err(_) => {
+                            // Source file doesn't exist or can't be accessed, but we already validated it above
+                            // This shouldn't happen, but refresh to be safe
+                            true
+                        }
+                    }
+                } else {
+                    // Check if cache is expired for HTTP sources
+                    let cache_expired = (now - last_fetch_time) >= (cache_duration_hours * 3600);
+                    
+                    if cache_expired {
+                        true // Cache is expired, need refresh
+                    } else {
+                        // Cache is not expired, but validate the cached file
+                        let data_dir = dirs::data_dir().unwrap().join("tollo");
+                        let channel_lists_dir = data_dir.join("channel_lists");
+                        let cached_file_path = channel_lists_dir.join(&cached_file);
+                    
+                        // Check if cached file exists and is not empty
+                        match std::fs::metadata(&cached_file_path) {
+                            Ok(metadata) => {
+                                if metadata.len() == 0 {
+                                    // File is empty, need refresh
+                                    true
+                                } else {
+                                    // File exists and has content, check if it's valid M3U
+                                    match std::fs::read_to_string(&cached_file_path) {
+                                        Ok(content) => {
+                                            // Consider it invalid if it's too short or doesn't contain M3U markers
+                                            content.trim().is_empty() 
+                                                || content.len() < 10 
+                                                || (!content.contains("#EXTINF") && !content.contains("#EXTM3U"))
+                                        }
+                                        Err(_) => true, // Can't read file, need refresh
+                                    }
+                                }
+                            }
+                            Err(_) => true, // File doesn't exist, need refresh
+                        }
                     }
                 }
             }

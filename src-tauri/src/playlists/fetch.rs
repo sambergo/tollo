@@ -28,9 +28,12 @@ pub async fn refresh_channel_list_async(
         .map_err(|_| "Channel list not found".to_string())?
     };
 
-    // Only process HTTP sources
-    if !source.starts_with("http") {
-        return Err("Only HTTP sources can be refreshed".to_string());
+    // Handle both HTTP and file sources
+    if source.starts_with("http") {
+        // HTTP source - download and cache
+    } else {
+        // File source - read from local filesystem
+        return refresh_file_playlist(app_handle, db_state, cache_state, fetch_state, id, source).await;
     }
 
     // Emit starting status
@@ -224,7 +227,7 @@ pub async fn validate_and_add_channel_list_async(
         .map_err(|e| e.to_string())?
     };
 
-    // If it's an HTTP source, fetch it asynchronously
+    // Process both HTTP and file sources
     if clean_source.starts_with("http") {
         if !clean_source.starts_with("http://") && !clean_source.starts_with("https://") {
             return Err("Invalid URL format".to_string());
@@ -386,6 +389,68 @@ pub async fn validate_and_add_channel_list_async(
             },
         )
         .await;
+    } else {
+        // Handle file sources
+        if !std::path::Path::new(clean_source).exists() {
+            // Delete the playlist entry since the file doesn't exist
+            let db = db_state.db.lock().unwrap();
+            let _ = db.execute("DELETE FROM channel_lists WHERE id = ?1", [list_id]);
+            return Err(format!("File '{}' does not exist", clean_source));
+        }
+
+        // Read and validate the file
+        let content = fs::read_to_string(clean_source)
+            .map_err(|e| {
+                // Delete the playlist entry since we can't read the file
+                let db = db_state.db.lock().unwrap();
+                let _ = db.execute("DELETE FROM channel_lists WHERE id = ?1", [list_id]);
+                format!("Failed to read file '{}': {}", clean_source, e)
+            })?;
+
+        if content.trim().is_empty() || !content.trim_start().starts_with("#EXTM3U") {
+            // Delete the playlist entry since the file is invalid
+            let db = db_state.db.lock().unwrap();
+            let _ = db.execute("DELETE FROM channel_lists WHERE id = ?1", [list_id]);
+            return Err("Invalid M3U playlist file".to_string());
+        }
+
+        let channel_count = content
+            .lines()
+            .filter(|line| line.starts_with("#EXTINF:"))
+            .count();
+
+        if channel_count == 0 {
+            // Delete the playlist entry since no channels were found
+            let db = db_state.db.lock().unwrap();
+            let _ = db.execute("DELETE FROM channel_lists WHERE id = ?1", [list_id]);
+            return Err("No channels found in playlist file".to_string());
+        }
+
+        // Save the file content to cache
+        let data_dir = dirs::data_dir().unwrap().join("tollo/channel_lists");
+        fs::create_dir_all(&data_dir).map_err(|e| format!("Failed to create directory: {}", e))?;
+        let filename = format!("{}.m3u", Uuid::new_v4());
+        let filepath = data_dir.join(&filename);
+
+        fs::write(&filepath, &content).map_err(|e| format!("Failed to save: {}", e))?;
+
+        // Update database with file info
+        let now = Utc::now().timestamp();
+        {
+            let db = db_state.db.lock().unwrap();
+            db.execute(
+                "UPDATE channel_lists SET filepath = ?1, last_fetched = ?2 WHERE id = ?3",
+                &[
+                    &filename as &dyn rusqlite::ToSql,
+                    &now as &dyn rusqlite::ToSql,
+                    &list_id as &dyn rusqlite::ToSql,
+                ],
+            )
+            .map_err(|e| format!("Failed to update: {}", e))?;
+        }
+
+        // Invalidate cache
+        invalidate_channel_cache(cache_state)?;
     }
 
     Ok(list_id)
@@ -406,4 +471,129 @@ pub async fn get_all_playlist_fetch_status(
 ) -> Result<Vec<PlaylistFetchStatus>, String> {
     let operations = fetch_state.operations.lock().await;
     Ok(operations.values().cloned().collect())
+}
+
+async fn refresh_file_playlist(
+    app_handle: AppHandle,
+    db_state: State<'_, DbState>,
+    cache_state: State<'_, ChannelCacheState>,
+    fetch_state: State<'_, FetchState>,
+    id: i32,
+    source: String,
+) -> Result<(), String> {
+    // Emit starting status
+    emit_progress(
+        &app_handle,
+        &fetch_state,
+        PlaylistFetchStatus {
+            id,
+            status: "starting".to_string(),
+            progress: 0.0,
+            message: "Reading file playlist...".to_string(),
+            channel_count: None,
+            error: None,
+        },
+    )
+    .await;
+
+    // Emit processing status
+    emit_progress(
+        &app_handle,
+        &fetch_state,
+        PlaylistFetchStatus {
+            id,
+            status: "processing".to_string(),
+            progress: 0.4,
+            message: "Processing playlist content...".to_string(),
+            channel_count: None,
+            error: None,
+        },
+    )
+    .await;
+
+    // Read the file content
+    let content = fs::read_to_string(&source)
+        .map_err(|e| format!("Failed to read file '{}': {}", source, e))?;
+
+    if content.trim().is_empty() || !content.trim_start().starts_with("#EXTM3U") {
+        let error_msg = "Invalid M3U playlist file".to_string();
+        emit_progress(
+            &app_handle,
+            &fetch_state,
+            PlaylistFetchStatus {
+                id,
+                status: "error".to_string(),
+                progress: 0.0,
+                message: "Failed to process playlist".to_string(),
+                channel_count: None,
+                error: Some(error_msg.clone()),
+            },
+        )
+        .await;
+        return Err(error_msg);
+    }
+
+    // Count channels
+    let channel_count = content
+        .lines()
+        .filter(|line| line.starts_with("#EXTINF:"))
+        .count();
+
+    // Emit saving status
+    emit_progress(
+        &app_handle,
+        &fetch_state,
+        PlaylistFetchStatus {
+            id,
+            status: "saving".to_string(),
+            progress: 0.8,
+            message: "Updating cached playlist...".to_string(),
+            channel_count: Some(channel_count),
+            error: None,
+        },
+    )
+    .await;
+
+    // Save to cache file
+    let data_dir = dirs::data_dir().unwrap().join("tollo/channel_lists");
+    fs::create_dir_all(&data_dir).map_err(|e| format!("Failed to create directory: {}", e))?;
+    let filename = format!("{}.m3u", Uuid::new_v4());
+    let filepath = data_dir.join(&filename);
+
+    fs::write(&filepath, &content).map_err(|e| format!("Failed to save: {}", e))?;
+
+    // Update database
+    let now = Utc::now().timestamp();
+    {
+        let db = db_state.db.lock().unwrap();
+        db.execute(
+            "UPDATE channel_lists SET filepath = ?1, last_fetched = ?2 WHERE id = ?3",
+            &[
+                &filename as &dyn rusqlite::ToSql,
+                &now as &dyn rusqlite::ToSql,
+                &id as &dyn rusqlite::ToSql,
+            ],
+        )
+        .map_err(|e| format!("Failed to update: {}", e))?;
+    }
+
+    // Invalidate cache
+    invalidate_channel_cache(cache_state)?;
+
+    // Emit completed status
+    emit_progress(
+        &app_handle,
+        &fetch_state,
+        PlaylistFetchStatus {
+            id,
+            status: "completed".to_string(),
+            progress: 1.0,
+            message: "File playlist refreshed successfully".to_string(),
+            channel_count: Some(channel_count),
+            error: None,
+        },
+    )
+    .await;
+
+    Ok(())
 }
