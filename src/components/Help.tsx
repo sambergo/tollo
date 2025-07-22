@@ -75,6 +75,7 @@ export default function Help() {
             <div className="keybinding">
               <div className="keys">
                 <span className="key">l</span>
+                <span className="key">→</span>
                 <span className="key">Space</span>
               </div>
               <span className="description">Play/pause video preview</span>
@@ -121,7 +122,7 @@ export default function Help() {
               <div className="keys">
                 <span className="key">f</span>
               </div>
-              <span className="description">Toggle favorite (in channels tab)</span>
+              <span className="description">Toggle fullscreen</span>
             </div>
             <div className="keybinding">
               <div className="keys">
@@ -139,7 +140,27 @@ export default function Help() {
               <div className="keys">
                 <span className="key">F</span>
               </div>
-              <span className="description">Toggle fullscreen (if preview enabled)</span>
+              <span className="description">Toggle favorite (in channels tab)</span>
+            </div>
+            <div className="keybinding">
+              <div className="keys">
+                <span className="key">J</span>
+              </div>
+              <span className="description">Next tab</span>
+            </div>
+            <div className="keybinding">
+              <div className="keys">
+                <span className="key">K</span>
+              </div>
+              <span className="description">Previous tab</span>
+            </div>
+            <div className="keybinding">
+              <div className="keys">
+                <span className="key">h</span>
+                <span className="key">←</span>
+                <span className="key">Backspace</span>
+              </div>
+              <span className="description">Clear selected channel</span>
             </div>
           </div>
         </div>

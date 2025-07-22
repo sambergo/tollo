@@ -145,7 +145,7 @@ export function useKeyboardNavigation({
       }
 
       // Handle Tab key navigation separately to prevent conflicts
-      if (e.key === "Tab" && !e.ctrlKey && !e.altKey) {
+      if (e.key === "Tab" && !e.ctrlKey && !e.altKey && !e.shiftKey) {
         e.preventDefault();
         const tabs: Tab[] = [
           "channels",
@@ -157,15 +157,9 @@ export function useKeyboardNavigation({
         ];
         const currentIndex = tabs.indexOf(activeTab);
         
-        if (e.shiftKey) {
-          // Shift+Tab - Previous tab
-          const prevIndex = (currentIndex - 1 + tabs.length) % tabs.length;
-          setActiveTab(tabs[prevIndex]);
-        } else {
-          // Tab - Next tab
-          const nextIndex = (currentIndex + 1) % tabs.length;
-          setActiveTab(tabs[nextIndex]);
-        }
+        // Tab - Next tab
+        const nextIndex = (currentIndex + 1) % tabs.length;
+        setActiveTab(tabs[nextIndex]);
         setFocusedIndex(0);
         setSelectedChannel(null);
         return;
