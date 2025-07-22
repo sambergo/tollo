@@ -81,31 +81,10 @@ export default function Help() {
               </div>
               <div className="keybinding">
                 <div className="keys">
-                  <span className="key">l</span>
-                  <span className="key">→</span>
-                  <span className="key">Space</span>
-                </div>
-                <span className="description">Play/pause video preview</span>
-              </div>
-              <div className="keybinding">
-                <div className="keys">
-                  <span className="key">Enter</span>
-                  <span className="key">o</span>
-                </div>
-                <span className="description">Play in external player</span>
-              </div>
-              <div className="keybinding">
-                <div className="keys">
                   <span className="key">/</span>
                   <span className="key">i</span>
                 </div>
                 <span className="description">Focus search input</span>
-              </div>
-              <div className="keybinding">
-                <div className="keys">
-                  <span className="key">c</span>
-                </div>
-                <span className="description">Clear search and focus search input</span>
               </div>
               <div className="keybinding">
                 <div className="keys">
@@ -127,21 +106,15 @@ export default function Help() {
               </div>
               <div className="keybinding">
                 <div className="keys">
-                  <span className="key">f</span>
+                  <span className="key">c</span>
                 </div>
-                <span className="description">Toggle fullscreen</span>
+                <span className="description">Clear search and focus search input</span>
               </div>
               <div className="keybinding">
                 <div className="keys">
                   <span className="key">R</span>
                 </div>
                 <span className="description">Refresh current channel list</span>
-              </div>
-              <div className="keybinding">
-                <div className="keys">
-                  <span className="key">m</span>
-                </div>
-                <span className="description">Toggle mute</span>
               </div>
               <div className="keybinding">
                 <div className="keys">
@@ -165,20 +138,56 @@ export default function Help() {
           <div className="settings-card">
             <div className="card-header">
               <HelpIcon />
+              <h3>Video Playback</h3>
+            </div>
+            <div className="card-content">
+              <div className="keybinding">
+                <div className="keys">
+                  <span className="key">l</span>
+                  <span className="key">→</span>
+                  <span className="key">Space</span>
+                </div>
+                <span className="description">Play/pause video preview</span>
+              </div>
+              <div className="keybinding">
+                <div className="keys">
+                  <span className="key">Enter</span>
+                  <span className="key">o</span>
+                </div>
+                <span className="description">Play in external player</span>
+              </div>
+              <div className="keybinding">
+                <div className="keys">
+                  <span className="key">m</span>
+                </div>
+                <span className="description">Toggle mute</span>
+              </div>
+              <div className="keybinding">
+                <div className="keys">
+                  <span className="key">f</span>
+                </div>
+                <span className="description">Toggle fullscreen</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="settings-card">
+            <div className="card-header">
+              <HelpIcon />
               <h3>Saved Filters</h3>
             </div>
             <div className="card-content">
               <div className="keybinding">
                 <div className="keys">
-                  <span className="key">0-9</span>
-                </div>
-                <span className="description">Apply saved filter from slot (0-9)</span>
-              </div>
-              <div className="keybinding">
-                <div className="keys">
                   <span className="key">Alt+0-9</span>
                 </div>
                 <span className="description">Save current search + group filter to slot (0-9)</span>
+              </div>
+              <div className="keybinding">
+                <div className="keys">
+                  <span className="key">0-9</span>
+                </div>
+                <span className="description">Apply saved filter from slot (0-9)</span>
               </div>
             </div>
           </div>
