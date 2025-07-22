@@ -1,7 +1,7 @@
 [package]
 name = "tollo"
 version = "0.1.0"
-description = "Töllö - A modern IPTV player"
+description = "Tollo - A modern IPTV player"
 authors = ["you"]
 edition = "2021"
 

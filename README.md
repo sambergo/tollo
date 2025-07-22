@@ -1,4 +1,4 @@
-# Töllö - IPTV Player
+# Tollo - IPTV Player
 
 ⚠️ **Development Phase** - This application is currently under active development and may be unstable.
 

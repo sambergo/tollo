@@ -1,6 +1,6 @@
 use tauri::ipc::InvokeError;
 
-/// Application-specific error types for the Töllö IPTV player
+/// Application-specific error types for the Tollo IPTV player
 #[derive(Debug, thiserror::Error)]
 pub enum TolloError {
     // Database errors

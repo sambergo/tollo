@@ -1,4 +1,4 @@
-# Töllö IPTV Player - Keybindings Reference
+# Tollo IPTV Player - Keybindings Reference
 
 ## Current Keybindings
 

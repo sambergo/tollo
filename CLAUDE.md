@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Töllö is a modern IPTV player built with Tauri (Rust backend) and React/TypeScript frontend. It allows users to manage IPTV playlists, browse channels, search content, and play media through external players.
+Tollo is a modern IPTV player built with Tauri (Rust backend) and React/TypeScript frontend. It allows users to manage IPTV playlists, browse channels, search content, and play media through external players.
 
 ## Development Commands
 

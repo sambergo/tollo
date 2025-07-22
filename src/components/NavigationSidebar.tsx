@@ -19,7 +19,7 @@ export default function NavigationSidebar() {
     <div className="nav-sidebar">
       <div className="app-header">
         <div className="app-logo">
-          <img className="app-logo-icon" src="/logo.png" alt="Töllö logo" />
+          <img className="app-logo-icon" src="/logo.png" alt="Tollo logo" />
         </div>
         <nav className="nav-menu">
           <button

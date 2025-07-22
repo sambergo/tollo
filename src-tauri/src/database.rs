@@ -144,7 +144,7 @@ pub fn initialize_database() -> Result<Connection> {
     if list_count == 0 {
         conn.execute(
             "INSERT INTO channel_lists (name, source, is_default) VALUES (?1, ?2, ?3)",
-            &["Default", "https://iptv-org.github.io/iptv/countries/fi.m3u", "1"],
+            &["Default", "https://iptv-org.github.io/iptv/index.m3u", "1"],
         )?;
     }
 
