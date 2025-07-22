@@ -28,6 +28,10 @@ pnpm install
 pnpm dev:tauri
 ```
 
+## Contributing
+
+This app is ~95% vibecoded, so you might find some weird stuff here and there. Contributions are welcome! Feel free to open issues or submit pull requests.
+
 ## License
 
 MIT - see [LICENSE](LICENSE) file.
