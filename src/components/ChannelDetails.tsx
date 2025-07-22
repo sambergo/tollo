@@ -1,10 +1,11 @@
 import CachedImage from "./CachedImage";
 import { SignalIcon, StarIcon } from "./Icons";
-import { useChannelStore } from "../stores";
+import { useChannelStore, useUIStore, GroupDisplayMode } from "../stores";
 
 export default function ChannelDetails() {
   const { selectedChannel, channels, favorites, toggleFavorite, playInExternalPlayer } =
     useChannelStore();
+  const { setSelectedGroup, setActiveTab, setGroupDisplayMode } = useUIStore();
 
   if (!selectedChannel) {
     return (
@@ -17,6 +18,14 @@ export default function ChannelDetails() {
   }
 
   const isFavorite = favorites.some((fav) => fav.name === selectedChannel.name);
+  
+  const handleFilterByGroup = () => {
+    if (selectedChannel?.group_title) {
+      setGroupDisplayMode(GroupDisplayMode.AllGroups);
+      setSelectedGroup(selectedChannel.group_title);
+      setActiveTab("channels");
+    }
+  };
 
   return (
     <div className="channel-details">
@@ -70,7 +79,16 @@ export default function ChannelDetails() {
         <div className="details-grid">
           <div className="detail-item">
             <div className="detail-label">Group</div>
-            <div className="detail-value">{selectedChannel.group_title}</div>
+            <div className="detail-value">
+              {selectedChannel.group_title}
+              <button
+                className="detail-action-button"
+                onClick={handleFilterByGroup}
+                title="Filter channels by this group"
+              >
+                Filter
+              </button>
+            </div>
           </div>
           <div className="detail-item">
             <div className="detail-label">TVG ID</div>
