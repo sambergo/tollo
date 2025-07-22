@@ -4,13 +4,22 @@
 
 A modern IPTV player built with Tauri (Rust + React/TypeScript) for managing playlists, browsing channels, and playing media through external players.
 
+![Tollo Screenshot](public/screenshot.png)
+
 ## Features
 
 - IPTV playlist management
-- Channel browsing with fuzzy search
-- External player integration (MPV)
+- Fast fuzzy search
 - Vim-like keyboard navigation
+- External player integration (MPV)
 - Favorites and history
+
+## Prerequisites
+
+- [Node.js](https://nodejs.org/) (18+)
+- [Rust](https://rustlang.org/) (latest stable)
+- [pnpm](https://pnpm.io/)
+- [MPV player](https://mpv.io/) (for media playback)
 
 ## Development
 
@@ -18,3 +27,7 @@ A modern IPTV player built with Tauri (Rust + React/TypeScript) for managing pla
 pnpm install
 pnpm dev:tauri
 ```
+
+## License
+
+MIT - see [LICENSE](LICENSE) file.
