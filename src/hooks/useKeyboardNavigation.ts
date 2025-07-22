@@ -165,6 +165,43 @@ export function useKeyboardNavigation({
         return;
       }
 
+      // Tab navigation with Ctrl+J and Ctrl+K keys
+      if (e.ctrlKey && e.key === "j" && !e.altKey && !e.shiftKey) {
+        e.preventDefault(); // Prevent default tab behavior
+        const tabs: Tab[] = [
+          "channels",
+          "favorites",
+          "groups",
+          "history",
+          "help",
+          "settings",
+        ];
+        const currentIndex = tabs.indexOf(activeTab);
+        const nextIndex = (currentIndex + 1) % tabs.length;
+        setActiveTab(tabs[nextIndex]);
+        setFocusedIndex(0);
+        setSelectedChannel(null);
+        return;
+      }
+      
+      if (e.ctrlKey && e.key === "k" && !e.altKey && !e.shiftKey) {
+        e.preventDefault(); // Prevent default tab behavior
+        const tabs: Tab[] = [
+          "channels",
+          "favorites",
+          "groups",
+          "history",
+          "help",
+          "settings",
+        ];
+        const currentIndex = tabs.indexOf(activeTab);
+        const prevIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+        setActiveTab(tabs[prevIndex]);
+        setFocusedIndex(0);
+        setSelectedChannel(null);
+        return;
+      }
+
       // Navigation within lists
       if (e.key === "j" || e.key === "ArrowDown") {
         setFocusedIndex((prev) => {
@@ -192,38 +229,6 @@ export function useKeyboardNavigation({
         });
       }
 
-      // Tab navigation with J and K keys
-      else if (e.key === "J") {
-        e.preventDefault(); // Prevent default tab behavior
-        const tabs: Tab[] = [
-          "channels",
-          "favorites",
-          "groups",
-          "history",
-          "help",
-          "settings",
-        ];
-        const currentIndex = tabs.indexOf(activeTab);
-        const nextIndex = (currentIndex + 1) % tabs.length;
-        setActiveTab(tabs[nextIndex]);
-        setFocusedIndex(0);
-        setSelectedChannel(null);
-      } else if (e.key === "K") {
-        e.preventDefault(); // Prevent default tab behavior
-        const tabs: Tab[] = [
-          "channels",
-          "favorites",
-          "groups",
-          "history",
-          "help",
-          "settings",
-        ];
-        const currentIndex = tabs.indexOf(activeTab);
-        const prevIndex = (currentIndex - 1 + tabs.length) % tabs.length;
-        setActiveTab(tabs[prevIndex]);
-        setFocusedIndex(0);
-        setSelectedChannel(null);
-      }
 
       // Selection and interaction
       else if (e.key === "l" || e.key === "ArrowRight") {

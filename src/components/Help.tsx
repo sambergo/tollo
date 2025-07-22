@@ -144,13 +144,13 @@ export default function Help() {
             </div>
             <div className="keybinding">
               <div className="keys">
-                <span className="key">J</span>
+                <span className="key">Ctrl+j</span>
               </div>
               <span className="description">Next tab</span>
             </div>
             <div className="keybinding">
               <div className="keys">
-                <span className="key">K</span>
+                <span className="key">Ctrl+k</span>
               </div>
               <span className="description">Previous tab</span>
             </div>
