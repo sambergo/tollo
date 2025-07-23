@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Tollo",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "identifier": "com.tollo.app",
   "build": {
     "beforeDevCommand": "pnpm dev",
@@ -42,7 +42,6 @@
         "environment": {
           "GST_PLUGIN_PATH": "/usr/lib/x86_64-linux-gnu/gstreamer-1.0:/usr/lib/gstreamer-1.0",
           "GST_PLUGIN_SYSTEM_PATH": "/usr/lib/x86_64-linux-gnu/gstreamer-1.0:/usr/lib/gstreamer-1.0"
-        }
         }
       }
     },
