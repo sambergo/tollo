@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Tollo",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "identifier": "com.tollo.app",
   "build": {
     "beforeDevCommand": "pnpm dev",
@@ -37,7 +37,11 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "linux": {},
+    "linux": {
+      "appimage": {
+        "bundleMediaFramework": true
+      }
+    },
     "windows": {
       "certificateThumbprint": null,
       "digestAlgorithm": "sha256",
