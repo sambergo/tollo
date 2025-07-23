@@ -28,7 +28,7 @@ Download the latest release for your platform from [GitHub Releases](https://git
 
 ### Available Downloads
 - **Windows**: `.msi` installer
-- **macOS**: `.dmg` disk image  
+- **macOS**: `.dmg` disk image *(not tested)*
 - **Linux**: `.deb` package and `.AppImage`
 
 ## Development
