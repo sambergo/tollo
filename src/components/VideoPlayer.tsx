@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useRef } from "react";
+import { forwardRef, useEffect, useRef, useState } from "react";
 import { PlayIcon } from "./Icons";
 import { useChannelStore } from "../stores";
 import { useSettingsStore } from "../stores";
@@ -11,6 +11,7 @@ const VideoPlayer = forwardRef<HTMLVideoElement, {}>((_, ref) => {
   } = useChannelStore();
   const { muteOnStart, showControls, autoplay } = useSettingsStore();
   const previousChannelRef = useRef(selectedChannel);
+  const [codecWarning, setCodecWarning] = useState(false);
 
   // Reset external player playing state when a different channel is selected
   useEffect(() => {
@@ -36,7 +37,14 @@ const VideoPlayer = forwardRef<HTMLVideoElement, {}>((_, ref) => {
               controls={showControls}
               muted={muteOnStart}
               autoPlay={autoplay}
+              onError={() => setCodecWarning(true)}
+              onLoadStart={() => setCodecWarning(false)}
             />
+            {codecWarning && (
+              <div className="codec-warning">
+                ⚠️ Video codec issue detected. Install GStreamer plugins: gstreamer1.0-plugins-bad gstreamer1.0-libav
+              </div>
+            )}
             <div className="video-controls">
               <div className="video-status">
                 <div className="status-dot"></div>

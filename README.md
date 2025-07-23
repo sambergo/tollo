@@ -20,6 +20,16 @@ A modern IPTV player built with Tauri (Rust + React/TypeScript) for managing pla
 - [Rust](https://rustlang.org/) (latest stable)
 - [pnpm](https://pnpm.io/)
 - [MPV player](https://mpv.io/) (for media playback)
+- [GStreamer plugins](https://gstreamer.freedesktop.org/) (for video preview: `gstreamer1.0-plugins-bad gstreamer1.0-libav`)
+
+## Installation
+
+Download the latest release for your platform from [GitHub Releases](https://github.com/sambergo/tollo/releases).
+
+### Available Downloads
+- **Windows**: `.msi` installer
+- **macOS**: `.dmg` disk image  
+- **Linux**: `.deb` package and `.AppImage`
 
 ## Development
 
