@@ -2,7 +2,7 @@
 
 ⚠️ **Development Phase** - This application is currently under active development and may be unstable.
 
-A modern IPTV player built with Tauri (Rust + React/TypeScript) for managing playlists, browsing channels, and playing media through external players.
+IPTV player with fuzzy search, vim-like navigation, external player integration, favorites and history. Built with Tauri (Rust + React/TypeScript).
 
 ![Tollo Screenshot](public/screenshot.png)
 
