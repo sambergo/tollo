@@ -69,7 +69,10 @@ export default function ChannelDetails() {
         <div className="actions-section">
           <button
             className="primary-button"
-            onClick={() => playInExternalPlayer(selectedChannel)}
+            onClick={(e) => {
+              playInExternalPlayer(selectedChannel);
+              e.currentTarget.blur();
+            }}
           >
             Play in External Player
           </button>
