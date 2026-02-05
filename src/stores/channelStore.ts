@@ -49,6 +49,10 @@ interface ChannelState {
   toggleFavorite: (channel: Channel) => Promise<void>;
   playInExternalPlayer: (channel: Channel) => Promise<void>;
 
+  // Favorites reordering
+  reorderFavorites: (reorderedFavorites: Channel[]) => Promise<void>;
+  moveFavorite: (fromIndex: number, toIndex: number) => void;
+
   // NEW: Async API actions
   fetchChannelsAsync: (id?: number | null) => Promise<void>;
   fetchFavoritesAsync: () => Promise<void>;
@@ -126,6 +130,34 @@ export const useChannelStore = create<ChannelState>((set, get) => ({
 
     // Refresh favorites
     get().fetchFavorites();
+  },
+
+  reorderFavorites: async (reorderedFavorites) => {
+    const previousFavorites = get().favorites;
+    set({ favorites: reorderedFavorites });
+    try {
+      const names = reorderedFavorites.map((ch) => ch.name);
+      await invoke("reorder_favorites_async", { names });
+    } catch (error) {
+      console.error("Failed to reorder favorites:", error);
+      set({ favorites: previousFavorites });
+    }
+  },
+
+  moveFavorite: (fromIndex, toIndex) => {
+    const { favorites, reorderFavorites } = get();
+    if (
+      fromIndex < 0 ||
+      fromIndex >= favorites.length ||
+      toIndex < 0 ||
+      toIndex >= favorites.length
+    ) {
+      return;
+    }
+    const updated = [...favorites];
+    const [moved] = updated.splice(fromIndex, 1);
+    updated.splice(toIndex, 0, moved);
+    reorderFavorites(updated);
   },
 
   playInExternalPlayer: async (channel) => {

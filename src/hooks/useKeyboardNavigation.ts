@@ -43,6 +43,9 @@ interface UseKeyboardNavigationProps {
   toggleGroupDisplayMode: () => void;
   toggleCurrentGroupSelection: () => void;
 
+  // Favorites reordering
+  moveFavorite: (fromIndex: number, toIndex: number) => void;
+
   // Video controls
   toggleMute: () => void;
   toggleFullscreen: () => void;
@@ -77,6 +80,7 @@ export function useKeyboardNavigation({
   unselectAllGroups,
   toggleGroupDisplayMode,
   toggleCurrentGroupSelection,
+  moveFavorite,
   toggleMute,
   toggleFullscreen,
   togglePlayPause,
@@ -199,6 +203,40 @@ export function useKeyboardNavigation({
         setActiveTab(tabs[prevIndex]);
         setFocusedIndex(0);
         setSelectedChannel(null);
+        return;
+      }
+
+      // Move favorite up/down with Shift+K/J or Shift+Arrow
+      if (
+        activeTab === "favorites" &&
+        ((e.key === "J" && !e.ctrlKey && !e.altKey) ||
+          (e.shiftKey && e.key === "ArrowDown"))
+      ) {
+        e.preventDefault();
+        if (focusedIndex < listItems.length - 1) {
+          moveFavorite(focusedIndex, focusedIndex + 1);
+          const newIndex = focusedIndex + 1;
+          setFocusedIndex(newIndex);
+          if (listItems[newIndex]) {
+            setSelectedChannel(listItems[newIndex] as Channel);
+          }
+        }
+        return;
+      }
+      if (
+        activeTab === "favorites" &&
+        ((e.key === "K" && !e.ctrlKey && !e.altKey) ||
+          (e.shiftKey && e.key === "ArrowUp"))
+      ) {
+        e.preventDefault();
+        if (focusedIndex > 0) {
+          moveFavorite(focusedIndex, focusedIndex - 1);
+          const newIndex = focusedIndex - 1;
+          setFocusedIndex(newIndex);
+          if (listItems[newIndex]) {
+            setSelectedChannel(listItems[newIndex] as Channel);
+          }
+        }
         return;
       }
 
@@ -546,6 +584,7 @@ export function useKeyboardNavigation({
     unselectAllGroups,
     toggleGroupDisplayMode,
     toggleCurrentGroupSelection,
+    moveFavorite,
     toggleMute,
     toggleFullscreen,
     togglePlayPause,

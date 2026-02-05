@@ -5,9 +5,12 @@ use tauri::{AppHandle, Emitter, State};
 #[tauri::command]
 pub fn add_favorite(state: State<DbState>, channel: Channel) -> Result<(), String> {
     let db = state.db.lock().unwrap();
+    let max_pos: i64 = db
+        .query_row("SELECT COALESCE(MAX(position), -1) FROM favorites", [], |row| row.get(0))
+        .map_err(|e| e.to_string())?;
     db.execute(
-        "INSERT INTO favorites (name, logo, url, group_title, tvg_id, resolution, extra_info) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
-        &[&channel.name, &channel.logo, &channel.url, &channel.group_title, &channel.tvg_id, &channel.resolution, &channel.extra_info],
+        "INSERT INTO favorites (name, logo, url, group_title, tvg_id, resolution, extra_info, position) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+        rusqlite::params![&channel.name, &channel.logo, &channel.url, &channel.group_title, &channel.tvg_id, &channel.resolution, &channel.extra_info, max_pos + 1],
     ).map_err(|e| e.to_string())?;
     Ok(())
 }
@@ -25,7 +28,7 @@ pub fn get_favorites(state: State<DbState>) -> Result<Vec<Channel>, String> {
     let db = state.db.lock().unwrap();
     let mut stmt = db
         .prepare(
-            "SELECT name, logo, url, group_title, tvg_id, resolution, extra_info FROM favorites",
+            "SELECT name, logo, url, group_title, tvg_id, resolution, extra_info FROM favorites ORDER BY position ASC",
         )
         .map_err(|e| e.to_string())?;
     let channel_iter = stmt
@@ -99,5 +102,34 @@ pub async fn get_favorites_async(
     // Emit completion
     let _ = app_handle.emit("favorites_loading", "Favorites loaded!");
 
+    result
+}
+
+#[tauri::command]
+pub fn reorder_favorites(state: State<DbState>, names: Vec<String>) -> Result<(), String> {
+    let db = state.db.lock().unwrap();
+    let tx = db.unchecked_transaction().map_err(|e| e.to_string())?;
+    {
+        let mut stmt = tx
+            .prepare("UPDATE favorites SET position = ?1 WHERE name = ?2")
+            .map_err(|e| e.to_string())?;
+        for (i, name) in names.iter().enumerate() {
+            stmt.execute(rusqlite::params![i as i64, name])
+                .map_err(|e| e.to_string())?;
+        }
+    }
+    tx.commit().map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn reorder_favorites_async(
+    app_handle: AppHandle,
+    state: State<'_, DbState>,
+    names: Vec<String>,
+) -> Result<(), String> {
+    let _ = app_handle.emit("favorite_operation", "Reordering favorites...");
+    let result = reorder_favorites(state, names);
+    let _ = app_handle.emit("favorite_operation", "Favorites reordered!");
     result
 }

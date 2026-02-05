@@ -38,6 +38,7 @@ function App() {
     setIsLoadingChannelList,
     toggleFavorite,
     playInExternalPlayer,
+    moveFavorite,
     // NEW: Async operations
     fetchChannelsAsync,
     fetchFavoritesAsync,
@@ -487,6 +488,7 @@ function App() {
     unselectAllGroups: handleUnselectAllGroups,
     toggleGroupDisplayMode: handleToggleGroupDisplayMode,
     toggleCurrentGroupSelection: handleToggleCurrentGroupSelection,
+    moveFavorite,
     toggleMute: handleToggleMute,
     toggleFullscreen: handleToggleFullscreen,
     togglePlayPause: handleTogglePlayPause,
