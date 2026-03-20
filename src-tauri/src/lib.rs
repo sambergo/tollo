@@ -112,6 +112,8 @@ pub fn run() {
             add_favorite_async,
             remove_favorite_async,
             get_favorites_async,
+            reorder_favorites,
+            reorder_favorites_async,
             get_history_async,
             // Settings commands
             get_player_command,

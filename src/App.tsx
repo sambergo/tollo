@@ -1,4 +1,4 @@
-import { useEffect, useRef, startTransition } from "react";
+import { useEffect, useRef, useState, startTransition } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import Hls from "hls.js";
 import NavigationSidebar from "./components/NavigationSidebar";
@@ -38,6 +38,7 @@ function App() {
     setIsLoadingChannelList,
     toggleFavorite,
     playInExternalPlayer,
+    moveFavorite,
     // NEW: Async operations
     fetchChannelsAsync,
     fetchFavoritesAsync,
@@ -73,6 +74,8 @@ function App() {
   // Refs for video player
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
+
+  const [channelListDataVersion, setChannelListDataVersion] = useState(0);
 
   // Custom hooks (keeping existing functionality)
   const { debouncedSearchQuery, searchChannels } = useChannelSearch(
@@ -138,6 +141,15 @@ function App() {
       groups: allGroups,
     });
   }
+
+  // Auto-reload channels when the selected list is refreshed from settings
+  useEffect(() => {
+    return asyncPlaylistStore.onStatusUpdate((status) => {
+      if (status.status === "completed" && status.id === selectedChannelListId) {
+        setChannelListDataVersion((v) => v + 1);
+      }
+    });
+  }, [selectedChannelListId]);
 
   // Trigger search when debounced query changes
   useEffect(() => {
@@ -226,7 +238,7 @@ function App() {
     };
 
     loadChannelListData();
-  }, [selectedChannelListId]);
+  }, [selectedChannelListId, channelListDataVersion]);
 
   useEffect(() => {
     if (hlsRef.current) {
@@ -487,6 +499,7 @@ function App() {
     unselectAllGroups: handleUnselectAllGroups,
     toggleGroupDisplayMode: handleToggleGroupDisplayMode,
     toggleCurrentGroupSelection: handleToggleCurrentGroupSelection,
+    moveFavorite,
     toggleMute: handleToggleMute,
     toggleFullscreen: handleToggleFullscreen,
     togglePlayPause: handleTogglePlayPause,

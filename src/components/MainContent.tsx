@@ -1,4 +1,5 @@
 import ChannelList, { type Channel } from "./ChannelList";
+import FavoritesChannelList from "./FavoritesChannelList";
 import GroupList from "./GroupList";
 import ChannelLoadingProgress from "./ChannelLoadingProgress";
 import {
@@ -190,7 +191,7 @@ export default function MainContent({ filteredChannels }: MainContentProps) {
       case "favorites":
         return (
           <div className="content-list">
-            <ChannelList channels={favorites} />
+            <FavoritesChannelList />
           </div>
         );
       case "groups":

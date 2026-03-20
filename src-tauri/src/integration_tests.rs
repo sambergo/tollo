@@ -19,7 +19,8 @@ fn create_test_db() -> Connection {
             group_title TEXT NOT NULL,
             tvg_id TEXT NOT NULL,
             resolution TEXT NOT NULL,
-            extra_info TEXT NOT NULL
+            extra_info TEXT NOT NULL,
+            position INTEGER NOT NULL DEFAULT 0
         )",
         [],
     ).unwrap();

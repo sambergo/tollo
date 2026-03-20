@@ -75,6 +75,20 @@ pub fn initialize_database() -> Result<Connection> {
         [],
     )?;
 
+    // Add the position column to existing favorites table if it doesn't exist
+    conn.execute(
+        "ALTER TABLE favorites ADD COLUMN position INTEGER NOT NULL DEFAULT 0",
+        [],
+    )
+    .ok();
+
+    // Backfill existing favorites with sequential positions based on id order
+    conn.execute(
+        "UPDATE favorites SET position = (SELECT COUNT(*) FROM favorites f2 WHERE f2.id <= favorites.id) - 1 WHERE position = 0",
+        [],
+    )
+    .ok();
+
     // Add the enable_preview column to existing settings table if it doesn't exist
     conn.execute(
         "ALTER TABLE settings ADD COLUMN enable_preview BOOLEAN NOT NULL DEFAULT 1",
@@ -375,7 +389,8 @@ mod tests {
                 group_title TEXT NOT NULL,
                 tvg_id TEXT NOT NULL,
                 resolution TEXT NOT NULL,
-                extra_info TEXT NOT NULL
+                extra_info TEXT NOT NULL,
+                position INTEGER NOT NULL DEFAULT 0
             )",
             [],
         )
