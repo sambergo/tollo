@@ -153,7 +153,8 @@ function App() {
         setIsBackgroundRefreshing(true);
       }
       if (status.status === "completed") {
-        setIsBackgroundRefreshing(false);
+        // Keep isBackgroundRefreshing=true through the re-parse after download.
+        // It will be cleared in loadChannelListData's finally block.
         setChannelListDataVersion((v) => v + 1);
       }
       if (status.status === "error") {
@@ -261,6 +262,8 @@ function App() {
       } finally {
         setIsLoadingChannelList(false);
         setSkipSearchEffect(false);
+        // Clear background refresh indicator (covers both download + re-parse phases)
+        setIsBackgroundRefreshing(false);
       }
     };
 

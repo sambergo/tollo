@@ -138,20 +138,21 @@ export default function MainContent({ filteredChannels, isBackgroundRefreshing }
   const renderContent = () => {
     switch (activeTab) {
       case "channels":
-        // Show loading progress for async operations
-        if (isAsyncLoading || loadingProgress) {
-          return (
-            <>
-              <ChannelLoadingProgress />
-              {/* Still show the old loading screen if no channels are loaded yet */}
-              {filteredChannels.length === 0 && <LoadingChannelList />}
-            </>
-          );
-        }
-
-        // Show legacy loading screen for non-async operations
-        if (isLoadingChannelList) {
-          return <LoadingChannelList />;
+        // Only show the loading overlay when there are no channels yet.
+        // When channels are already visible (e.g. stale cache during background refresh),
+        // keep showing them and update silently when the new data arrives.
+        if (filteredChannels.length === 0) {
+          if (isAsyncLoading || loadingProgress) {
+            return (
+              <>
+                <ChannelLoadingProgress />
+                <LoadingChannelList />
+              </>
+            );
+          }
+          if (isLoadingChannelList) {
+            return <LoadingChannelList />;
+          }
         }
 
         return (
