@@ -12,6 +12,7 @@ import { useEffect } from "react";
 
 interface MainContentProps {
   filteredChannels: Channel[];
+  isBackgroundRefreshing?: boolean;
 }
 
 // Loading indicator component
@@ -27,7 +28,7 @@ const LoadingChannelList = () => (
   </div>
 );
 
-export default function MainContent({ filteredChannels }: MainContentProps) {
+export default function MainContent({ filteredChannels, isBackgroundRefreshing }: MainContentProps) {
   // Get state from stores
   const {
     favorites,
@@ -217,6 +218,12 @@ export default function MainContent({ filteredChannels }: MainContentProps) {
       <div className="section-header">
         <h2 className="section-title">{getTabTitle()}</h2>
         <p className="section-subtitle">{getTabSubtitle()}</p>
+        {isBackgroundRefreshing && (
+          <div className="bg-refresh-pill">
+            <span className="bg-refresh-spinner" />
+            Refreshing playlist...
+          </div>
+        )}
       </div>
       {renderContent()}
     </div>

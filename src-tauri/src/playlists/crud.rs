@@ -217,3 +217,36 @@ pub async fn start_channel_list_selection_async(
         Ok(())
     }
 }
+
+#[tauri::command]
+pub fn is_cache_expired(db_state: State<DbState>, id: i32) -> Result<bool, String> {
+    let db = db_state.db.lock().unwrap();
+
+    let cache_duration_hours: i64 = db
+        .query_row(
+            "SELECT cache_duration_hours FROM settings WHERE id = 1",
+            [],
+            |row| row.get(0),
+        )
+        .unwrap_or(24);
+
+    let row: Result<(Option<i64>, String, Option<String>), _> = db.query_row(
+        "SELECT last_fetched, source, filepath FROM channel_lists WHERE id = ?1",
+        [id],
+        |row| Ok((row.get(0).ok(), row.get(1)?, row.get(2).ok())),
+    );
+
+    match row {
+        Err(e) => Err(format!("Failed to query channel list: {}", e)),
+        Ok((last_fetched, source, filepath)) => {
+            if !source.starts_with("http") {
+                return Ok(false);
+            }
+            let (Some(lf), Some(_fp)) = (last_fetched, filepath) else {
+                return Ok(true); // no cached file → treat as expired
+            };
+            let now = chrono::Utc::now().timestamp();
+            Ok((now - lf) >= (cache_duration_hours * 3600))
+        }
+    }
+}
