@@ -12,6 +12,7 @@ import { useEffect } from "react";
 
 interface MainContentProps {
   filteredChannels: Channel[];
+  isBackgroundRefreshing?: boolean;
 }
 
 // Loading indicator component
@@ -27,7 +28,7 @@ const LoadingChannelList = () => (
   </div>
 );
 
-export default function MainContent({ filteredChannels }: MainContentProps) {
+export default function MainContent({ filteredChannels, isBackgroundRefreshing }: MainContentProps) {
   // Get state from stores
   const {
     favorites,
@@ -137,20 +138,21 @@ export default function MainContent({ filteredChannels }: MainContentProps) {
   const renderContent = () => {
     switch (activeTab) {
       case "channels":
-        // Show loading progress for async operations
-        if (isAsyncLoading || loadingProgress) {
-          return (
-            <>
-              <ChannelLoadingProgress />
-              {/* Still show the old loading screen if no channels are loaded yet */}
-              {filteredChannels.length === 0 && <LoadingChannelList />}
-            </>
-          );
-        }
-
-        // Show legacy loading screen for non-async operations
-        if (isLoadingChannelList) {
-          return <LoadingChannelList />;
+        // Only show the loading overlay when there are no channels yet.
+        // When channels are already visible (e.g. stale cache during background refresh),
+        // keep showing them and update silently when the new data arrives.
+        if (filteredChannels.length === 0) {
+          if (isAsyncLoading || loadingProgress) {
+            return (
+              <>
+                <ChannelLoadingProgress />
+                <LoadingChannelList />
+              </>
+            );
+          }
+          if (isLoadingChannelList) {
+            return <LoadingChannelList />;
+          }
         }
 
         return (
@@ -217,6 +219,12 @@ export default function MainContent({ filteredChannels }: MainContentProps) {
       <div className="section-header">
         <h2 className="section-title">{getTabTitle()}</h2>
         <p className="section-subtitle">{getTabSubtitle()}</p>
+        {isBackgroundRefreshing && (
+          <div className="bg-refresh-pill">
+            <span className="bg-refresh-spinner" />
+            Refreshing playlist...
+          </div>
+        )}
       </div>
       {renderContent()}
     </div>

@@ -222,7 +222,8 @@ export function ChannelListsSettings({
               (asyncStatus.status === "starting" ||
                 asyncStatus.status === "fetching" ||
                 asyncStatus.status === "processing" ||
-                asyncStatus.status === "saving");
+                asyncStatus.status === "saving" ||
+                asyncStatus.status === "parsing");
 
             return (
               <div

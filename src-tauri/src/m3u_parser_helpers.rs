@@ -1,10 +1,7 @@
 use crate::m3u_parser::Channel;
-use chrono;
 use dirs;
 use regex;
-use reqwest;
 use rusqlite;
-use uuid;
 
 // Helper function to get M3U content without parsing
 pub fn get_m3u_content(conn: &mut rusqlite::Connection, id: Option<i32>) -> Result<String, String> {
@@ -27,61 +24,17 @@ pub fn get_m3u_content(conn: &mut rusqlite::Connection, id: Option<i32>) -> Resu
         let filepath: Option<String> = row.get(2).map_err(|e| e.to_string())?;
         let last_fetched: Option<i64> = row.get(3).map_err(|e| e.to_string())?;
 
-        let cache_duration_hours: i64 = conn
-            .query_row(
-                "SELECT cache_duration_hours FROM settings WHERE id = 1",
-                [],
-                |row| row.get(0),
-            )
-            .unwrap_or(24);
-
-        let now = chrono::Utc::now().timestamp();
-
-        // Check if we have cached content
-        if let (Some(fp), Some(lf)) = (filepath, last_fetched) {
-            if now - lf < cache_duration_hours * 3600 {
-                let data_dir = dirs::data_dir().unwrap().join("tollo");
-                let channel_lists_dir = data_dir.join("channel_lists");
-                if let Ok(content) = std::fs::read_to_string(channel_lists_dir.join(fp)) {
-                    return Ok(content);
-                }
+        // Always serve stale cache if it exists. Background refresh handles expiry.
+        if let (Some(fp), Some(_lf)) = (filepath, last_fetched) {
+            let data_dir = dirs::data_dir().unwrap().join("tollo");
+            let channel_lists_dir = data_dir.join("channel_lists");
+            if let Ok(content) = std::fs::read_to_string(channel_lists_dir.join(fp)) {
+                return Ok(content);
             }
         }
 
-        // Fetch from source
-        if source.starts_with("http") {
-            let client = reqwest::blocking::Client::builder()
-                .timeout(std::time::Duration::from_secs(120))
-                .build()
-                .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
-            
-            let content = client
-                .get(&source)
-                .header("User-Agent", "Mozilla/5.0")
-                .send()
-                .map_err(|e| format!("Failed to fetch playlist: {}", e))?
-                .text()
-                .map_err(|e| format!("Failed to read response: {}", e))?;
-
-            // Save to cache
-            let data_dir = dirs::data_dir().unwrap().join("tollo");
-            let channel_lists_dir = data_dir.join("channel_lists");
-            let _ = std::fs::create_dir_all(&channel_lists_dir);
-            let filename = format!("{}.m3u", uuid::Uuid::new_v4());
-            let new_filepath = channel_lists_dir.join(&filename);
-            if std::fs::write(&new_filepath, &content).is_ok() {
-                let _ = conn.execute(
-                    "UPDATE channel_lists SET filepath = ?1, last_fetched = ?2 WHERE id = ?3",
-                    &[
-                        &filename as &dyn rusqlite::ToSql,
-                        &now as &dyn rusqlite::ToSql,
-                        &id as &dyn rusqlite::ToSql,
-                    ],
-                );
-            }
-
-            return Ok(content);
-        } else {
+        // For file sources, try reading from the source path directly
+        if !source.starts_with("http") {
             let data_dir = dirs::data_dir().unwrap().join("tollo");
             let channel_lists_dir = data_dir.join("channel_lists");
             if let Ok(content) = std::fs::read_to_string(channel_lists_dir.join(&source)) {
@@ -90,7 +43,7 @@ pub fn get_m3u_content(conn: &mut rusqlite::Connection, id: Option<i32>) -> Resu
         }
     }
 
-    Err("No channel list found".to_string())
+    Err("No cached playlist file found — please refresh the channel list".to_string())
 }
 
 // Helper function to parse M3U content with progress

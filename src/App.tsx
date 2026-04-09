@@ -76,6 +76,7 @@ function App() {
   const hlsRef = useRef<Hls | null>(null);
 
   const [channelListDataVersion, setChannelListDataVersion] = useState(0);
+  const [isBackgroundRefreshing, setIsBackgroundRefreshing] = useState(false);
 
   // Custom hooks (keeping existing functionality)
   const { debouncedSearchQuery, searchChannels } = useChannelSearch(
@@ -142,11 +143,22 @@ function App() {
     });
   }
 
-  // Auto-reload channels when the selected list is refreshed from settings
+  // Track background refresh status and reload channels when refresh completes
   useEffect(() => {
     return asyncPlaylistStore.onStatusUpdate((status) => {
-      if (status.status === "completed" && status.id === selectedChannelListId) {
+      if (status.id !== selectedChannelListId) return;
+
+      const activeStatuses = ["starting", "fetching", "processing", "saving", "parsing"];
+      if (activeStatuses.includes(status.status)) {
+        setIsBackgroundRefreshing(true);
+      }
+      if (status.status === "completed") {
+        // Keep isBackgroundRefreshing=true through the re-parse after download.
+        // It will be cleared in loadChannelListData's finally block.
         setChannelListDataVersion((v) => v + 1);
+      }
+      if (status.status === "error") {
+        setIsBackgroundRefreshing(false);
       }
     });
   }, [selectedChannelListId]);
@@ -229,11 +241,29 @@ function App() {
           setGroupDisplayMode(GroupDisplayMode.EnabledGroups);
           setSelectedGroup(null);
         });
+
+        // Step 4: Background refresh check — channels are visible, refresh if cache is stale
+        await performStep(async () => {
+          try {
+            const expired = await invoke<boolean>("is_cache_expired", {
+              id: selectedChannelListId,
+            });
+            if (expired) {
+              asyncPlaylistStore.refreshPlaylistAsync(selectedChannelListId).catch(
+                (err) => console.warn("Background refresh failed to start:", err),
+              );
+            }
+          } catch (err) {
+            console.warn("Could not check cache expiry:", err);
+          }
+        });
       } catch (error) {
         console.error("Failed to load channel list data:", error);
       } finally {
         setIsLoadingChannelList(false);
         setSkipSearchEffect(false);
+        // Clear background refresh indicator (covers both download + re-parse phases)
+        setIsBackgroundRefreshing(false);
       }
     };
 
@@ -534,7 +564,7 @@ function App() {
           </div>
         ) : (
           <>
-            <MainContent filteredChannels={filteredChannels} />
+            <MainContent filteredChannels={filteredChannels} isBackgroundRefreshing={isBackgroundRefreshing} />
 
             <div
               className={`video-section ${!enablePreview ? "preview-disabled" : ""}`}
