@@ -148,7 +148,7 @@ function App() {
     return asyncPlaylistStore.onStatusUpdate((status) => {
       if (status.id !== selectedChannelListId) return;
 
-      const activeStatuses = ["starting", "fetching", "processing", "saving"];
+      const activeStatuses = ["starting", "fetching", "processing", "saving", "parsing"];
       if (activeStatuses.includes(status.status)) {
         setIsBackgroundRefreshing(true);
       }

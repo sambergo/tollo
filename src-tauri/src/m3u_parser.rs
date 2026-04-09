@@ -1,11 +1,8 @@
-use chrono::Utc;
 use regex::Regex;
-use reqwest;
 use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::fs;
-use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct Channel {
@@ -214,66 +211,32 @@ where
 pub fn get_channels(conn: &mut Connection, id: Option<i32>) -> Vec<Channel> {
     let query = if let Some(list_id) = id {
         format!(
-            "SELECT id, source, filepath, last_fetched FROM channel_lists WHERE id = {}",
+            "SELECT source, filepath FROM channel_lists WHERE id = {}",
             list_id
         )
     } else {
-        "SELECT id, source, filepath, last_fetched FROM channel_lists WHERE is_default = 1"
-            .to_string()
+        "SELECT source, filepath FROM channel_lists WHERE is_default = 1".to_string()
     };
 
     let mut stmt = conn.prepare(&query).unwrap();
     let mut rows = stmt.query([]).unwrap();
 
     if let Some(row) = rows.next().unwrap() {
-        let id: i32 = row.get(0).unwrap();
-        let source: String = row.get(1).unwrap();
-        let filepath: Option<String> = row.get(2).unwrap();
-        let last_fetched: Option<i64> = row.get(3).unwrap();
+        let source: String = row.get(0).unwrap();
+        let filepath: Option<String> = row.get(1).unwrap();
 
-        let cache_duration_hours: i64 = conn
-            .query_row(
-                "SELECT cache_duration_hours FROM settings WHERE id = 1",
-                [],
-                |row| row.get(0),
-            )
-            .unwrap_or(24);
-
-        let now = Utc::now().timestamp();
-
-        if let (Some(fp), Some(lf)) = (filepath, last_fetched) {
-            if now - lf < cache_duration_hours * 3600 {
-                let data_dir = dirs::data_dir().unwrap().join("tollo");
-                let channel_lists_dir = data_dir.join("channel_lists");
-                if let Ok(content) = fs::read_to_string(channel_lists_dir.join(fp)) {
-                    return parse_m3u_content(&content);
-                }
+        // Always serve cached file if it exists — stale-while-revalidate.
+        // Background refresh (refresh_channel_list_async) is responsible for freshness.
+        if let Some(fp) = filepath {
+            let channel_lists_dir = dirs::data_dir().unwrap().join("tollo/channel_lists");
+            if let Ok(content) = fs::read_to_string(channel_lists_dir.join(fp)) {
+                return parse_m3u_content(&content);
             }
         }
 
-        if source.starts_with("http") {
-            if let Ok(content) = reqwest::blocking::get(&source).and_then(|resp| resp.text()) {
-                let data_dir = dirs::data_dir().unwrap().join("tollo");
-                let channel_lists_dir = data_dir.join("channel_lists");
-                let _ = fs::create_dir_all(&channel_lists_dir);
-                let filename = format!("{}.m3u", Uuid::new_v4());
-                let new_filepath = channel_lists_dir.join(&filename);
-                if fs::write(&new_filepath, &content).is_ok() {
-                    conn.execute(
-                        "UPDATE channel_lists SET filepath = ?1, last_fetched = ?2 WHERE id = ?3",
-                        &[
-                            &filename as &dyn rusqlite::ToSql,
-                            &now as &dyn rusqlite::ToSql,
-                            &id as &dyn rusqlite::ToSql,
-                        ],
-                    )
-                    .unwrap();
-                    return parse_m3u_content(&content);
-                }
-            }
-        } else {
-            let data_dir = dirs::data_dir().unwrap().join("tollo");
-            let channel_lists_dir = data_dir.join("channel_lists");
+        // For local file sources, try the source path directly.
+        if !source.starts_with("http") {
+            let channel_lists_dir = dirs::data_dir().unwrap().join("tollo/channel_lists");
             if let Ok(content) = fs::read_to_string(channel_lists_dir.join(&source)) {
                 return parse_m3u_content(&content);
             }
@@ -296,74 +259,36 @@ where
 
     let query = if let Some(list_id) = id {
         format!(
-            "SELECT id, source, filepath, last_fetched FROM channel_lists WHERE id = {}",
+            "SELECT source, filepath FROM channel_lists WHERE id = {}",
             list_id
         )
     } else {
-        "SELECT id, source, filepath, last_fetched FROM channel_lists WHERE is_default = 1"
-            .to_string()
+        "SELECT source, filepath FROM channel_lists WHERE is_default = 1".to_string()
     };
 
     let mut stmt = conn.prepare(&query).unwrap();
     let mut rows = stmt.query([]).unwrap();
 
     if let Some(row) = rows.next().unwrap() {
-        let id: i32 = row.get(0).unwrap();
-        let source: String = row.get(1).unwrap();
-        let filepath: Option<String> = row.get(2).unwrap();
-        let last_fetched: Option<i64> = row.get(3).unwrap();
-
-        let cache_duration_hours: i64 = conn
-            .query_row(
-                "SELECT cache_duration_hours FROM settings WHERE id = 1",
-                [],
-                |row| row.get(0),
-            )
-            .unwrap_or(24);
-
-        let now = Utc::now().timestamp();
+        let source: String = row.get(0).unwrap();
+        let filepath: Option<String> = row.get(1).unwrap();
 
         progress_callback(0.1, "Checking cache...".to_string(), 0);
 
-        if let (Some(fp), Some(lf)) = (filepath, last_fetched) {
-            if now - lf < cache_duration_hours * 3600 {
-                progress_callback(0.2, "Loading from cache...".to_string(), 0);
-                let data_dir = dirs::data_dir().unwrap().join("tollo");
-                let channel_lists_dir = data_dir.join("channel_lists");
-                if let Ok(content) = fs::read_to_string(channel_lists_dir.join(fp)) {
-                    progress_callback(0.3, "Parsing cached M3U content...".to_string(), 0);
-                    return parse_m3u_content_with_progress(&content, progress_callback);
-                }
+        // Always serve cached file if it exists — stale-while-revalidate.
+        if let Some(fp) = filepath {
+            progress_callback(0.2, "Loading from cache...".to_string(), 0);
+            let channel_lists_dir = dirs::data_dir().unwrap().join("tollo/channel_lists");
+            if let Ok(content) = fs::read_to_string(channel_lists_dir.join(fp)) {
+                progress_callback(0.3, "Parsing cached M3U content...".to_string(), 0);
+                return parse_m3u_content_with_progress(&content, progress_callback);
             }
         }
 
-        if source.starts_with("http") {
-            progress_callback(0.2, "Downloading playlist...".to_string(), 0);
-            if let Ok(content) = reqwest::blocking::get(&source).and_then(|resp| resp.text()) {
-                progress_callback(0.4, "Saving to cache...".to_string(), 0);
-                let data_dir = dirs::data_dir().unwrap().join("tollo");
-                let channel_lists_dir = data_dir.join("channel_lists");
-                let _ = fs::create_dir_all(&channel_lists_dir);
-                let filename = format!("{}.m3u", Uuid::new_v4());
-                let new_filepath = channel_lists_dir.join(&filename);
-                if fs::write(&new_filepath, &content).is_ok() {
-                    conn.execute(
-                        "UPDATE channel_lists SET filepath = ?1, last_fetched = ?2 WHERE id = ?3",
-                        &[
-                            &filename as &dyn rusqlite::ToSql,
-                            &now as &dyn rusqlite::ToSql,
-                            &id as &dyn rusqlite::ToSql,
-                        ],
-                    )
-                    .unwrap();
-                }
-                progress_callback(0.5, "Parsing M3U content...".to_string(), 0);
-                return parse_m3u_content_with_progress(&content, progress_callback);
-            }
-        } else {
+        // For local file sources, try the source path directly.
+        if !source.starts_with("http") {
             progress_callback(0.2, "Loading from file...".to_string(), 0);
-            let data_dir = dirs::data_dir().unwrap().join("tollo");
-            let channel_lists_dir = data_dir.join("channel_lists");
+            let channel_lists_dir = dirs::data_dir().unwrap().join("tollo/channel_lists");
             if let Ok(content) = fs::read_to_string(channel_lists_dir.join(&source)) {
                 progress_callback(0.3, "Parsing M3U content...".to_string(), 0);
                 return parse_m3u_content_with_progress(&content, progress_callback);

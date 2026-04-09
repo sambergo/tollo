@@ -1,11 +1,13 @@
-use crate::channels::invalidate_channel_cache;
+use crate::m3u_parser_helpers::parse_m3u_with_progress;
 use crate::playlists::types::{emit_progress, FetchState, PlaylistFetchStatus};
-use crate::state::{ChannelCacheState, DbState};
+use crate::search::clear_advanced_cache;
+use crate::state::{ChannelCache, ChannelCacheState, DbState};
 use chrono::Utc;
 use dirs;
 use reqwest;
 use rusqlite;
 use std::fs;
+use std::time::SystemTime;
 use tauri::{AppHandle, State};
 use uuid::Uuid;
 
@@ -158,8 +160,38 @@ pub async fn refresh_channel_list_async(
         .map_err(|e| format!("Failed to update: {}", e))?;
     }
 
-    // Invalidate cache
-    invalidate_channel_cache(cache_state)?;
+    // Emit parsing status
+    emit_progress(
+        &app_handle,
+        &fetch_state,
+        PlaylistFetchStatus {
+            id,
+            status: "parsing".to_string(),
+            progress: 0.9,
+            message: "Parsing channels...".to_string(),
+            channel_count: Some(channel_count),
+            error: None,
+        },
+    )
+    .await;
+
+    // Parse channels and populate cache so the next get_channels_async call is instant
+    let channels = tokio::task::spawn_blocking(move || {
+        parse_m3u_with_progress(&content, |_, _, _| {})
+    })
+    .await
+    .map_err(|e| format!("Failed to parse channels: {}", e))?;
+
+    let parsed_count = channels.len();
+    {
+        let mut cache = cache_state.cache.lock().unwrap();
+        *cache = Some(ChannelCache {
+            channel_list_id: Some(id),
+            channels,
+            last_updated: SystemTime::now(),
+        });
+    }
+    clear_advanced_cache();
 
     // Emit completed status
     emit_progress(
@@ -170,7 +202,7 @@ pub async fn refresh_channel_list_async(
             status: "completed".to_string(),
             progress: 1.0,
             message: "Playlist refreshed successfully".to_string(),
-            channel_count: Some(channel_count),
+            channel_count: Some(parsed_count),
             error: None,
         },
     )
@@ -372,8 +404,23 @@ pub async fn validate_and_add_channel_list_async(
             .map_err(|e| format!("Failed to update: {}", e))?;
         }
 
-        // Invalidate cache
-        invalidate_channel_cache(cache_state)?;
+        // Populate cache with the new channels so selecting this list is instant
+        let channels = tokio::task::spawn_blocking(move || {
+            parse_m3u_with_progress(&content, |_, _, _| {})
+        })
+        .await
+        .map_err(|e| format!("Failed to parse channels: {}", e))?;
+
+        let parsed_count = channels.len();
+        {
+            let mut cache = cache_state.cache.lock().unwrap();
+            *cache = Some(ChannelCache {
+                channel_list_id: Some(list_id),
+                channels,
+                last_updated: SystemTime::now(),
+            });
+        }
+        clear_advanced_cache();
 
         // Emit completed status
         emit_progress(
@@ -384,7 +431,7 @@ pub async fn validate_and_add_channel_list_async(
                 status: "completed".to_string(),
                 progress: 1.0,
                 message: "Playlist added successfully".to_string(),
-                channel_count: Some(channel_count),
+                channel_count: Some(parsed_count),
                 error: None,
             },
         )
@@ -449,8 +496,12 @@ pub async fn validate_and_add_channel_list_async(
             .map_err(|e| format!("Failed to update: {}", e))?;
         }
 
-        // Invalidate cache
-        invalidate_channel_cache(cache_state)?;
+        // Invalidate cache (file source: just clear, no pre-population needed)
+        {
+            let mut cache = cache_state.cache.lock().unwrap();
+            *cache = None;
+        }
+        clear_advanced_cache();
     }
 
     Ok(list_id)
@@ -577,8 +628,38 @@ async fn refresh_file_playlist(
         .map_err(|e| format!("Failed to update: {}", e))?;
     }
 
-    // Invalidate cache
-    invalidate_channel_cache(cache_state)?;
+    // Emit parsing status
+    emit_progress(
+        &app_handle,
+        &fetch_state,
+        PlaylistFetchStatus {
+            id,
+            status: "parsing".to_string(),
+            progress: 0.9,
+            message: "Parsing channels...".to_string(),
+            channel_count: Some(channel_count),
+            error: None,
+        },
+    )
+    .await;
+
+    // Parse channels and populate cache so the next get_channels_async call is instant
+    let channels = tokio::task::spawn_blocking(move || {
+        parse_m3u_with_progress(&content, |_, _, _| {})
+    })
+    .await
+    .map_err(|e| format!("Failed to parse channels: {}", e))?;
+
+    let parsed_count = channels.len();
+    {
+        let mut cache = cache_state.cache.lock().unwrap();
+        *cache = Some(ChannelCache {
+            channel_list_id: Some(id),
+            channels,
+            last_updated: SystemTime::now(),
+        });
+    }
+    clear_advanced_cache();
 
     // Emit completed status
     emit_progress(
@@ -589,7 +670,7 @@ async fn refresh_file_playlist(
             status: "completed".to_string(),
             progress: 1.0,
             message: "File playlist refreshed successfully".to_string(),
-            channel_count: Some(channel_count),
+            channel_count: Some(parsed_count),
             error: None,
         },
     )
