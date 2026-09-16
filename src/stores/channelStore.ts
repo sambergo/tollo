@@ -48,6 +48,7 @@ interface ChannelState {
   fetchHistory: () => Promise<void>;
   toggleFavorite: (channel: Channel) => Promise<void>;
   playInExternalPlayer: (channel: Channel) => Promise<void>;
+  copyChannelUrl: (channel: Channel) => Promise<boolean>;
 
   // Favorites reordering
   reorderFavorites: (reorderedFavorites: Channel[]) => Promise<void>;
@@ -176,6 +177,17 @@ export const useChannelStore = create<ChannelState>((set, get) => ({
       alert(
         `Failed to play channel "${channel.name}". The external player couldn't play this channel.`,
       );
+    }
+  },
+
+  copyChannelUrl: async (channel) => {
+    try {
+      await invoke("copy_channel_url", { channel });
+      return true;
+    } catch (error) {
+      console.error("Failed to copy channel URL:", error);
+      alert(`Failed to copy the URL for "${channel.name}": ${error}`);
+      return false;
     }
   },
 

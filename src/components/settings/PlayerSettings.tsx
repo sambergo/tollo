@@ -9,6 +9,10 @@ export function PlayerSettings() {
     setPlayerCommand,
     savePlayerCommand,
     fetchPlayerCommand,
+    clipboardCommand,
+    setClipboardCommand,
+    saveClipboardCommand,
+    fetchClipboardCommand,
     enablePreview,
     setEnablePreview,
     fetchEnablePreview,
@@ -28,12 +32,14 @@ export function PlayerSettings() {
 
   useEffect(() => {
     fetchPlayerCommand();
+    fetchClipboardCommand();
     fetchEnablePreview();
     fetchMuteOnStart();
     fetchShowControls();
     fetchAutoplay();
   }, [
     fetchPlayerCommand,
+    fetchClipboardCommand,
     fetchEnablePreview,
     fetchMuteOnStart,
     fetchShowControls,
@@ -42,6 +48,10 @@ export function PlayerSettings() {
 
   const handleSavePlayerCommand = async () => {
     await savePlayerCommand();
+  };
+
+  const handleSaveClipboardCommand = async () => {
+    await saveClipboardCommand();
   };
 
   const handleTogglePreview = async () => {
@@ -90,6 +100,27 @@ export function PlayerSettings() {
             </button>
           </div>
           <p className="form-help">Command to launch external video player</p>
+        </div>
+        <div className="form-group">
+          <label className="form-label">Clipboard Command</label>
+          <div className="form-row">
+            <input
+              type="text"
+              className="form-input"
+              value={clipboardCommand}
+              onChange={(e) => setClipboardCommand(e.target.value)}
+              placeholder="e.g., wl-copy"
+            />
+            <button
+              className="btn-primary"
+              onClick={handleSaveClipboardCommand}
+            >
+              Save
+            </button>
+          </div>
+          <p className="form-help">
+            Command that receives the channel URL through standard input
+          </p>
         </div>
         <div className="form-group">
           <div className="toggle-setting">

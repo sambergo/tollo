@@ -9,6 +9,7 @@ interface SettingsState {
 
   // Player settings
   playerCommand: string;
+  clipboardCommand: string;
   enablePreview: boolean;
   muteOnStart: boolean;
   showControls: boolean;
@@ -29,6 +30,9 @@ interface SettingsState {
   setPlayerCommand: (command: string) => void;
   savePlayerCommand: () => Promise<void>;
   fetchPlayerCommand: () => Promise<void>;
+  setClipboardCommand: (command: string) => void;
+  saveClipboardCommand: () => Promise<void>;
+  fetchClipboardCommand: () => Promise<void>;
   setEnablePreview: (enabled: boolean) => void;
   saveEnablePreview: () => Promise<void>;
   fetchEnablePreview: () => Promise<void>;
@@ -55,6 +59,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   channelLists: [],
   channelListName: null,
   playerCommand: "",
+  clipboardCommand: "",
   enablePreview: true,
   muteOnStart: false,
   showControls: true,
@@ -65,6 +70,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setChannelLists: (channelLists) => set({ channelLists }),
   setChannelListName: (channelListName) => set({ channelListName }),
   setPlayerCommand: (playerCommand) => set({ playerCommand }),
+  setClipboardCommand: (clipboardCommand) => set({ clipboardCommand }),
   setEnablePreview: (enablePreview) => set({ enablePreview }),
   setMuteOnStart: (muteOnStart) => set({ muteOnStart }),
   setShowControls: (showControls) => set({ showControls }),
@@ -122,6 +128,16 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   fetchPlayerCommand: async () => {
     const fetchedCommand = await invoke<string>("get_player_command");
     set({ playerCommand: fetchedCommand });
+  },
+
+  saveClipboardCommand: async () => {
+    const { clipboardCommand } = get();
+    await invoke("set_clipboard_command", { command: clipboardCommand });
+  },
+
+  fetchClipboardCommand: async () => {
+    const clipboardCommand = await invoke<string>("get_clipboard_command");
+    set({ clipboardCommand });
   },
 
   saveEnablePreview: async () => {

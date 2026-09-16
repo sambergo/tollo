@@ -1,3 +1,4 @@
+import { useState } from "react";
 import CachedImage from "./CachedImage";
 import { SignalIcon, StarIcon } from "./Icons";
 import { useChannelStore, useUIStore, GroupDisplayMode } from "../stores";
@@ -9,7 +10,9 @@ export default function ChannelDetails() {
     favorites,
     toggleFavorite,
     playInExternalPlayer,
+    copyChannelUrl,
   } = useChannelStore();
+  const [copied, setCopied] = useState(false);
   const { setSelectedGroup, setActiveTab, setGroupDisplayMode } = useUIStore();
 
   if (!selectedChannel) {
@@ -81,6 +84,19 @@ export default function ChannelDetails() {
             onClick={() => toggleFavorite(selectedChannel)}
           >
             {isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+          </button>
+          <button
+            className="secondary-button"
+            onClick={async (e) => {
+              e.currentTarget.blur();
+              const success = await copyChannelUrl(selectedChannel);
+              if (success) {
+                setCopied(true);
+                window.setTimeout(() => setCopied(false), 1500);
+              }
+            }}
+          >
+            {copied ? "URL Copied" : "Copy Channel URL"}
           </button>
         </div>
 

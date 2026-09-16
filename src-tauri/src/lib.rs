@@ -112,6 +112,7 @@ pub fn run() {
             get_channels,
             get_groups,
             play_channel,
+            copy_channel_url,
             add_favorite,
             remove_favorite,
             get_favorites,
@@ -134,6 +135,8 @@ pub fn run() {
             // Settings commands
             get_player_command,
             set_player_command,
+            get_clipboard_command,
+            set_clipboard_command,
             get_cache_duration,
             set_cache_duration,
             get_enable_preview,

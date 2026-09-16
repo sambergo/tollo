@@ -58,6 +58,7 @@ fn create_test_db() -> Connection {
         "CREATE TABLE IF NOT EXISTS settings (
             id INTEGER PRIMARY KEY,
             player_command TEXT NOT NULL,
+            clipboard_command TEXT NOT NULL DEFAULT 'test-clipboard',
             cache_duration_hours INTEGER NOT NULL DEFAULT 24,
             enable_preview BOOLEAN NOT NULL DEFAULT 1,
             mute_on_start BOOLEAN NOT NULL DEFAULT 0,
@@ -169,6 +170,40 @@ fn test_set_player_command() {
     let result = get_player_command(unsafe { std::mem::transmute(&state) });
     assert!(result.is_ok());
     assert_eq!(result.unwrap(), "vlc");
+}
+
+#[test]
+fn test_get_and_set_clipboard_command() {
+    let db_state = DbState {
+        db: Mutex::new(create_test_db()),
+    };
+    let state = MockState::from(db_state);
+
+    let result = get_clipboard_command(unsafe { std::mem::transmute(&state) });
+    assert_eq!(result.unwrap(), "test-clipboard");
+
+    let result = set_clipboard_command(
+        unsafe { std::mem::transmute(&state) },
+        "custom-copy --clipboard".to_string(),
+    );
+    assert!(result.is_ok());
+
+    let result = get_clipboard_command(unsafe { std::mem::transmute(&state) });
+    assert_eq!(result.unwrap(), "custom-copy --clipboard");
+}
+
+#[test]
+fn test_rejects_empty_clipboard_command() {
+    let db_state = DbState {
+        db: Mutex::new(create_test_db()),
+    };
+    let state = MockState::from(db_state);
+
+    let result = set_clipboard_command(
+        unsafe { std::mem::transmute(&state) },
+        "   ".to_string(),
+    );
+    assert!(result.is_err());
 }
 
 #[test]

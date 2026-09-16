@@ -39,6 +39,7 @@ function App() {
     setIsLoadingChannelList,
     toggleFavorite,
     playInExternalPlayer,
+    copyChannelUrl,
     moveFavorite,
     // NEW: Async operations
     fetchChannelsAsync,
@@ -158,7 +159,13 @@ function App() {
     return asyncPlaylistStore.onStatusUpdate((status) => {
       if (status.id !== selectedChannelListId) return;
 
-      const activeStatuses = ["starting", "fetching", "processing", "saving", "parsing"];
+      const activeStatuses = [
+        "starting",
+        "fetching",
+        "processing",
+        "saving",
+        "parsing",
+      ];
       if (activeStatuses.includes(status.status)) {
         setIsBackgroundRefreshing(true);
       }
@@ -259,9 +266,11 @@ function App() {
               id: selectedChannelListId,
             });
             if (expired) {
-              asyncPlaylistStore.refreshPlaylistAsync(selectedChannelListId).catch(
-                (err) => console.warn("Background refresh failed to start:", err),
-              );
+              asyncPlaylistStore
+                .refreshPlaylistAsync(selectedChannelListId)
+                .catch((err) =>
+                  console.warn("Background refresh failed to start:", err),
+                );
             }
           } catch (err) {
             console.warn("Could not check cache expiry:", err);
@@ -350,6 +359,10 @@ function App() {
 
   const handlePlayInExternalPlayer = (channel: Channel) => {
     playInExternalPlayer(channel);
+  };
+
+  const handleCopyChannelUrl = (channel: Channel) => {
+    copyChannelUrl(channel);
   };
 
   const filteredChannels = (() => {
@@ -542,6 +555,7 @@ function App() {
     handleSelectGroup,
     handleToggleFavorite,
     handlePlayInExternalPlayer,
+    handleCopyChannelUrl,
     savedFilters,
     onSaveFilter: handleSaveFilter,
     onApplyFilter: handleApplyFilter,
@@ -588,7 +602,10 @@ function App() {
           </div>
         ) : (
           <>
-            <MainContent filteredChannels={filteredChannels} isBackgroundRefreshing={isBackgroundRefreshing} />
+            <MainContent
+              filteredChannels={filteredChannels}
+              isBackgroundRefreshing={isBackgroundRefreshing}
+            />
 
             <div
               className={`video-section ${!enablePreview ? "preview-disabled" : ""}`}

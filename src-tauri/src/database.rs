@@ -66,6 +66,7 @@ pub fn initialize_database() -> Result<Connection> {
         "CREATE TABLE IF NOT EXISTS settings (
             id INTEGER PRIMARY KEY,
             player_command TEXT NOT NULL,
+            clipboard_command TEXT NOT NULL DEFAULT 'wl-copy',
             cache_duration_hours INTEGER NOT NULL DEFAULT 24,
             enable_preview BOOLEAN NOT NULL DEFAULT 1,
             mute_on_start BOOLEAN NOT NULL DEFAULT 0,
@@ -111,6 +112,13 @@ pub fn initialize_database() -> Result<Connection> {
     // Add the autoplay column to existing settings table if it doesn't exist
     conn.execute(
         "ALTER TABLE settings ADD COLUMN autoplay BOOLEAN NOT NULL DEFAULT 0",
+        [],
+    )
+    .ok();
+
+    // The platform-specific value is filled below for both existing and new databases.
+    conn.execute(
+        "ALTER TABLE settings ADD COLUMN clipboard_command TEXT NOT NULL DEFAULT ''",
         [],
     )
     .ok();
@@ -171,9 +179,16 @@ pub fn initialize_database() -> Result<Connection> {
     let settings_count: i64 =
         conn.query_row("SELECT COUNT(*) FROM settings", [], |row| row.get(0))?;
     if settings_count == 0 {
+        let default_clipboard_command = crate::settings::detect_default_clipboard_command();
         conn.execute(
-            "INSERT INTO settings (id, player_command, cache_duration_hours, enable_preview, mute_on_start, show_controls, autoplay) VALUES (1, 'mpv', 24, 1, 0, 1, 0)",
-            [],
+            "INSERT INTO settings (id, player_command, clipboard_command, cache_duration_hours, enable_preview, mute_on_start, show_controls, autoplay) VALUES (1, 'mpv', ?1, 24, 1, 0, 1, 0)",
+            [&default_clipboard_command],
+        )?;
+    } else {
+        let default_clipboard_command = crate::settings::detect_default_clipboard_command();
+        conn.execute(
+            "UPDATE settings SET clipboard_command = ?1 WHERE id = 1 AND clipboard_command = ''",
+            [&default_clipboard_command],
         )?;
     }
 
