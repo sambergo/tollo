@@ -181,6 +181,12 @@ export default function Help() {
               </div>
               <div className="keybinding">
                 <div className="keys">
+                  <span className="key">y</span>
+                </div>
+                <span className="description">Copy channel URL</span>
+              </div>
+              <div className="keybinding">
+                <div className="keys">
                   <span className="key">f</span>
                 </div>
                 <span className="description">Toggle fullscreen</span>

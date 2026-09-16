@@ -3,7 +3,8 @@ use crate::m3u_parser_helpers::{get_m3u_content, parse_m3u_with_progress};
 use crate::search::clear_advanced_cache;
 use crate::state::{ChannelCache, ChannelCacheState, DbState};
 use serde::{Deserialize, Serialize};
-use std::process::Command;
+use std::io::Write;
+use std::process::{Command, Stdio};
 #[cfg(target_os = "windows")]
 use std::os::windows::process::CommandExt;
 use std::time::{Duration, SystemTime};
@@ -160,6 +161,58 @@ pub async fn play_channel(state: State<'_, DbState>, channel: Channel) -> Result
             eprintln!("Failed to launch video player '{}': {}", command, e);
             Err(format!("Failed to launch video player: {}", e))
         }
+    }
+}
+
+#[tauri::command]
+pub fn copy_channel_url(state: State<'_, DbState>, channel: Channel) -> Result<(), String> {
+    let clipboard_command: String = {
+        let db = state.db.lock().unwrap();
+        let command: String = db.query_row(
+            "SELECT clipboard_command FROM settings WHERE id = 1",
+            [],
+            |row| row.get(0),
+        )
+        .unwrap_or_default();
+        if command.trim().is_empty() {
+            crate::settings::detect_default_clipboard_command()
+        } else {
+            command
+        }
+    };
+
+    let mut command_parts = clipboard_command.split_whitespace();
+    let command = command_parts
+        .next()
+        .ok_or_else(|| "Clipboard command cannot be empty".to_string())?;
+    let args = command_parts.collect::<Vec<_>>();
+
+    let mut clipboard_process = Command::new(command);
+    clipboard_process.args(args).stdin(Stdio::piped());
+    #[cfg(target_os = "windows")]
+    clipboard_process.creation_flags(0x08000000);
+
+    let mut child = clipboard_process
+        .spawn()
+        .map_err(|e| format!("Failed to launch clipboard command '{}': {}", command, e))?;
+
+    child
+        .stdin
+        .take()
+        .ok_or_else(|| "Failed to open clipboard command input".to_string())?
+        .write_all(channel.url.as_bytes())
+        .map_err(|e| format!("Failed to write channel URL to clipboard command: {}", e))?;
+
+    let status = child
+        .wait()
+        .map_err(|e| format!("Failed to wait for clipboard command: {}", e))?;
+    if status.success() {
+        Ok(())
+    } else {
+        Err(format!(
+            "Clipboard command '{}' exited with status {}",
+            command, status
+        ))
     }
 }
 

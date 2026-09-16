@@ -26,6 +26,34 @@ pub fn detect_default_player() -> String {
     }
 }
 
+pub fn detect_default_clipboard_command() -> String {
+    if cfg!(target_os = "windows") {
+        return "clip".to_string();
+    }
+
+    if cfg!(target_os = "macos") {
+        return "pbcopy".to_string();
+    }
+
+    for command in [
+        ("wl-copy", "wl-copy"),
+        ("xclip", "xclip -selection clipboard"),
+        ("xsel", "xsel --clipboard --input"),
+    ] {
+        if Command::new("which")
+            .arg(command.0)
+            .output()
+            .map(|output| output.status.success())
+            .unwrap_or(false)
+        {
+            return command.1.to_string();
+        }
+    }
+
+    // Prefer the native Wayland utility when no clipboard tool can be detected.
+    "wl-copy".to_string()
+}
+
 #[tauri::command]
 pub fn get_player_command(state: State<DbState>) -> Result<String, String> {
     let db = state.db.lock().unwrap();
@@ -49,6 +77,39 @@ pub fn set_player_command(state: State<DbState>, command: String) -> Result<(), 
         "UPDATE settings SET player_command = ?1 WHERE id = 1",
         &[&command],
     ).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+pub fn get_clipboard_command(state: State<DbState>) -> Result<String, String> {
+    let db = state.db.lock().unwrap();
+    let command: String = db.query_row(
+        "SELECT clipboard_command FROM settings WHERE id = 1",
+        [],
+        |row| row.get(0),
+    )
+    .unwrap_or_default();
+
+    if command.trim().is_empty() {
+        Ok(detect_default_clipboard_command())
+    } else {
+        Ok(command)
+    }
+}
+
+#[tauri::command]
+pub fn set_clipboard_command(state: State<DbState>, command: String) -> Result<(), String> {
+    let command = command.trim();
+    if command.is_empty() {
+        return Err("Clipboard command cannot be empty".to_string());
+    }
+
+    let db = state.db.lock().unwrap();
+    db.execute(
+        "UPDATE settings SET clipboard_command = ?1 WHERE id = 1",
+        [command],
+    )
+    .map_err(|e| e.to_string())?;
     Ok(())
 }
 
@@ -190,4 +251,4 @@ pub fn set_autoplay(state: State<DbState>, enabled: bool) -> Result<(), String> 
         ).map_err(|e| e.to_string())?;
     }
     Ok(())
-} 
+}

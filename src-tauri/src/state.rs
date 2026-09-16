@@ -24,6 +24,10 @@ pub struct ChannelCacheState {
     pub cache: Mutex<Option<ChannelCache>>,
 }
 
+pub struct ProxyState {
+    pub port: u16,
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ChannelList {
     pub id: i32,

@@ -36,7 +36,10 @@ reqwest = { version = "0.12.5", features = [
   "blocking",
   "json",
   "rustls-tls",
+  "stream",
 ], default-features = false }
+
+axum = "0.7"
 chrono = { version = "0.4.38", features = ["serde"] }
 uuid = { version = "1.8.0", features = ["v4"] }
 tokio = { version = "1", features = ["full"] }

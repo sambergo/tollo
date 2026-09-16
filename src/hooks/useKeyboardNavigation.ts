@@ -20,6 +20,7 @@ interface UseKeyboardNavigationProps {
   handleSelectGroup: (group: string | null) => void;
   handleToggleFavorite: (channel: Channel) => void;
   handlePlayInExternalPlayer: (channel: Channel) => void;
+  handleCopyChannelUrl: (channel: Channel) => void;
   // Saved filters functionality
   savedFilters: SavedFilter[];
   onSaveFilter: (
@@ -69,6 +70,7 @@ export function useKeyboardNavigation({
   handleSelectGroup,
   handleToggleFavorite,
   handlePlayInExternalPlayer,
+  handleCopyChannelUrl,
   savedFilters,
   onSaveFilter,
   onApplyFilter,
@@ -501,6 +503,15 @@ export function useKeyboardNavigation({
         if (activeTab === "channels") {
           handleToggleFavorite(listItems[focusedIndex] as Channel);
         }
+      } else if (e.key === "y" && !e.ctrlKey && !e.altKey && !e.shiftKey) {
+        if (
+          (activeTab === "channels" ||
+            activeTab === "favorites" ||
+            activeTab === "history") &&
+          listItems[focusedIndex]
+        ) {
+          handleCopyChannelUrl(listItems[focusedIndex] as Channel);
+        }
       }
 
       // Channel list management
@@ -576,6 +587,7 @@ export function useKeyboardNavigation({
     savedFilters,
     onSaveFilter,
     onApplyFilter,
+    handleCopyChannelUrl,
     clearSearch,
     clearGroupSearch,
     clearAllFilters,
