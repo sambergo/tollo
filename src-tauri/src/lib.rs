@@ -14,6 +14,7 @@ mod playlists;
 pub mod search;
 mod settings;
 mod state;
+mod stream_proxy;
 mod utils;
 
 #[cfg(test)]
@@ -22,7 +23,7 @@ mod integration_tests;
 use error::{Result, TolloError};
 use image_cache::ImageCache;
 use playlists::FetchState;
-use state::{ChannelCacheState, DbState, ImageCacheState};
+use state::{ChannelCacheState, DbState, ImageCacheState, ProxyState};
 use std::sync::{Arc, Mutex};
 use tauri::Manager;
 
@@ -36,6 +37,7 @@ use image_cache_api::*;
 use playlists::*;
 use search::*;
 use settings::*;
+use stream_proxy::get_proxy_port;
 
 fn initialize_application() -> Result<(rusqlite::Connection, Vec<m3u_parser::Channel>)> {
     let mut db_connection = database::initialize_database()
@@ -88,6 +90,20 @@ pub fn run() {
             app.manage(ImageCacheState {
                 cache: Arc::new(image_cache),
             });
+
+            // Start the local streaming proxy server (random loopback port)
+            match tauri::async_runtime::block_on(stream_proxy::start_proxy_server()) {
+                Ok(port) => {
+                    println!("Stream proxy listening on 127.0.0.1:{}", port);
+                    app.manage(ProxyState { port });
+                }
+                Err(e) => {
+                    eprintln!("Warning: Failed to start stream proxy: {}", e);
+                    // Use port 0 as sentinel — frontend will skip proxy if port is 0
+                    app.manage(ProxyState { port: 0 });
+                }
+            }
+
             Ok(())
         })
         .plugin(tauri_plugin_opener::init())
@@ -164,6 +180,8 @@ pub fn run() {
             save_filter,
             get_saved_filters,
             delete_saved_filter,
+            // Stream proxy
+            get_proxy_port,
         ])
         .run(tauri::generate_context!())
         .map_err(|e| {

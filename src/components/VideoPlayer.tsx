@@ -42,7 +42,7 @@ const VideoPlayer = forwardRef<HTMLVideoElement, {}>((_, ref) => {
             />
             {codecWarning && (
               <div className="codec-warning">
-                ⚠️ Video codec issue detected. Install GStreamer plugins: gstreamer1.0-plugins-bad gstreamer1.0-libav
+                ⚠️ Could not play this stream. Try opening it in an external player.
               </div>
             )}
             <div className="video-controls">

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, startTransition } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import Hls from "hls.js";
+import mpegts from "mpegts.js";
 import NavigationSidebar from "./components/NavigationSidebar";
 import MainContent from "./components/MainContent";
 import VideoPlayer from "./components/VideoPlayer";
@@ -74,6 +75,8 @@ function App() {
   // Refs for video player
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
+  const mpegtsRef = useRef<mpegts.Player | null>(null);
+  const proxyPortRef = useRef<number | null>(null);
 
   const [channelListDataVersion, setChannelListDataVersion] = useState(0);
   const [isBackgroundRefreshing, setIsBackgroundRefreshing] = useState(false);
@@ -88,6 +91,13 @@ function App() {
   useEffect(() => {
     fetchEnablePreview();
   }, [fetchEnablePreview]);
+
+  // Fetch stream proxy port once on mount
+  useEffect(() => {
+    invoke<number>("get_proxy_port").then((port) => {
+      proxyPortRef.current = port > 0 ? port : null;
+    });
+  }, []);
 
   // Load default channel list on app startup
   useEffect(() => {
@@ -271,47 +281,61 @@ function App() {
   }, [selectedChannelListId, channelListDataVersion]);
 
   useEffect(() => {
+    // Destroy any existing players before loading a new source
     if (hlsRef.current) {
       hlsRef.current.destroy();
+      hlsRef.current = null;
+    }
+    if (mpegtsRef.current) {
+      mpegtsRef.current.destroy();
+      mpegtsRef.current = null;
     }
 
-    // Only load video if preview is enabled
-    if (enablePreview && selectedChannel && videoRef.current) {
-      const video = videoRef.current;
-      const isHlsUrl =
-        selectedChannel.url.includes(".m3u8") ||
-        selectedChannel.url.includes("m3u8");
+    if (!enablePreview || !selectedChannel || !videoRef.current) return;
 
-      if (isHlsUrl && Hls.isSupported()) {
-        // Use HLS.js for .m3u8 streams when supported
-        const hls = new Hls();
-        hlsRef.current = hls;
-        hls.loadSource(selectedChannel.url);
-        hls.attachMedia(video);
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          if (autoplay) video.play();
-        });
-      } else if (
-        isHlsUrl &&
-        video.canPlayType("application/vnd.apple.mpegurl")
-      ) {
-        // Native HLS support (Safari)
-        video.src = selectedChannel.url;
-        video.addEventListener("loadedmetadata", () => {
-          if (autoplay) video.play();
-        });
-      } else {
-        // Fallback for direct video streams (MP4, WebM, etc.) and other protocols
-        video.src = selectedChannel.url;
-        video.addEventListener("loadedmetadata", () => {
-          if (autoplay) video.play();
-        });
+    const video = videoRef.current;
+    const url = selectedChannel.url;
+    const isHlsUrl = url.includes(".m3u8") || url.includes("m3u8");
 
-        // Handle load errors gracefully
-        video.addEventListener("error", (e) => {
-          console.warn(`Video load error for ${selectedChannel.name}:`, e);
-        });
-      }
+    if (isHlsUrl && Hls.isSupported()) {
+      // HLS.js — direct URL (MSE-capable browsers handle HLS natively via hls.js)
+      const hls = new Hls();
+      hlsRef.current = hls;
+      hls.loadSource(url);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        if (autoplay) video.play();
+      });
+    } else if (isHlsUrl && video.canPlayType("application/vnd.apple.mpegurl")) {
+      // Native HLS support (Safari / macOS WebKit)
+      video.src = url;
+      video.addEventListener("loadedmetadata", () => {
+        if (autoplay) video.play();
+      });
+    } else if (mpegts.isSupported() && proxyPortRef.current !== null) {
+      // MPEG-TS over MSE via local proxy — fixes Windows (WebView2 can't decode raw MPEG-TS)
+      const proxiedUrl = `http://127.0.0.1:${proxyPortRef.current}/stream?url=${encodeURIComponent(url)}`;
+      const player = mpegts.createPlayer({
+        type: "mpegts",
+        url: proxiedUrl,
+        isLive: true,
+      });
+      mpegtsRef.current = player;
+      player.attachMediaElement(video);
+      player.load();
+      if (autoplay) player.play();
+    } else {
+      // Absolute fallback — route through proxy if available to handle CORS/mixed-content
+      const port = proxyPortRef.current;
+      video.src = port
+        ? `http://127.0.0.1:${port}/stream?url=${encodeURIComponent(url)}`
+        : url;
+      video.addEventListener("loadedmetadata", () => {
+        if (autoplay) video.play();
+      });
+      video.addEventListener("error", (e) => {
+        console.warn(`Video load error for ${selectedChannel.name}:`, e);
+      });
     }
   }, [selectedChannel, enablePreview, autoplay]);
 
