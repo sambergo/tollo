@@ -378,7 +378,7 @@ fn test_invalidate_channel_cache() {
 
 // Error Handling Tests
 #[test]
-fn test_settings_commands_with_empty_database() {
+fn test_settings_commands_with_empty_database_use_default_player_and_reject_writes() {
     let conn = Connection::open_in_memory().unwrap();
     // Don't create the settings table to test error handling
     
@@ -388,6 +388,12 @@ fn test_settings_commands_with_empty_database() {
     let state = MockState::from(db_state);
     
     let result = get_player_command(unsafe { std::mem::transmute(&state) });
+    assert_eq!(result.unwrap(), detect_default_player());
+
+    let result = set_player_command(
+        unsafe { std::mem::transmute(&state) },
+        "test-player".to_string(),
+    );
     assert!(result.is_err());
 }
 

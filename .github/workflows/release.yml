@@ -21,6 +21,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Verify release versions
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json, os, pathlib, re
+          versions = {
+              "package.json": json.loads(pathlib.Path("package.json").read_text())["version"],
+              "src-tauri/tauri.conf.json": json.loads(pathlib.Path("src-tauri/tauri.conf.json").read_text())["version"],
+              "src-tauri/Cargo.toml": re.search(r'^version = "([^"]+)"', pathlib.Path("src-tauri/Cargo.toml").read_text(), re.M)[1],
+              "src-tauri/Cargo.lock": re.search(r'name = "tollo"\nversion = "([^"]+)"', pathlib.Path("src-tauri/Cargo.lock").read_text())[1],
+          }
+          assert len(set(versions.values())) == 1, f"Release version mismatch: {versions}"
+          assert os.environ["GITHUB_REF_NAME"] == "v" + versions["package.json"], "Run releases from the matching version tag"
+          print(versions)
+          PY
+
       - name: Install dependencies (ubuntu only)
         if: matrix.platform == 'ubuntu-latest'
         run: |
@@ -41,15 +57,15 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '22'
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 8
+          version: 10.7.0
 
       - name: Install frontend dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: Build the app
         uses: tauri-apps/tauri-action@v0
