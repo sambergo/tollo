@@ -1,3 +1,4 @@
+mod backup;
 mod channels;
 pub mod database;
 mod error;
@@ -10,6 +11,7 @@ pub mod image_cache;
 mod image_cache_api;
 pub mod m3u_parser;
 mod m3u_parser_helpers;
+mod operation_gate;
 mod playlists;
 pub mod search;
 mod settings;
@@ -28,6 +30,7 @@ use std::sync::{Arc, Mutex};
 use tauri::Manager;
 
 // Import all the command functions from their respective modules
+use backup::*;
 use channels::*;
 use favorites::*;
 use filters::*;
@@ -79,6 +82,7 @@ pub fn run() {
             cache: Mutex::new(None),
         })
         .manage(FetchState::new())
+        .manage(BackupState::default())
         .setup(|app| {
             let image_cache = match setup_image_cache(app) {
                 Ok(cache) => cache,
@@ -107,7 +111,12 @@ pub fn run() {
             Ok(())
         })
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
+            export_user_data,
+            preview_user_data_import,
+            confirm_user_data_import,
+            cancel_user_data_import,
             // Channel commands
             get_channels,
             get_groups,

@@ -11,8 +11,7 @@ use std::time::SystemTime;
 use tauri::{AppHandle, State};
 use uuid::Uuid;
 
-#[tauri::command]
-pub async fn refresh_channel_list_async(
+pub(crate) async fn refresh_channel_list_async_inner(
     app_handle: AppHandle,
     db_state: State<'_, DbState>,
     cache_state: State<'_, ChannelCacheState>,
@@ -35,7 +34,8 @@ pub async fn refresh_channel_list_async(
         // HTTP source - download and cache
     } else {
         // File source - read from local filesystem
-        return refresh_file_playlist(app_handle, db_state, cache_state, fetch_state, id, source).await;
+        return refresh_file_playlist(app_handle, db_state, cache_state, fetch_state, id, source)
+            .await;
     }
 
     // Emit starting status
@@ -176,11 +176,10 @@ pub async fn refresh_channel_list_async(
     .await;
 
     // Parse channels and populate cache so the next get_channels_async call is instant
-    let channels = tokio::task::spawn_blocking(move || {
-        parse_m3u_with_progress(&content, |_, _, _| {})
-    })
-    .await
-    .map_err(|e| format!("Failed to parse channels: {}", e))?;
+    let channels =
+        tokio::task::spawn_blocking(move || parse_m3u_with_progress(&content, |_, _, _| {}))
+            .await
+            .map_err(|e| format!("Failed to parse channels: {}", e))?;
 
     let parsed_count = channels.len();
     {
@@ -220,6 +219,8 @@ pub async fn validate_and_add_channel_list_async(
     name: String,
     source: String,
 ) -> Result<i32, String> {
+    let _operation = crate::operation_gate::read_async().await?;
+
     let clean_name = name.trim();
     let clean_source = source.trim();
 
@@ -405,11 +406,10 @@ pub async fn validate_and_add_channel_list_async(
         }
 
         // Populate cache with the new channels so selecting this list is instant
-        let channels = tokio::task::spawn_blocking(move || {
-            parse_m3u_with_progress(&content, |_, _, _| {})
-        })
-        .await
-        .map_err(|e| format!("Failed to parse channels: {}", e))?;
+        let channels =
+            tokio::task::spawn_blocking(move || parse_m3u_with_progress(&content, |_, _, _| {}))
+                .await
+                .map_err(|e| format!("Failed to parse channels: {}", e))?;
 
         let parsed_count = channels.len();
         {
@@ -446,13 +446,12 @@ pub async fn validate_and_add_channel_list_async(
         }
 
         // Read and validate the file
-        let content = fs::read_to_string(clean_source)
-            .map_err(|e| {
-                // Delete the playlist entry since we can't read the file
-                let db = db_state.db.lock().unwrap();
-                let _ = db.execute("DELETE FROM channel_lists WHERE id = ?1", [list_id]);
-                format!("Failed to read file '{}': {}", clean_source, e)
-            })?;
+        let content = fs::read_to_string(clean_source).map_err(|e| {
+            // Delete the playlist entry since we can't read the file
+            let db = db_state.db.lock().unwrap();
+            let _ = db.execute("DELETE FROM channel_lists WHERE id = ?1", [list_id]);
+            format!("Failed to read file '{}': {}", clean_source, e)
+        })?;
 
         if content.trim().is_empty() || !content.trim_start().starts_with("#EXTM3U") {
             // Delete the playlist entry since the file is invalid
@@ -644,11 +643,10 @@ async fn refresh_file_playlist(
     .await;
 
     // Parse channels and populate cache so the next get_channels_async call is instant
-    let channels = tokio::task::spawn_blocking(move || {
-        parse_m3u_with_progress(&content, |_, _, _| {})
-    })
-    .await
-    .map_err(|e| format!("Failed to parse channels: {}", e))?;
+    let channels =
+        tokio::task::spawn_blocking(move || parse_m3u_with_progress(&content, |_, _, _| {}))
+            .await
+            .map_err(|e| format!("Failed to parse channels: {}", e))?;
 
     let parsed_count = channels.len();
     {
@@ -677,4 +675,15 @@ async fn refresh_file_playlist(
     .await;
 
     Ok(())
+}
+#[tauri::command]
+pub async fn refresh_channel_list_async(
+    app_handle: AppHandle,
+    db_state: State<'_, DbState>,
+    cache_state: State<'_, ChannelCacheState>,
+    fetch_state: State<'_, FetchState>,
+    id: i32,
+) -> Result<(), String> {
+    let _operation = crate::operation_gate::read_async().await?;
+    refresh_channel_list_async_inner(app_handle, db_state, cache_state, fetch_state, id).await
 }
