@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { useRemoteStore } from "../../stores/remoteStore";
 import type { RemoteInfo } from "../../types/remote";
+import { RemoteConnectionAddress } from "./RemoteConnectionAddress";
 
 export function BrowserRemoteSettings() {
   const { info, setInfo } = useRemoteStore();
@@ -139,29 +140,41 @@ export function BrowserRemoteSettings() {
                   The private link grants control; share it only with people you
                   trust. HTTP connections are not encrypted.
                 </p>
-                {info.urls.map((url) => (
-                  <div className="form-group" key={url}>
-                    <label className="form-label">
-                      {url.includes("127.0.0.1")
-                        ? "This computer only"
-                        : "Connection address"}
-                    </label>
-                    <div className="form-row">
-                      <input
-                        aria-label="Connection address"
-                        className="form-input"
-                        readOnly
-                        value={url}
-                      />
-                      <button
-                        className="btn-primary"
-                        onClick={() => copy(`${url}/#key=${info.token}`)}
-                      >
-                        Copy private link
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                <p className="form-help">
+                  QR codes include the access key. Share them only with people
+                  you want to give control.
+                </p>
+                {info.addresses
+                  .filter((address) => address.local_network)
+                  .map((address) => (
+                    <RemoteConnectionAddress
+                      key={address.url}
+                      address={address}
+                      token={info.token}
+                      onCopy={copy}
+                    />
+                  ))}
+                {info.addresses.some((address) => !address.local_network) && (
+                  <details className="remote-other-addresses">
+                    <summary>Other addresses</summary>
+                    <p className="form-help">
+                      Virtual networks, VPNs and local testing addresses. Use
+                      one only if your device can reach that network. If your
+                      home network uses a bridge or virtual interface, its
+                      address may also appear here.
+                    </p>
+                    {info.addresses
+                      .filter((address) => !address.local_network)
+                      .map((address) => (
+                        <RemoteConnectionAddress
+                          key={address.url}
+                          address={address}
+                          token={info.token}
+                          onCopy={copy}
+                        />
+                      ))}
+                  </details>
+                )}
                 <div className="form-group">
                   <label className="form-label" htmlFor="remote-key">
                     Access key (for manual connection)

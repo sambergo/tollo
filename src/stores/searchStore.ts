@@ -39,11 +39,11 @@ export const useSearchStore = create<SearchState>((set, get) => ({
     // Clear existing timer
     const { debounceTimer } = get();
     if (debounceTimer) {
-      clearTimeout(debounceTimer);
+      window.clearTimeout(debounceTimer);
     }
 
     // Set new timer for debouncing
-    const newTimer = setTimeout(() => {
+    const newTimer = window.setTimeout(() => {
       set({ debouncedSearchQuery: searchQuery });
     }, 400);
 
@@ -58,7 +58,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
   clearSearch: () => {
     const { debounceTimer } = get();
     if (debounceTimer) {
-      clearTimeout(debounceTimer);
+      window.clearTimeout(debounceTimer);
     }
 
     set({

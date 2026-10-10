@@ -19,7 +19,8 @@ IPTV player with fuzzy search, vim-like navigation, external player integration,
 ## Browser Remote
 
 On a Linux computer connected to your TV, install mpv, open Tollo, and enable
-**Settings → Browser Remote → Allow browser remote access**. Copy the private
+**Settings → Browser Remote → Allow browser remote access**. Scan the QR code
+with your phone’s camera, or copy the private
 connection link and open it on another computer or phone on the same trusted
 local network. Browse playlists, search channels, edit favourites, and control
 playback on the TV computer without installing Tollo on the controlling device.

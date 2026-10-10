@@ -29,13 +29,18 @@ setting up the remote.
 2. Enable **Allow browser remote access**. The service is off on fresh installations.
 3. Confirm the status says **Remote service is running**. The default port is
    `8790`; change it and select **Save / retry** if another program uses it.
-4. Use **Copy private link** beside the host’s network address. Open that link in a
-   browser on a device on the same local network.
+4. Scan the QR code beside the host’s Wi-Fi/Ethernet address with your phone’s
+   camera, or use **Copy private link** and open it on another device on the same
+   local network. Both include the access key; share them only with trusted people.
 5. Alternatively, open the displayed address (for example,
    `http://192.168.1.50:8790`) and enter the access key copied from Settings.
 
 The `127.0.0.1` address only works on the host itself. If several network addresses
 appear, choose the one for the Wi-Fi or Ethernet network shared by your devices.
+Interface names appear beside addresses. **Other addresses** is folded by default
+and contains virtual networks, VPNs, and localhost. Expand it for those networks
+or if your home network uses a bridge/virtual interface. Address grouping is based
+on interfaces, not on whether an address starts with `192.168`, `10`, or `172`.
 Addresses can change when your router assigns a new address; Settings shows the
 current addresses.
 

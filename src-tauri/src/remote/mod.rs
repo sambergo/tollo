@@ -58,7 +58,7 @@ pub struct RemoteInfo {
     supported: bool,
     enabled: bool,
     running: bool,
-    urls: Vec<String>,
+    addresses: Vec<RemoteAddress>,
     token: String,
     port: u16,
     error: Option<String>,
@@ -107,7 +107,7 @@ impl Runtime {
             supported: cfg!(target_os = "linux"),
             enabled: self.config.enabled,
             running,
-            urls: if running {
+            addresses: if running {
                 addresses(self.config.port)
             } else {
                 Vec::new()
@@ -166,46 +166,81 @@ impl Runtime {
     }
 }
 
-fn addresses(port: u16) -> Vec<String> {
-    let mut ips = Vec::new();
-    #[cfg(target_os = "linux")]
-    if let Ok(output) = std::process::Command::new("ip")
-        .args(["-j", "-4", "address", "show", "up"])
-        .output()
-    {
-        if let Ok(interfaces) = serde_json::from_slice::<Value>(&output.stdout) {
-            if let Some(interfaces) = interfaces.as_array() {
-                for interface in interfaces {
-                    if let Some(addresses) = interface["addr_info"].as_array() {
-                        for address in addresses {
-                            if let Some(ip) = address["local"]
-                                .as_str()
-                                .and_then(|ip| ip.parse::<std::net::Ipv4Addr>().ok())
-                            {
-                                if !ip.is_loopback() && !ip.is_unspecified() {
-                                    ips.push(ip.to_string());
-                                }
-                            }
+#[derive(Clone, Serialize)]
+pub struct RemoteAddress {
+    url: String,
+    interface_name: Option<String>,
+    local_network: bool,
+}
+
+fn interface_addresses(
+    interfaces: &Value,
+    port: u16,
+    physical: impl Fn(&str) -> bool,
+) -> Vec<RemoteAddress> {
+    let mut addresses = Vec::new();
+    if let Some(interfaces) = interfaces.as_array() {
+        for interface in interfaces {
+            let name = interface["ifname"].as_str().unwrap_or("");
+            if let Some(items) = interface["addr_info"].as_array() {
+                for address in items {
+                    if let Some(ip) = address["local"]
+                        .as_str()
+                        .and_then(|ip| ip.parse::<std::net::Ipv4Addr>().ok())
+                    {
+                        if !ip.is_loopback() && !ip.is_unspecified() {
+                            addresses.push(RemoteAddress {
+                                url: format!("http://{ip}:{port}"),
+                                interface_name: Some(name.to_owned()),
+                                local_network: physical(name),
+                            });
                         }
                     }
                 }
             }
         }
     }
-    if ips.is_empty() {
+    addresses
+}
+
+fn addresses(port: u16) -> Vec<RemoteAddress> {
+    let mut addresses = Vec::new();
+    #[cfg(target_os = "linux")]
+    if let Ok(output) = std::process::Command::new("ip")
+        .args(["-j", "-4", "address", "show", "up"])
+        .output()
+    {
+        if let Ok(interfaces) = serde_json::from_slice::<Value>(&output.stdout) {
+            // Hardware interfaces are the usual Wi-Fi/Ethernet choices. Keep
+            // bridges, containers and tunnels available under Other addresses.
+            addresses = interface_addresses(&interfaces, port, |name| {
+                std::path::Path::new("/sys/class/net")
+                    .join(name)
+                    .join("device")
+                    .exists()
+            });
+        }
+    }
+    if addresses.is_empty() {
         if let Ok(address) = std::net::UdpSocket::bind("0.0.0.0:0").and_then(|socket| {
             socket.connect("192.0.2.1:80")?;
             socket.local_addr()
         }) {
-            ips.push(address.ip().to_string());
+            addresses.push(RemoteAddress {
+                url: format!("http://{}:{port}", address.ip()),
+                interface_name: None,
+                local_network: false,
+            });
         }
     }
-    ips.sort();
-    ips.dedup();
-    ips.push("127.0.0.1".into());
-    ips.into_iter()
-        .map(|ip| format!("http://{ip}:{port}"))
-        .collect()
+    addresses.sort_by(|a, b| a.url.cmp(&b.url));
+    addresses.dedup_by(|a, b| a.url == b.url);
+    addresses.push(RemoteAddress {
+        url: format!("http://127.0.0.1:{port}"),
+        interface_name: Some("lo".into()),
+        local_network: false,
+    });
+    addresses
 }
 
 #[tauri::command]
@@ -639,6 +674,25 @@ async fn status(State(service): State<Service>) -> Response {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn address_grouping_uses_interface_type_instead_of_ip_prefix() {
+        let interfaces = json!([
+            {"ifname":"enp1s0", "addr_info":[{"local":"172.16.0.5"}]},
+            {"ifname":"wlan0", "addr_info":[{"local":"10.0.0.5"}]},
+            {"ifname":"tun0", "addr_info":[{"local":"192.168.5.10"}]},
+            {"ifname":"docker0", "addr_info":[{"local":"172.17.0.1"}]},
+            {"ifname":"lo", "addr_info":[{"local":"127.0.0.1"}]}
+        ]);
+        let addresses =
+            interface_addresses(&interfaces, 8790, |name| matches!(name, "enp1s0" | "wlan0"));
+        assert_eq!(addresses.len(), 4);
+        assert_eq!(addresses.iter().filter(|a| a.local_network).count(), 2);
+        assert!(addresses[0].url.starts_with("http://172.16."));
+        assert_eq!(addresses[0].interface_name.as_deref(), Some("enp1s0"));
+        assert!(!addresses[2].local_network);
+        assert!(!addresses[3].local_network);
+    }
+
     fn sample() -> Channel {
         Channel {
             name: "News".into(),

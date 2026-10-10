@@ -1,8 +1,14 @@
+export interface RemoteAddress {
+  url: string;
+  interface_name: string | null;
+  local_network: boolean;
+}
+
 export interface RemoteInfo {
   supported: boolean;
   enabled: boolean;
   running: boolean;
-  urls: string[];
+  addresses: RemoteAddress[];
   token: string;
   port: number;
   error: string | null;
