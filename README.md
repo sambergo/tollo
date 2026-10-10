@@ -13,6 +13,15 @@ IPTV player with fuzzy search, vim-like navigation, external player integration,
 - Vim-like keyboard navigation
 - External player integration (MPV)
 - Favorites and history
+- Portable user-data backup and restore
+
+## Backup & restore
+
+Open Settings → Backup & restore to export a JSON backup or review a backup before importing. Restore replaces settings, channel lists and their default selection, ordered favorites, saved filters, and group selections. Watch history is preserved.
+
+Local playlist contents travel with the backup and restore into Tollo’s data directory. Remote playlists retain their URLs and download again when selected. Downloaded playlists and image caches are excluded. Backups are unencrypted and contain source URLs and configured commands; player and clipboard commands may need adjustment on another operating system.
+
+The version 1 format uses the `tollo-user-data` identifier, an export timestamp, app version, settings, ordered favorites, and channel lists with embedded local content, saved filters, and group selections. Unsupported formats or versions are rejected before any data is replaced.
 
 ## Prerequisites
 

@@ -2,11 +2,14 @@ use crate::m3u_parser::Channel;
 use crate::state::DbState;
 use tauri::{AppHandle, Emitter, State};
 
-#[tauri::command]
-pub fn add_favorite(state: State<DbState>, channel: Channel) -> Result<(), String> {
+pub(crate) fn add_favorite_inner(state: State<DbState>, channel: Channel) -> Result<(), String> {
     let db = state.db.lock().unwrap();
     let max_pos: i64 = db
-        .query_row("SELECT COALESCE(MAX(position), -1) FROM favorites", [], |row| row.get(0))
+        .query_row(
+            "SELECT COALESCE(MAX(position), -1) FROM favorites",
+            [],
+            |row| row.get(0),
+        )
         .map_err(|e| e.to_string())?;
     db.execute(
         "INSERT INTO favorites (name, logo, url, group_title, tvg_id, resolution, extra_info, position) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
@@ -15,16 +18,14 @@ pub fn add_favorite(state: State<DbState>, channel: Channel) -> Result<(), Strin
     Ok(())
 }
 
-#[tauri::command]
-pub fn remove_favorite(state: State<DbState>, name: String) -> Result<(), String> {
+pub(crate) fn remove_favorite_inner(state: State<DbState>, name: String) -> Result<(), String> {
     let db = state.db.lock().unwrap();
     db.execute("DELETE FROM favorites WHERE name = ?1", &[&name])
         .map_err(|e| e.to_string())?;
     Ok(())
 }
 
-#[tauri::command]
-pub fn get_favorites(state: State<DbState>) -> Result<Vec<Channel>, String> {
+pub(crate) fn get_favorites_inner(state: State<DbState>) -> Result<Vec<Channel>, String> {
     let db = state.db.lock().unwrap();
     let mut stmt = db
         .prepare(
@@ -58,11 +59,13 @@ pub async fn add_favorite_async(
     state: State<'_, DbState>,
     channel: Channel,
 ) -> Result<(), String> {
+    let _operation = crate::operation_gate::read_async().await?;
+
     // Emit start
     let _ = app_handle.emit("favorite_operation", "Adding to favorites...");
 
     // Use blocking version for now
-    let result = add_favorite(state, channel);
+    let result = add_favorite_inner(state, channel);
 
     // Emit completion
     let _ = app_handle.emit("favorite_operation", "Added to favorites!");
@@ -76,11 +79,13 @@ pub async fn remove_favorite_async(
     state: State<'_, DbState>,
     name: String,
 ) -> Result<(), String> {
+    let _operation = crate::operation_gate::read_async().await?;
+
     // Emit start
     let _ = app_handle.emit("favorite_operation", "Removing from favorites...");
 
     // Use blocking version for now
-    let result = remove_favorite(state, name);
+    let result = remove_favorite_inner(state, name);
 
     // Emit completion
     let _ = app_handle.emit("favorite_operation", "Removed from favorites!");
@@ -93,11 +98,13 @@ pub async fn get_favorites_async(
     app_handle: AppHandle,
     state: State<'_, DbState>,
 ) -> Result<Vec<Channel>, String> {
+    let _operation = crate::operation_gate::read_async().await?;
+
     // Emit start
     let _ = app_handle.emit("favorites_loading", "Loading favorites...");
 
     // Use blocking version for now
-    let result = get_favorites(state);
+    let result = get_favorites_inner(state);
 
     // Emit completion
     let _ = app_handle.emit("favorites_loading", "Favorites loaded!");
@@ -105,8 +112,10 @@ pub async fn get_favorites_async(
     result
 }
 
-#[tauri::command]
-pub fn reorder_favorites(state: State<DbState>, names: Vec<String>) -> Result<(), String> {
+pub(crate) fn reorder_favorites_inner(
+    state: State<DbState>,
+    names: Vec<String>,
+) -> Result<(), String> {
     let db = state.db.lock().unwrap();
     let tx = db.unchecked_transaction().map_err(|e| e.to_string())?;
     {
@@ -128,8 +137,33 @@ pub async fn reorder_favorites_async(
     state: State<'_, DbState>,
     names: Vec<String>,
 ) -> Result<(), String> {
+    let _operation = crate::operation_gate::read_async().await?;
+
     let _ = app_handle.emit("favorite_operation", "Reordering favorites...");
-    let result = reorder_favorites(state, names);
+    let result = reorder_favorites_inner(state, names);
     let _ = app_handle.emit("favorite_operation", "Favorites reordered!");
     result
+}
+#[tauri::command]
+pub fn reorder_favorites(state: State<DbState>, names: Vec<String>) -> Result<(), String> {
+    let _operation = crate::operation_gate::read()?;
+    reorder_favorites_inner(state, names)
+}
+
+#[tauri::command]
+pub fn get_favorites(state: State<DbState>) -> Result<Vec<Channel>, String> {
+    let _operation = crate::operation_gate::read()?;
+    get_favorites_inner(state)
+}
+
+#[tauri::command]
+pub fn remove_favorite(state: State<DbState>, name: String) -> Result<(), String> {
+    let _operation = crate::operation_gate::read()?;
+    remove_favorite_inner(state, name)
+}
+
+#[tauri::command]
+pub fn add_favorite(state: State<DbState>, channel: Channel) -> Result<(), String> {
+    let _operation = crate::operation_gate::read()?;
+    add_favorite_inner(state, channel)
 }

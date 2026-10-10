@@ -4,17 +4,22 @@ use crate::search::clear_advanced_cache;
 use crate::state::{ChannelCache, ChannelCacheState, DbState};
 use serde::{Deserialize, Serialize};
 use std::io::Write;
-use std::process::{Command, Stdio};
 #[cfg(target_os = "windows")]
 use std::os::windows::process::CommandExt;
-use std::time::{Duration, SystemTime};
+use std::process::{Command, Stdio};
 use std::sync::{Mutex, MutexGuard};
+use std::time::{Duration, SystemTime};
 use tauri::{AppHandle, Emitter, State};
 use tokio::time;
 
 // Helper function for safe mutex locking with timeout
-fn lock_with_timeout<'a, T>(mutex: &'a Mutex<T>, resource_name: &str) -> Result<MutexGuard<'a, T>, String> {
-    mutex.lock().map_err(|_| format!("Failed to acquire lock for {}", resource_name))
+fn lock_with_timeout<'a, T>(
+    mutex: &'a Mutex<T>,
+    resource_name: &str,
+) -> Result<MutexGuard<'a, T>, String> {
+    mutex
+        .lock()
+        .map_err(|_| format!("Failed to acquire lock for {}", resource_name))
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -31,6 +36,8 @@ pub fn get_channels(
     cache_state: State<ChannelCacheState>,
     id: Option<i32>,
 ) -> std::result::Result<Vec<Channel>, String> {
+    let _operation = crate::operation_gate::read()?;
+
     get_cached_channels(db_state, cache_state, id)
 }
 
@@ -67,8 +74,9 @@ pub fn get_cached_channels(
     Ok(channels)
 }
 
-#[tauri::command]
-pub fn invalidate_channel_cache(cache_state: State<ChannelCacheState>) -> Result<(), String> {
+pub(crate) fn invalidate_channel_cache_inner(
+    cache_state: State<ChannelCacheState>,
+) -> Result<(), String> {
     let mut cache = cache_state.cache.lock().unwrap();
     *cache = None;
 
@@ -80,6 +88,8 @@ pub fn invalidate_channel_cache(cache_state: State<ChannelCacheState>) -> Result
 
 #[tauri::command]
 pub async fn play_channel(state: State<'_, DbState>, channel: Channel) -> Result<(), String> {
+    let _operation = crate::operation_gate::read_async().await?;
+
     let player_command: String = {
         let db = state.db.lock().unwrap();
 
@@ -112,13 +122,10 @@ pub async fn play_channel(state: State<'_, DbState>, channel: Channel) -> Result
         .arg(&channel.url)
         .creation_flags(0x08000000) // CREATE_NO_WINDOW flag to hide CMD window
         .spawn();
-    
+
     #[cfg(not(target_os = "windows"))]
-    let spawn_result = Command::new(command)
-        .args(args)
-        .arg(&channel.url)
-        .spawn();
-    
+    let spawn_result = Command::new(command).args(args).arg(&channel.url).spawn();
+
     match spawn_result {
         Ok(mut child) => {
             println!("Successfully launched player for channel: {}", channel.name);
@@ -166,14 +173,17 @@ pub async fn play_channel(state: State<'_, DbState>, channel: Channel) -> Result
 
 #[tauri::command]
 pub fn copy_channel_url(state: State<'_, DbState>, channel: Channel) -> Result<(), String> {
+    let _operation = crate::operation_gate::read()?;
+
     let clipboard_command: String = {
         let db = state.db.lock().unwrap();
-        let command: String = db.query_row(
-            "SELECT clipboard_command FROM settings WHERE id = 1",
-            [],
-            |row| row.get(0),
-        )
-        .unwrap_or_default();
+        let command: String = db
+            .query_row(
+                "SELECT clipboard_command FROM settings WHERE id = 1",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap_or_default();
         if command.trim().is_empty() {
             crate::settings::detect_default_clipboard_command()
         } else {
@@ -224,6 +234,8 @@ pub async fn get_channels_async(
     cache_state: State<'_, ChannelCacheState>,
     id: Option<i32>,
 ) -> Result<Vec<Channel>, String> {
+    let _operation = crate::operation_gate::read_async().await?;
+
     // Emit loading start
     let _ = app_handle.emit(
         "channel_loading",
@@ -305,4 +317,9 @@ pub async fn get_channels_async(
     );
 
     Ok(channels)
+}
+#[tauri::command]
+pub fn invalidate_channel_cache(cache_state: State<ChannelCacheState>) -> Result<(), String> {
+    let _operation = crate::operation_gate::read()?;
+    invalidate_channel_cache_inner(cache_state)
 }

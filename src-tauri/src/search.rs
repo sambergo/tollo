@@ -54,7 +54,7 @@ mod tests {
         let key2 = make_cache_key("test", Some(2));
         let key3 = make_cache_key("test", None);
         let key4 = make_cache_key("TEST", Some(1)); // Should be lowercase
-        
+
         assert_eq!(key1, "1:test");
         assert_eq!(key2, "2:test");
         assert_eq!(key3, "-1:test");
@@ -66,9 +66,9 @@ mod tests {
         let channels = create_test_channels();
         let query = "news".to_string();
         let id = Some(1);
-        
+
         let entry = AdvancedSearchCacheEntry::new(query.clone(), channels.clone(), id);
-        
+
         assert_eq!(entry.query, query);
         assert_eq!(entry.results.len(), channels.len());
         assert_eq!(entry.channel_list_id, id);
@@ -80,12 +80,12 @@ mod tests {
     fn test_advanced_search_cache_entry_access() {
         let channels = create_test_channels();
         let mut entry = AdvancedSearchCacheEntry::new("test".to_string(), channels, None);
-        
+
         assert_eq!(entry.access_count, 1);
-        
+
         entry.access();
         assert_eq!(entry.access_count, 2);
-        
+
         entry.access();
         assert_eq!(entry.access_count, 3);
     }
@@ -94,16 +94,16 @@ mod tests {
     fn test_advanced_search_cache_entry_expiry() {
         let channels = create_test_channels();
         let mut entry = AdvancedSearchCacheEntry::new("test".to_string(), channels, None);
-        
+
         // Should not be expired with short TTL
         assert!(!entry.is_expired(Duration::from_secs(1)));
-        
+
         // Simulate old timestamp
         entry.timestamp = SystemTime::now() - Duration::from_secs(10);
-        
+
         // Should be expired with short TTL
         assert!(entry.is_expired(Duration::from_secs(5)));
-        
+
         // Should not be expired with long TTL
         assert!(!entry.is_expired(Duration::from_secs(20)));
     }
@@ -112,31 +112,32 @@ mod tests {
     fn test_cleanup_expired_entries() {
         // Clear cache before test
         clear_advanced_cache();
-        
+
         let channels = create_test_channels();
-        
+
         // Add some entries with different timestamps
         let key1 = make_cache_key("cleanup_test1", None);
         let key2 = make_cache_key("cleanup_test2", None);
-        
-        let mut entry1 = AdvancedSearchCacheEntry::new("cleanup_test1".to_string(), channels.clone(), None);
+
+        let mut entry1 =
+            AdvancedSearchCacheEntry::new("cleanup_test1".to_string(), channels.clone(), None);
         let entry2 = AdvancedSearchCacheEntry::new("cleanup_test2".to_string(), channels, None);
-        
+
         // Make entry1 expired
         entry1.timestamp = SystemTime::now() - Duration::from_secs(400);
-        
+
         ADVANCED_CACHE.insert(key1, entry1);
         ADVANCED_CACHE.insert(key2, entry2);
-        
+
         let initial_size = ADVANCED_CACHE.len();
         assert!(initial_size >= 2);
-        
+
         // Clean up expired entries
         cleanup_expired_entries();
-        
+
         // Should have removed at least one expired entry
         assert!(ADVANCED_CACHE.len() < initial_size);
-        
+
         // Clear cache after test
         clear_advanced_cache();
     }
@@ -147,12 +148,12 @@ mod tests {
         let channels = create_test_channels();
         let key = make_cache_key("clear_test_unique", None);
         let entry = AdvancedSearchCacheEntry::new("clear_test_unique".to_string(), channels, None);
-        
+
         ADVANCED_CACHE.insert(key.clone(), entry);
-        
+
         // Verify entry was added
         assert!(ADVANCED_CACHE.contains_key(&key));
-        
+
         // Clear cache
         clear_advanced_cache();
         assert_eq!(ADVANCED_CACHE.len(), 0);
@@ -163,13 +164,14 @@ mod tests {
         // Add some test entries with unique key
         let channels = create_test_channels();
         let key = make_cache_key("invalidate_test_unique", None);
-        let entry = AdvancedSearchCacheEntry::new("invalidate_test_unique".to_string(), channels, None);
-        
+        let entry =
+            AdvancedSearchCacheEntry::new("invalidate_test_unique".to_string(), channels, None);
+
         ADVANCED_CACHE.insert(key.clone(), entry);
-        
+
         // Verify entry was added
         assert!(ADVANCED_CACHE.contains_key(&key));
-        
+
         // Invalidate cache
         let result = invalidate_search_cache();
         assert!(result.is_ok());
@@ -180,26 +182,39 @@ mod tests {
     fn test_get_cache_stats() {
         // Clear cache first and store initial state
         clear_advanced_cache();
-        
+
         let initial_result = get_cache_stats();
         assert!(initial_result.is_ok());
         let _initial_stats = initial_result.unwrap();
-        
+
         // Add some entries with unique key
         let channels = create_test_channels();
         let key = make_cache_key("stats_test_unique", Some(996));
-        let entry = AdvancedSearchCacheEntry::new("stats_test_unique".to_string(), channels, Some(996));
-        
+        let entry =
+            AdvancedSearchCacheEntry::new("stats_test_unique".to_string(), channels, Some(996));
+
         ADVANCED_CACHE.insert(key.clone(), entry);
-        
+
         let result = get_cache_stats();
         assert!(result.is_ok());
-        
+
         let stats = result.unwrap();
-        assert!(stats.entries >= 1, "Should have at least 1 entry in cache, got: {}", stats.entries);
-        assert!(stats.total_results >= 3, "Should have at least 3 total results, got: {}", stats.total_results);
-        assert!(stats.memory_usage_estimate > 0, "Memory usage should be > 0, got: {}", stats.memory_usage_estimate);
-        
+        assert!(
+            stats.entries >= 1,
+            "Should have at least 1 entry in cache, got: {}",
+            stats.entries
+        );
+        assert!(
+            stats.total_results >= 3,
+            "Should have at least 3 total results, got: {}",
+            stats.total_results
+        );
+        assert!(
+            stats.memory_usage_estimate > 0,
+            "Memory usage should be > 0, got: {}",
+            stats.memory_usage_estimate
+        );
+
         // Clean up our test entry
         ADVANCED_CACHE.remove(&key);
     }
@@ -208,35 +223,44 @@ mod tests {
     fn test_find_best_cached_prefix() {
         // Clear cache first
         clear_advanced_cache();
-        
+
         let channels = create_test_channels();
-        
+
         // Add cache entries with different prefixes using unique IDs
         let key1 = make_cache_key("prefix_ne", Some(997));
         let key2 = make_cache_key("prefix_news", Some(997));
         let key3 = make_cache_key("prefix_sport", Some(997));
-        
-        let entry1 = AdvancedSearchCacheEntry::new("prefix_ne".to_string(), channels.clone(), Some(997));
-        let entry2 = AdvancedSearchCacheEntry::new("prefix_news".to_string(), channels.clone(), Some(997));
-        let entry3 = AdvancedSearchCacheEntry::new("prefix_sport".to_string(), channels.clone(), Some(997));
-        
+
+        let entry1 =
+            AdvancedSearchCacheEntry::new("prefix_ne".to_string(), channels.clone(), Some(997));
+        let entry2 =
+            AdvancedSearchCacheEntry::new("prefix_news".to_string(), channels.clone(), Some(997));
+        let entry3 =
+            AdvancedSearchCacheEntry::new("prefix_sport".to_string(), channels.clone(), Some(997));
+
         ADVANCED_CACHE.insert(key1.clone(), entry1);
         ADVANCED_CACHE.insert(key2.clone(), entry2);
         ADVANCED_CACHE.insert(key3.clone(), entry3);
-        
+
         // Test finding best prefix for "prefix_news channel"
         let result = find_best_cached_prefix("prefix_news channel", Some(997));
-        assert!(result.is_some(), "Should find cached prefix for 'prefix_news channel'");
+        assert!(
+            result.is_some(),
+            "Should find cached prefix for 'prefix_news channel'"
+        );
         let (cached_query, cached_channels) = result.unwrap();
         assert_eq!(cached_query, "prefix_news"); // Should find "prefix_news" as the best prefix
         assert_eq!(cached_channels.len(), 3);
-        
+
         // Test finding best prefix for "prefix_newscaster" (should find "prefix_news")
         let result = find_best_cached_prefix("prefix_newscaster", Some(997));
-        assert!(result.is_some(), "Should find cached prefix for 'prefix_newscaster'");
+        assert!(
+            result.is_some(),
+            "Should find cached prefix for 'prefix_newscaster'"
+        );
         let (cached_query, _) = result.unwrap();
         assert_eq!(cached_query, "prefix_news");
-        
+
         // Clean up test entries
         ADVANCED_CACHE.remove(&key1);
         ADVANCED_CACHE.remove(&key2);
@@ -247,24 +271,28 @@ mod tests {
     fn test_evict_if_needed() {
         // Clear cache first
         clear_advanced_cache();
-        
+
         let channels = create_test_channels();
-        
+
         // Add entries with unique keys that won't exceed limits
         for i in 0..5 {
             let key = make_cache_key(&format!("evict_test_{}", i), Some(888));
-            let entry = AdvancedSearchCacheEntry::new(format!("evict_test_{}", i), channels.clone(), Some(888));
+            let entry = AdvancedSearchCacheEntry::new(
+                format!("evict_test_{}", i),
+                channels.clone(),
+                Some(888),
+            );
             ADVANCED_CACHE.insert(key, entry);
         }
-        
+
         let initial_size = ADVANCED_CACHE.len();
         assert!(initial_size >= 5);
-        
+
         // Evict shouldn't remove anything yet (not exceeding limits)
         evict_if_needed();
         let final_size = ADVANCED_CACHE.len();
         assert!(final_size >= 5); // Should still have our entries
-        
+
         // Clean up our test entries
         for i in 0..5 {
             let key = make_cache_key(&format!("evict_test_{}", i), Some(888));
@@ -277,19 +305,19 @@ mod tests {
         // Reset counters
         CACHE_HITS.store(0, Ordering::Relaxed);
         CACHE_MISSES.store(0, Ordering::Relaxed);
-        
+
         // Simulate some cache operations
         CACHE_HITS.fetch_add(1, Ordering::Relaxed);
         CACHE_MISSES.fetch_add(2, Ordering::Relaxed);
-        
+
         let stats = get_cache_stats().unwrap();
         assert_eq!(stats.hits, 1);
         assert_eq!(stats.misses, 2);
-        
+
         // Add more operations
         CACHE_HITS.fetch_add(3, Ordering::Relaxed);
         CACHE_MISSES.fetch_add(1, Ordering::Relaxed);
-        
+
         let stats = get_cache_stats().unwrap();
         assert_eq!(stats.hits, 4);
         assert_eq!(stats.misses, 3);
@@ -301,7 +329,7 @@ mod tests {
         let key1 = make_cache_key("test", Some(1));
         let key2 = make_cache_key("test", Some(1));
         let key3 = make_cache_key("Test", Some(1)); // Different case
-        
+
         assert_eq!(key1, key2);
         assert_eq!(key1, key3); // Should be case-insensitive
     }
@@ -477,8 +505,7 @@ fn get_search_space(
     get_cached_channels(db_state.clone(), cache_state.clone(), channel_list_id)
 }
 
-#[tauri::command]
-pub fn search_channels(
+pub(crate) fn search_channels_inner(
     db_state: State<DbState>,
     cache_state: State<ChannelCacheState>,
     query: String,
@@ -568,10 +595,12 @@ pub fn warm_cache_with_common_searches(
     cache_state: State<ChannelCacheState>,
     id: Option<i32>,
 ) -> Result<(), String> {
+    let _operation = crate::operation_gate::read()?;
+
     let common_searches = vec!["news", "sport", "hd", "music", "movie", "tv", "live"];
 
     for search_term in common_searches {
-        let _ = search_channels(
+        let _ = search_channels_inner(
             db_state.clone(),
             cache_state.clone(),
             search_term.to_string(),
@@ -582,8 +611,7 @@ pub fn warm_cache_with_common_searches(
     Ok(())
 }
 
-#[tauri::command]
-pub fn get_groups(
+pub(crate) fn get_groups_inner(
     db_state: State<DbState>,
     cache_state: State<ChannelCacheState>,
     id: Option<i32>,
@@ -608,6 +636,8 @@ pub async fn search_channels_async(
     query: String,
     id: Option<i32>,
 ) -> Result<Vec<Channel>, String> {
+    let _operation = crate::operation_gate::read_async().await?;
+
     let query_clone = query.clone();
 
     // Emit search start
@@ -622,7 +652,7 @@ pub async fn search_channels_async(
     );
 
     // Use the main search function (now with advanced caching and cancellation)
-    let channels = search_channels(db_state, cache_state, query_clone, id)?;
+    let channels = search_channels_inner(db_state, cache_state, query_clone, id)?;
 
     // Emit completion
     let _ = app_handle.emit(
@@ -645,6 +675,8 @@ pub async fn get_groups_async(
     cache_state: State<'_, ChannelCacheState>,
     id: Option<i32>,
 ) -> Result<Vec<String>, String> {
+    let _operation = crate::operation_gate::read_async().await?;
+
     // Emit loading start
     let _ = app_handle.emit(
         "groups_loading",
@@ -657,7 +689,7 @@ pub async fn get_groups_async(
     );
 
     // For now, use the blocking version directly to avoid lifetime issues
-    let groups = get_groups(db_state, cache_state, id)?;
+    let groups = get_groups_inner(db_state, cache_state, id)?;
 
     // Emit completion
     let _ = app_handle.emit(
@@ -671,4 +703,24 @@ pub async fn get_groups_async(
     );
 
     Ok(groups)
+}
+#[tauri::command]
+pub fn get_groups(
+    db_state: State<DbState>,
+    cache_state: State<ChannelCacheState>,
+    id: Option<i32>,
+) -> Result<Vec<String>, String> {
+    let _operation = crate::operation_gate::read()?;
+    get_groups_inner(db_state, cache_state, id)
+}
+
+#[tauri::command]
+pub fn search_channels(
+    db_state: State<DbState>,
+    cache_state: State<ChannelCacheState>,
+    query: String,
+    id: Option<i32>,
+) -> Result<Vec<Channel>, String> {
+    let _operation = crate::operation_gate::read()?;
+    search_channels_inner(db_state, cache_state, query, id)
 }

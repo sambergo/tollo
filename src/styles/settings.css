@@ -455,3 +455,29 @@
   padding-top: 1.5rem;
   border-top: 1px solid var(--border-primary);
 }
+
+.backup-content {
+  overflow-wrap: anywhere;
+}
+
+.backup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.backup-preview {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-primary);
+}
+
+.backup-settings {
+  display: grid;
+  grid-template-columns: minmax(8rem, 1fr) minmax(0, 2fr);
+  gap: 0.5rem 1rem;
+}
+
+.backup-settings dd {
+  margin: 0;
+}

@@ -13,7 +13,19 @@ pub fn initialize_database() -> Result<Connection> {
 
     let db_path = data_dir.join("database.sqlite");
     let conn = Connection::open(&db_path)?;
+    initialize_schema(&conn)?;
+    Ok(conn)
+}
 
+// Shared with isolated backup tests to keep their schema identical to production.
+pub(crate) fn initialize_schema(conn: &Connection) -> Result<()> {
+    // Seed the example playlist only for a new database. An intentionally empty
+    // restored collection must remain empty on the next application startup.
+    let seed_channel_lists: bool = conn.query_row(
+        "SELECT NOT EXISTS(SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'channel_lists')",
+        [],
+        |row| row.get(0),
+    )?;
     conn.execute(
         "CREATE TABLE IF NOT EXISTS favorites (
             id INTEGER PRIMARY KEY,
@@ -168,7 +180,7 @@ pub fn initialize_database() -> Result<Connection> {
 
     let list_count: i64 =
         conn.query_row("SELECT COUNT(*) FROM channel_lists", [], |row| row.get(0))?;
-    if list_count == 0 {
+    if list_count == 0 && seed_channel_lists {
         conn.execute(
             "INSERT INTO channel_lists (name, source, is_default) VALUES (?1, ?2, ?3)",
             &["iptv-org", "https://iptv-org.github.io/iptv/index.m3u", "1"],
@@ -192,7 +204,7 @@ pub fn initialize_database() -> Result<Connection> {
         )?;
     }
 
-    Ok(conn)
+    Ok(())
 }
 
 pub fn populate_channels(conn: &mut Connection, channels: &[Channel]) -> RusqliteResult<()> {
