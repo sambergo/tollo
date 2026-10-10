@@ -1,6 +1,6 @@
 [package]
 name = "tollo"
-version = "0.1.13"
+version = "0.1.14"
 description = "Tollo - A modern IPTV player"
 authors = ["sambergo"]
 license = "MIT"
