@@ -211,8 +211,9 @@
         }[status.state] || status.state;
       element("playback-error").textContent = status.error || "";
       element("playback-error").hidden = !status.error;
-      element("pause").textContent = status.paused ? "Resume" : "Pause";
-      element("mute").textContent = status.muted ? "Unmute" : "Mute";
+      element("pause-label").textContent = status.paused ? "Resume" : "Pause";
+      element("pause").classList.toggle("is-paused", status.paused);
+      element("mute-label").textContent = status.muted ? "Unmute" : "Mute";
       element("pause").disabled = !["playing", "paused"].includes(status.state);
       element("stop").disabled = !status.channel;
       element("mute").disabled = !status.channel;

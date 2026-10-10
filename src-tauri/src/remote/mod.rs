@@ -406,6 +406,15 @@ fn router(service: Service) -> Router {
                 )
             }),
         )
+        .route(
+            "/icon.png",
+            get(|| async {
+                (
+                    [(header::CONTENT_TYPE, "image/png")],
+                    include_bytes!("../../icons/128x128.png").as_slice(),
+                )
+            }),
+        )
         .nest("/api", api)
         .layer(middleware::from_fn(security_headers))
         .with_state(service)

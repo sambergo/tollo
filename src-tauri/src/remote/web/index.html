@@ -5,14 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="dark" />
     <title>Tollo · Browser Remote</title>
+    <link rel="icon" type="image/png" href="/icon.png" />
     <link rel="stylesheet" href="/remote.css" />
     <script src="/remote.js" defer></script>
   </head>
   <body>
     <header class="topbar">
-      <a class="brand" href="/">Tollo <span>REMOTE</span></a>
+      <a class="brand" href="/" aria-label="Tollo Remote home">
+        <img src="/icon.png" width="44" height="44" alt="" />
+        <span class="brand-name">Tollo</span
+        ><span class="brand-detail">REMOTE</span>
+      </a>
       <div class="connection">
-        <span id="connection">Not connected</span
+        <span id="connection" role="status">Not connected</span
         ><button id="disconnect" class="quiet" hidden>Disconnect</button>
       </div>
     </header>
@@ -51,9 +56,20 @@
           </div>
           <p id="playback-error" class="error" role="status" hidden></p>
           <div class="controls">
-            <button id="pause" class="primary" disabled>Pause</button
-            ><button id="stop" disabled>Stop</button
-            ><button id="mute" disabled>Mute</button>
+            <div class="playback-actions">
+              <button id="pause" class="primary" disabled>
+                <span class="control-icon pause-icon" aria-hidden="true"></span
+                ><span id="pause-label">Pause</span></button
+              ><button id="stop" disabled>
+                <span class="control-icon stop-icon" aria-hidden="true"></span
+                >Stop</button
+              ><button id="mute" disabled>
+                <svg class="icon" aria-hidden="true" viewBox="0 0 24 24">
+                  <path d="M11 5 6 9H3v6h3l5 4V5Z" />
+                  <path d="M15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14" /></svg
+                ><span id="mute-label">Mute</span>
+              </button>
+            </div>
             <div class="volume">
               <label for="volume"
                 >Volume <output id="volume-value">100%</output></label
@@ -71,7 +87,13 @@
         <section class="library" aria-label="Channel library">
           <div class="library-heading">
             <h2>Your library</h2>
-            <button id="refresh" class="quiet">Refresh</button>
+            <button id="refresh" class="quiet">
+              <svg class="icon" aria-hidden="true" viewBox="0 0 24 24">
+                <path
+                  d="M20 7v5h-5M4 17v-5h5M6 7a7 7 0 0 1 12-2l2 3M4 16l2 3a7 7 0 0 0 12-2"
+                /></svg
+              >Refresh
+            </button>
           </div>
           <div class="filters">
             <div>
@@ -81,13 +103,19 @@
               </select>
             </div>
             <div class="search">
-              <label for="search">Search channels</label
-              ><input
-                id="search"
-                type="search"
-                placeholder="Search by name or group…"
-                autocomplete="off"
-              />
+              <label for="search">Search channels</label>
+              <div class="search-field">
+                <svg class="icon" aria-hidden="true" viewBox="0 0 24 24">
+                  <circle cx="10.5" cy="10.5" r="7" />
+                  <path d="m16 16 5 5" />
+                </svg>
+                <input
+                  id="search"
+                  type="search"
+                  placeholder="Search by name or group…"
+                  autocomplete="off"
+                />
+              </div>
             </div>
             <div>
               <label for="group">Group</label
