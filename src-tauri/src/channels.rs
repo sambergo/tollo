@@ -87,7 +87,14 @@ pub(crate) fn invalidate_channel_cache_inner(
 }
 
 #[tauri::command]
-pub async fn play_channel(state: State<'_, DbState>, channel: Channel) -> Result<(), String> {
+pub async fn play_channel(
+    app: AppHandle,
+    state: State<'_, DbState>,
+    channel: Channel,
+) -> Result<(), String> {
+    if let Some(result) = crate::remote::try_desktop_play(&app, channel.clone()).await {
+        return result;
+    }
     let _operation = crate::operation_gate::read_async().await?;
 
     let player_command: String = {

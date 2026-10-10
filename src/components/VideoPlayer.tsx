@@ -2,6 +2,7 @@ import { forwardRef, useEffect, useRef, useState } from "react";
 import { PlayIcon } from "./Icons";
 import { useChannelStore } from "../stores";
 import { useSettingsStore } from "../stores";
+import { useRemoteStore } from "../stores/remoteStore";
 
 const VideoPlayer = forwardRef<HTMLVideoElement, {}>((_, ref) => {
   const {
@@ -10,6 +11,7 @@ const VideoPlayer = forwardRef<HTMLVideoElement, {}>((_, ref) => {
     setIsExternalPlayerPlaying,
   } = useChannelStore();
   const { muteOnStart, showControls, autoplay } = useSettingsStore();
+  const previewSuspended = useRemoteStore((state) => state.previewSuspended);
   const previousChannelRef = useRef(selectedChannel);
   const [codecWarning, setCodecWarning] = useState(false);
 
@@ -29,7 +31,7 @@ const VideoPlayer = forwardRef<HTMLVideoElement, {}>((_, ref) => {
   return (
     <div className="video-preview">
       <div className="video-container">
-        {selectedChannel && !isExternalPlayerPlaying ? (
+        {selectedChannel && !isExternalPlayerPlaying && !previewSuspended ? (
           <>
             <video
               ref={ref}
@@ -42,7 +44,8 @@ const VideoPlayer = forwardRef<HTMLVideoElement, {}>((_, ref) => {
             />
             {codecWarning && (
               <div className="codec-warning">
-                ⚠️ Could not play this stream. Try opening it in an external player.
+                ⚠️ Could not play this stream. Try opening it in an external
+                player.
               </div>
             )}
             <div className="video-controls">
@@ -60,7 +63,9 @@ const VideoPlayer = forwardRef<HTMLVideoElement, {}>((_, ref) => {
             <PlayIcon />
             <div className="video-placeholder-text">Preview Window</div>
             <div className="video-placeholder-channel">
-              Select a channel to start watching
+              {previewSuspended
+                ? "Preview paused while the shared TV player is active"
+                : "Select a channel to start watching"}
             </div>
           </div>
         )}

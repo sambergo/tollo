@@ -13,6 +13,7 @@ pub mod m3u_parser;
 mod m3u_parser_helpers;
 mod operation_gate;
 mod playlists;
+mod remote;
 pub mod search;
 mod settings;
 mod state;
@@ -94,6 +95,14 @@ pub fn run() {
             app.manage(ImageCacheState {
                 cache: Arc::new(image_cache),
             });
+
+            let remote_state =
+                remote::RemoteState::new(app.path().app_config_dir()?.join("browser-remote.json"));
+            app.manage(remote_state);
+            tauri::async_runtime::block_on(
+                app.state::<remote::RemoteState>()
+                    .restore(app.handle().clone()),
+            );
 
             // Start the local streaming proxy server (random loopback port)
             match tauri::async_runtime::block_on(stream_proxy::start_proxy_server()) {
@@ -194,11 +203,20 @@ pub fn run() {
             delete_saved_filter,
             // Stream proxy
             get_proxy_port,
+            remote::get_remote_info,
+            remote::get_remote_playback,
+            remote::set_remote_config,
+            remote::revoke_remote_access,
         ])
-        .run(tauri::generate_context!())
+        .build(tauri::generate_context!())
         .map_err(|e| {
             eprintln!("Failed to run Tauri application: {}", e);
             std::process::exit(1);
         })
-        .unwrap();
+        .unwrap()
+        .run(|app, event| {
+            if matches!(event, tauri::RunEvent::Exit) {
+                tauri::async_runtime::block_on(app.state::<remote::RemoteState>().shutdown());
+            }
+        });
 }

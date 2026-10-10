@@ -2,6 +2,73 @@ use crate::m3u_parser::Channel;
 use crate::state::DbState;
 use tauri::{AppHandle, Emitter, State};
 
+// Idempotent desired-state updates for concurrent browser clients. Desktop
+// add_favorite retains its existing duplicate-error behaviour.
+pub(crate) fn set_favorite_inner(
+    state: State<DbState>,
+    channel: Channel,
+    enabled: bool,
+) -> Result<(), String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    set_favorite_in_db(&db, &channel, enabled)
+}
+
+fn set_favorite_in_db(
+    db: &rusqlite::Connection,
+    channel: &Channel,
+    enabled: bool,
+) -> Result<(), String> {
+    if enabled {
+        db.execute("INSERT OR IGNORE INTO favorites (name,logo,url,group_title,tvg_id,resolution,extra_info,position) VALUES (?1,?2,?3,?4,?5,?6,?7,(SELECT COALESCE(MAX(position),-1)+1 FROM favorites))",
+            rusqlite::params![channel.name,channel.logo,channel.url,channel.group_title,channel.tvg_id,channel.resolution,channel.extra_info]).map_err(|e| e.to_string())?;
+    } else {
+        db.execute("DELETE FROM favorites WHERE name = ?1", [&channel.name])
+            .map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod remote_tests {
+    use super::*;
+    #[test]
+    fn repeated_browser_updates_preserve_favorite_identity_and_order() {
+        let db = rusqlite::Connection::open_in_memory().unwrap();
+        crate::database::initialize_schema(&db).unwrap();
+        let mut channel = Channel {
+            name: "First".into(),
+            url: "https://example.test/1".into(),
+            logo: String::new(),
+            group_title: String::new(),
+            tvg_id: String::new(),
+            resolution: String::new(),
+            extra_info: String::new(),
+        };
+        set_favorite_in_db(&db, &channel, true).unwrap();
+        channel.name = "Second".into();
+        set_favorite_in_db(&db, &channel, true).unwrap();
+        channel.name = "First".into();
+        channel.url = "https://example.test/changed".into();
+        set_favorite_in_db(&db, &channel, true).unwrap();
+        let first: (String, i64) = db
+            .query_row(
+                "SELECT url, position FROM favorites WHERE name = 'First'",
+                [],
+                |row| Ok((row.get(0)?, row.get(1)?)),
+            )
+            .unwrap();
+        assert_eq!(first, ("https://example.test/1".into(), 0));
+        set_favorite_in_db(&db, &channel, false).unwrap();
+        set_favorite_in_db(&db, &channel, false).unwrap();
+        assert_eq!(
+            db.query_row("SELECT name FROM favorites", [], |row| row
+                .get::<_, String>(0))
+                .unwrap(),
+            "Second"
+        );
+    }
+}
+
 pub(crate) fn add_favorite_inner(state: State<DbState>, channel: Channel) -> Result<(), String> {
     let db = state.db.lock().unwrap();
     let max_pos: i64 = db
