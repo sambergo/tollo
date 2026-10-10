@@ -7,7 +7,10 @@ use tauri::{AppHandle, State};
 #[tauri::command]
 pub fn get_channel_lists(state: State<DbState>) -> Result<Vec<ChannelList>, String> {
     let _operation = crate::operation_gate::read()?;
+    get_channel_lists_inner(state)
+}
 
+pub(crate) fn get_channel_lists_inner(state: State<DbState>) -> Result<Vec<ChannelList>, String> {
     let db = state.db.lock().unwrap();
     let mut stmt = db
         .prepare("SELECT id, name, source, is_default, filepath, last_fetched FROM channel_lists")

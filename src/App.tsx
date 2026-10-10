@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState, startTransition } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
+import { useRemoteStore } from "./stores/remoteStore";
+import type { RemoteInfo, RemotePlayback } from "./types/remote";
 import Hls from "hls.js";
 import mpegts from "mpegts.js";
 import NavigationSidebar from "./components/NavigationSidebar";
@@ -25,6 +28,41 @@ import type { Channel } from "./components/ChannelList";
 import "./App.css";
 
 function App() {
+  const previewSuspended = useRemoteStore((state) => state.previewSuspended);
+  useEffect(() => {
+    let disposed = false;
+    const cleanup: (() => void)[] = [];
+    const register = async () => {
+      const listeners = await Promise.all([
+        listen<RemoteInfo>("remote-config", (event) =>
+          useRemoteStore.getState().setInfo(event.payload),
+        ),
+        listen<RemotePlayback>("remote-playback", (event) =>
+          useRemoteStore.getState().setPlayback(event.payload),
+        ),
+        listen("remote-preview-suspend", () =>
+          useRemoteStore.getState().suspendPreview(),
+        ),
+        listen("remote-library-changed", () => {
+          void useChannelStore.getState().fetchFavorites();
+          void useChannelStore.getState().fetchHistory();
+        }),
+      ]);
+      if (disposed) listeners.forEach((unlisten) => unlisten());
+      else cleanup.push(...listeners);
+    };
+    void register();
+    const refresh = () => {
+      void useRemoteStore.getState().refresh().catch(console.warn);
+    };
+    refresh();
+    const timer = window.setInterval(refresh, 1000);
+    return () => {
+      disposed = true;
+      cleanup.forEach((unlisten) => unlisten());
+      window.clearInterval(timer);
+    };
+  }, []);
   // Zustand store hooks
   const {
     channels,
@@ -300,9 +338,27 @@ function App() {
       mpegtsRef.current = null;
     }
 
-    if (!enablePreview || !selectedChannel || !videoRef.current) return;
+    const videoElement = videoRef.current;
+    if (videoElement) {
+      videoElement.pause();
+      videoElement.removeAttribute("src");
+      videoElement.load();
+    }
+    if (
+      !enablePreview ||
+      previewSuspended ||
+      !selectedChannel ||
+      !videoRef.current
+    )
+      return;
 
     const video = videoRef.current;
+    const handleMetadata = () => {
+      if (autoplay) void video.play();
+    };
+    const handleVideoError = () => {
+      console.warn("Video preview failed to load.");
+    };
     const url = selectedChannel.url;
     const isHlsUrl = url.includes(".m3u8") || url.includes("m3u8");
 
@@ -318,9 +374,7 @@ function App() {
     } else if (isHlsUrl && video.canPlayType("application/vnd.apple.mpegurl")) {
       // Native HLS support (Safari / macOS WebKit)
       video.src = url;
-      video.addEventListener("loadedmetadata", () => {
-        if (autoplay) video.play();
-      });
+      video.addEventListener("loadedmetadata", handleMetadata);
     } else if (mpegts.isSupported() && proxyPortRef.current !== null) {
       // MPEG-TS over MSE via local proxy — fixes Windows (WebView2 can't decode raw MPEG-TS)
       const proxiedUrl = `http://127.0.0.1:${proxyPortRef.current}/stream?url=${encodeURIComponent(url)}`;
@@ -339,14 +393,21 @@ function App() {
       video.src = port
         ? `http://127.0.0.1:${port}/stream?url=${encodeURIComponent(url)}`
         : url;
-      video.addEventListener("loadedmetadata", () => {
-        if (autoplay) video.play();
-      });
-      video.addEventListener("error", (e) => {
-        console.warn(`Video load error for ${selectedChannel.name}:`, e);
-      });
+      video.addEventListener("loadedmetadata", handleMetadata);
+      video.addEventListener("error", handleVideoError);
     }
-  }, [selectedChannel, enablePreview, autoplay]);
+    return () => {
+      video.removeEventListener("loadedmetadata", handleMetadata);
+      video.removeEventListener("error", handleVideoError);
+      hlsRef.current?.destroy();
+      hlsRef.current = null;
+      mpegtsRef.current?.destroy();
+      mpegtsRef.current = null;
+      video.pause();
+      video.removeAttribute("src");
+      video.load();
+    };
+  }, [selectedChannel, enablePreview, autoplay, previewSuspended]);
 
   const handleSelectGroup = (group: string | null) => {
     setSelectedGroup(group);

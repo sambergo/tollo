@@ -14,6 +14,24 @@ IPTV player with fuzzy search, vim-like navigation, external player integration,
 - External player integration (MPV)
 - Favorites and history
 - Portable user-data backup and restore
+- Optional browser remote for channels, favourites, and TV playback (Linux host)
+
+## Browser Remote
+
+On a Linux computer connected to your TV, install mpv, open Tollo, and enable
+**Settings → Browser Remote → Allow browser remote access**. Scan the QR code
+with your phone’s camera, or copy the private
+connection link and open it on another computer or phone on the same trusted
+local network. Browse playlists, search channels, edit favourites, and control
+playback on the TV computer without installing Tollo on the controlling device.
+
+Remote access is off by default. Once enabled, it starts with Tollo and remembers
+connected browsers. Keep Tollo open in the TV desktop session. Access keys and
+remote settings stay on the host and are excluded from portable backups. HTTP
+connections are unencrypted; use a trusted LAN and keep the private link private.
+
+See the [Browser Remote guide](docs/browser-remote.md) for setup, shared desktop
+playback, access revocation, Linux hosting requirements, and troubleshooting.
 
 ## Backup & restore
 
@@ -41,6 +59,9 @@ Download the latest release for your platform from [GitHub Releases](https://git
 - **Linux**: `.deb` package and `.AppImage`
 
 ## Development
+
+To control playback on another computer connected to a TV, see the
+[SSH remote playback prototype](docs/remote-playback.md).
 
 ```bash
 pnpm install

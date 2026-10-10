@@ -1,0 +1,136 @@
+#!/usr/bin/env python3
+"""Control a persistent mpv on a Linux TV computer over SSH (stdlib only)."""
+
+import argparse
+import fcntl
+import json
+from pathlib import Path
+import socket
+import subprocess
+import sys
+import time
+
+
+def socket_path():
+    # A fixed per-user path also works when SSH has no XDG_RUNTIME_DIR.
+    return Path.home() / ".cache" / "tollo-tv" / "mpv.sock"
+
+
+def start():
+    path = socket_path()
+    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    path.parent.chmod(0o700)
+    with (path.parent / "player.lock").open("w") as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise RuntimeError("The TV player is already running.") from None
+        # Only this launcher manages this socket; remove leftovers after a crash.
+        path.unlink(missing_ok=True)
+        try:
+            return subprocess.call([
+                "mpv", "--idle=yes", "--force-window=yes", "--fullscreen",
+                "--input-ipc-server=" + str(path),
+            ])
+        finally:
+            path.unlink(missing_ok=True)
+
+
+def receive():
+    request = json.loads(sys.stdin.buffer.readline(65537))
+    command = request.get("command") if isinstance(request, dict) else None
+    if not isinstance(command, list) or not command:
+        raise ValueError("Expected an mpv command array.")
+    # Use our own request ID to distinguish replies from unsolicited events.
+    request = {"command": command, "request_id": 1}
+    deadline = time.monotonic() + 5
+    with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as connection:
+        connection.settimeout(5)
+        try:
+            connection.connect(str(socket_path()))
+        except (FileNotFoundError, ConnectionRefusedError):
+            raise RuntimeError(
+                "TV player is not running. Run ~/.local/bin/tollo-tv start "
+                "in the TV computer's desktop session."
+            ) from None
+        connection.sendall(json.dumps(request).encode() + b"\n")
+        with connection.makefile("rb") as replies:
+            while True:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise TimeoutError("mpv did not acknowledge the command.")
+                connection.settimeout(remaining)
+                line = replies.readline(65537)
+                if not line:
+                    raise RuntimeError("mpv disconnected before acknowledging the command.")
+                reply = json.loads(line)
+                if reply.get("request_id") == 1:
+                    if reply.get("error") != "success":
+                        raise RuntimeError("mpv: " + str(reply.get("error")))
+                    print(json.dumps(reply))
+                    return 0
+
+
+def send(host, command):
+    if host.startswith("-") or not host or any(c.isspace() for c in host):
+        raise ValueError("Use an SSH hostname or alias, such as hp.")
+    payload = json.dumps({"command": command}) + "\n"
+    if len(payload.encode()) > 65536:
+        raise ValueError("Command is too large.")
+    # The URL travels on stdin, never as remote shell source.
+    result = subprocess.run([
+        "ssh", "-T", "-o", "BatchMode=yes", "-o", "ConnectTimeout=5",
+        host, 'python3 "$HOME/.local/bin/tollo-tv" receive',
+    ], input=payload, text=True, capture_output=True, timeout=12)
+    if result.returncode:
+        raise RuntimeError(result.stderr.strip() or "SSH command failed.")
+    reply = json.loads(result.stdout)
+    if reply.get("error") != "success":
+        raise RuntimeError("TV player did not acknowledge the command.")
+    if reply.get("data") is not None:
+        print(json.dumps(reply["data"]))
+    return 0
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    sub = parser.add_subparsers(dest="action", required=True)
+    sub.add_parser("start", help="Start fullscreen mpv in the TV desktop session")
+    sub.add_parser("receive", help="Internal SSH receiver")
+    for action in ("play", "pause", "stop", "volume", "status"):
+        child = sub.add_parser(action)
+        child.add_argument("host", help="SSH alias or user@hostname")
+        if action == "play":
+            child.add_argument("url")
+        if action == "volume":
+            child.add_argument("level", type=int, choices=range(101), metavar="0..100")
+    args = parser.parse_args()
+    if args.action == "start":
+        return start()
+    if args.action == "receive":
+        return receive()
+    commands = {
+        "pause": ["cycle", "pause"],
+        "stop": ["stop"],
+        "status": ["get_property", "idle-active"],
+    }
+    if args.action == "play":
+        # Restrict input to network streams, including URLs with credentials/query strings.
+        if not args.url.lower().startswith(("http://", "https://", "rtsp://", "rtmp://", "udp://", "rtp://")):
+            raise ValueError("Expected an HTTP(S), RTSP, RTMP, UDP, or RTP stream URL.")
+        command = ["loadfile", args.url, "replace"]
+    elif args.action == "volume":
+        command = ["set_property", "volume", args.level]
+    else:
+        command = commands[args.action]
+    return send(args.host, command)
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired) as error:
+        print(f"tollo-tv: {error}", file=sys.stderr)
+        sys.exit(1)
+    except KeyboardInterrupt:
+        sys.exit(130)
