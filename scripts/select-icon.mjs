@@ -6,8 +6,9 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const variant = process.argv[2];
-if (process.argv.length !== 3 || !["sleepy", "punk"].includes(variant)) {
-  console.error("Usage: pnpm icon:select <sleepy|punk>");
+const variants = ["sleepy", "punk", "punk-ice", "punk-copper"];
+if (process.argv.length !== 3 || !variants.includes(variant)) {
+  console.error(`Usage: pnpm icon:select <${variants.join("|")}>`);
   process.exit(1);
 }
 
@@ -48,7 +49,10 @@ try {
     join(root, "public", "logo.png"),
   );
   console.log(
-    `Selected ${variant} owl. Rebuild and reinstall to update OS icons.`,
+    `Selected ${variant} owl. Restart pnpm dev:tauri to refresh the native window icon.`,
+  );
+  console.log(
+    "Menu and Wayland dock icons come from your desktop launcher; rebuild and reinstall for installed app icons.",
   );
 } finally {
   await rm(temporary, { recursive: true, force: true });

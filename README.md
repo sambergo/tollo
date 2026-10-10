@@ -60,9 +60,9 @@ Download the latest release for your platform from [GitHub Releases](https://git
 
 ## Development
 
-The sleepy owl is the default app icon. To try the alternate punk owl, run
-`pnpm icon:select punk`, then rebuild and reinstall the app. Switch back with
-`pnpm icon:select sleepy`. See [icon variants](assets/branding/README.md) for
+To try an app icon, run `pnpm icon:select` with `sleepy`, `punk`, `punk-ice`
+(blue/orange), or `punk-copper` (copper/cream), then rebuild and reinstall the app.
+See [icon variants](assets/branding/README.md) for
 details about generated assets and desktop integration.
 
 To control playback on another computer connected to a TV, see the
