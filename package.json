@@ -12,6 +12,7 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
+    "icon:select": "node scripts/select-icon.mjs",
     "dev:tauri": "tauri dev",
     "build:tauri": "tauri build",
     "check:tauri": "tauri check",
