@@ -309,6 +309,34 @@ input[type="range"]:disabled {
 }
 .search-field input {
   padding-left: 46px;
+  padding-right: 48px;
+}
+.search-field input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+}
+.clear-filter {
+  flex-shrink: 0;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 10px;
+  color: var(--muted);
+  background: transparent;
+}
+.search-field .clear-filter {
+  position: absolute;
+  right: 3px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: 8px;
+}
+.group-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.group-field select {
+  flex: 1;
 }
 .tabs {
   display: flex;

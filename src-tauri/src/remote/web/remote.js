@@ -120,6 +120,7 @@
         )
           ? oldGroup
           : "";
+        updateFilterButtons();
         if (offset && offset >= data.total) {
           offset = Math.max(0, Math.floor((data.total - 1) / 150) * 150);
         }
@@ -278,8 +279,13 @@
     offset = 0;
     void loadLibrary(true);
   };
+  function updateFilterButtons() {
+    element("clear-search").hidden = !element("search").value;
+    element("clear-group").hidden = !element("group").value;
+  }
   let searchTimer;
   element("search").oninput = () => {
+    updateFilterButtons();
     offset = 0;
     clearTimeout(searchTimer);
     searchTimer = setTimeout(() => {
@@ -287,9 +293,26 @@
     }, 150);
   };
   element("group").onchange = () => {
+    updateFilterButtons();
     offset = 0;
     void loadLibrary(true);
   };
+  element("clear-search").onclick = () => {
+    clearTimeout(searchTimer);
+    element("search").value = "";
+    updateFilterButtons();
+    offset = 0;
+    element("search").focus();
+    void loadLibrary(true);
+  };
+  element("clear-group").onclick = () => {
+    element("group").value = "";
+    updateFilterButtons();
+    offset = 0;
+    element("group").focus();
+    void loadLibrary(true);
+  };
+  updateFilterButtons();
   document.querySelectorAll("[data-tab]").forEach((button) => {
     button.onclick = () => {
       view = button.dataset.tab;
