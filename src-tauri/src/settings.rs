@@ -1,6 +1,6 @@
-use tauri::State;
 use crate::state::DbState;
 use std::process::Command;
+use tauri::State;
 
 pub fn detect_default_player() -> String {
     let players = if cfg!(target_os = "windows") {
@@ -12,12 +12,21 @@ pub fn detect_default_player() -> String {
     };
 
     for player in players {
-        if Command::new("which").arg(player).output().map(|o| o.status.success()).unwrap_or(false) ||
-           Command::new("where").arg(player).output().map(|o| o.status.success()).unwrap_or(false) {
+        if Command::new("which")
+            .arg(player)
+            .output()
+            .map(|o| o.status.success())
+            .unwrap_or(false)
+            || Command::new("where")
+                .arg(player)
+                .output()
+                .map(|o| o.status.success())
+                .unwrap_or(false)
+        {
             return player.to_string();
         }
     }
-    
+
     // Fallback to mpv on Linux/macOS, vlc on Windows
     if cfg!(target_os = "windows") {
         "vlc".to_string()
@@ -56,6 +65,8 @@ pub fn detect_default_clipboard_command() -> String {
 
 #[tauri::command]
 pub fn get_player_command(state: State<DbState>) -> Result<String, String> {
+    let _operation = crate::operation_gate::read()?;
+
     let db = state.db.lock().unwrap();
     match db.query_row(
         "SELECT player_command FROM settings WHERE id = 1",
@@ -72,23 +83,29 @@ pub fn get_player_command(state: State<DbState>) -> Result<String, String> {
 
 #[tauri::command]
 pub fn set_player_command(state: State<DbState>, command: String) -> Result<(), String> {
+    let _operation = crate::operation_gate::read()?;
+
     let db = state.db.lock().unwrap();
     db.execute(
         "UPDATE settings SET player_command = ?1 WHERE id = 1",
         &[&command],
-    ).map_err(|e| e.to_string())?;
+    )
+    .map_err(|e| e.to_string())?;
     Ok(())
 }
 
 #[tauri::command]
 pub fn get_clipboard_command(state: State<DbState>) -> Result<String, String> {
+    let _operation = crate::operation_gate::read()?;
+
     let db = state.db.lock().unwrap();
-    let command: String = db.query_row(
-        "SELECT clipboard_command FROM settings WHERE id = 1",
-        [],
-        |row| row.get(0),
-    )
-    .unwrap_or_default();
+    let command: String = db
+        .query_row(
+            "SELECT clipboard_command FROM settings WHERE id = 1",
+            [],
+            |row| row.get(0),
+        )
+        .unwrap_or_default();
 
     if command.trim().is_empty() {
         Ok(detect_default_clipboard_command())
@@ -99,6 +116,8 @@ pub fn get_clipboard_command(state: State<DbState>) -> Result<String, String> {
 
 #[tauri::command]
 pub fn set_clipboard_command(state: State<DbState>, command: String) -> Result<(), String> {
+    let _operation = crate::operation_gate::read()?;
+
     let command = command.trim();
     if command.is_empty() {
         return Err("Clipboard command cannot be empty".to_string());
@@ -115,45 +134,59 @@ pub fn set_clipboard_command(state: State<DbState>, command: String) -> Result<(
 
 #[tauri::command]
 pub fn get_cache_duration(state: State<DbState>) -> Result<i64, String> {
+    let _operation = crate::operation_gate::read()?;
+
     let db = state.db.lock().unwrap();
     db.query_row(
         "SELECT cache_duration_hours FROM settings WHERE id = 1",
         [],
         |row| row.get(0),
-    ).map_err(|e| e.to_string())
+    )
+    .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 pub fn set_cache_duration(state: State<DbState>, hours: i64) -> Result<(), String> {
+    let _operation = crate::operation_gate::read()?;
+
     let db = state.db.lock().unwrap();
     db.execute(
         "UPDATE settings SET cache_duration_hours = ?1 WHERE id = 1",
         &[&hours],
-    ).map_err(|e| e.to_string())?;
+    )
+    .map_err(|e| e.to_string())?;
     Ok(())
 }
 
 #[tauri::command]
 pub fn get_enable_preview(state: State<DbState>) -> Result<bool, String> {
+    let _operation = crate::operation_gate::read()?;
+
     let db = state.db.lock().unwrap();
-    let enable_preview: bool = db.query_row(
-        "SELECT enable_preview FROM settings WHERE id = 1",
-        [],
-        |row| row.get(0),
-    ).unwrap_or(true); // Default to true if not found
+    let enable_preview: bool = db
+        .query_row(
+            "SELECT enable_preview FROM settings WHERE id = 1",
+            [],
+            |row| row.get(0),
+        )
+        .unwrap_or(true); // Default to true if not found
     Ok(enable_preview)
 }
 
 #[tauri::command]
 pub fn set_enable_preview(state: State<DbState>, enabled: bool) -> Result<(), String> {
+    let _operation = crate::operation_gate::read()?;
+
     let db = state.db.lock().unwrap();
-    
+
     // First try to update existing row
-    let rows_affected = db.execute(
-        "UPDATE settings SET enable_preview = ?1 WHERE id = 1",
-        &[&enabled],
-    ).map_err(|e| e.to_string())?;
-    
+    let rows_affected = db
+        .execute(
+            "UPDATE settings SET enable_preview = ?1 WHERE id = 1",
+            &[&enabled],
+        )
+        .map_err(|e| e.to_string())?;
+
     // If no rows were affected, insert a new settings row with default values
     if rows_affected == 0 {
         let default_player = detect_default_player();
@@ -162,29 +195,37 @@ pub fn set_enable_preview(state: State<DbState>, enabled: bool) -> Result<(), St
             rusqlite::params![default_player, enabled],
         ).map_err(|e| e.to_string())?;
     }
-    
+
     Ok(())
 }
 
 // --- Video Player Settings: Mute on Start ---
 #[tauri::command]
 pub fn get_mute_on_start(state: State<DbState>) -> Result<bool, String> {
+    let _operation = crate::operation_gate::read()?;
+
     let db = state.db.lock().unwrap();
-    let mute_on_start: bool = db.query_row(
-        "SELECT mute_on_start FROM settings WHERE id = 1",
-        [],
-        |row| row.get(0),
-    ).unwrap_or(false); // Default to false if not found
+    let mute_on_start: bool = db
+        .query_row(
+            "SELECT mute_on_start FROM settings WHERE id = 1",
+            [],
+            |row| row.get(0),
+        )
+        .unwrap_or(false); // Default to false if not found
     Ok(mute_on_start)
 }
 
 #[tauri::command]
 pub fn set_mute_on_start(state: State<DbState>, enabled: bool) -> Result<(), String> {
+    let _operation = crate::operation_gate::read()?;
+
     let db = state.db.lock().unwrap();
-    let rows_affected = db.execute(
-        "UPDATE settings SET mute_on_start = ?1 WHERE id = 1",
-        &[&enabled],
-    ).map_err(|e| e.to_string())?;
+    let rows_affected = db
+        .execute(
+            "UPDATE settings SET mute_on_start = ?1 WHERE id = 1",
+            &[&enabled],
+        )
+        .map_err(|e| e.to_string())?;
     if rows_affected == 0 {
         let default_player = detect_default_player();
         db.execute(
@@ -198,22 +239,30 @@ pub fn set_mute_on_start(state: State<DbState>, enabled: bool) -> Result<(), Str
 // --- Video Player Settings: Show Controls ---
 #[tauri::command]
 pub fn get_show_controls(state: State<DbState>) -> Result<bool, String> {
+    let _operation = crate::operation_gate::read()?;
+
     let db = state.db.lock().unwrap();
-    let show_controls: bool = db.query_row(
-        "SELECT show_controls FROM settings WHERE id = 1",
-        [],
-        |row| row.get(0),
-    ).unwrap_or(true); // Default to true if not found
+    let show_controls: bool = db
+        .query_row(
+            "SELECT show_controls FROM settings WHERE id = 1",
+            [],
+            |row| row.get(0),
+        )
+        .unwrap_or(true); // Default to true if not found
     Ok(show_controls)
 }
 
 #[tauri::command]
 pub fn set_show_controls(state: State<DbState>, enabled: bool) -> Result<(), String> {
+    let _operation = crate::operation_gate::read()?;
+
     let db = state.db.lock().unwrap();
-    let rows_affected = db.execute(
-        "UPDATE settings SET show_controls = ?1 WHERE id = 1",
-        &[&enabled],
-    ).map_err(|e| e.to_string())?;
+    let rows_affected = db
+        .execute(
+            "UPDATE settings SET show_controls = ?1 WHERE id = 1",
+            &[&enabled],
+        )
+        .map_err(|e| e.to_string())?;
     if rows_affected == 0 {
         let default_player = detect_default_player();
         db.execute(
@@ -227,22 +276,28 @@ pub fn set_show_controls(state: State<DbState>, enabled: bool) -> Result<(), Str
 // --- Video Player Settings: Autoplay ---
 #[tauri::command]
 pub fn get_autoplay(state: State<DbState>) -> Result<bool, String> {
+    let _operation = crate::operation_gate::read()?;
+
     let db = state.db.lock().unwrap();
-    let autoplay: bool = db.query_row(
-        "SELECT autoplay FROM settings WHERE id = 1",
-        [],
-        |row| row.get(0),
-    ).unwrap_or(false); // Default to false if not found
+    let autoplay: bool = db
+        .query_row("SELECT autoplay FROM settings WHERE id = 1", [], |row| {
+            row.get(0)
+        })
+        .unwrap_or(false); // Default to false if not found
     Ok(autoplay)
 }
 
 #[tauri::command]
 pub fn set_autoplay(state: State<DbState>, enabled: bool) -> Result<(), String> {
+    let _operation = crate::operation_gate::read()?;
+
     let db = state.db.lock().unwrap();
-    let rows_affected = db.execute(
-        "UPDATE settings SET autoplay = ?1 WHERE id = 1",
-        &[&enabled],
-    ).map_err(|e| e.to_string())?;
+    let rows_affected = db
+        .execute(
+            "UPDATE settings SET autoplay = ?1 WHERE id = 1",
+            &[&enabled],
+        )
+        .map_err(|e| e.to_string())?;
     if rows_affected == 0 {
         let default_player = detect_default_player();
         db.execute(

@@ -1,4 +1,4 @@
-use crate::channels::invalidate_channel_cache;
+use crate::channels::invalidate_channel_cache_inner;
 use crate::state::{ChannelCacheState, DbState};
 use chrono::Utc;
 use dirs;
@@ -15,6 +15,8 @@ pub fn refresh_channel_list(
     cache_state: State<ChannelCacheState>,
     id: i32,
 ) -> Result<(), String> {
+    let _operation = crate::operation_gate::read()?;
+
     let db = db_state.db.lock().unwrap();
     let source: String = db
         .query_row(
@@ -59,7 +61,7 @@ pub fn refresh_channel_list(
         .map_err(|e| format!("Failed to update: {}", e))?;
     }
 
-    invalidate_channel_cache(cache_state)?;
+    invalidate_channel_cache_inner(cache_state)?;
     Ok(())
 }
 
@@ -70,6 +72,8 @@ pub fn validate_and_add_channel_list(
     name: String,
     source: String,
 ) -> Result<i32, String> {
+    let _operation = crate::operation_gate::read()?;
+
     let clean_name = name.trim();
     let clean_source = source.trim();
 
@@ -161,7 +165,7 @@ pub fn validate_and_add_channel_list(
         )
         .map_err(|e| format!("Failed to update: {}", e))?;
 
-        invalidate_channel_cache(cache_state)?;
+        invalidate_channel_cache_inner(cache_state)?;
     }
 
     Ok(list_id)

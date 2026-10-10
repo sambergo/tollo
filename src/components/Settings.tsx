@@ -13,6 +13,8 @@ import { PlayerSettings } from "./settings/PlayerSettings";
 import { ImageCacheSettings } from "./settings/ImageCacheSettings";
 import { SavedFiltersSettings } from "./settings/SavedFiltersSettings";
 
+import { BackupSettings } from "./settings/BackupSettings";
+
 function Settings() {
   const [defaultChannelList, setDefaultChannelList] = useState<number | null>(
     null,
@@ -121,6 +123,8 @@ function Settings() {
       <ImageCacheSettings />
 
       <SavedFiltersSettings />
+
+      <BackupSettings />
     </div>
   );
 }
