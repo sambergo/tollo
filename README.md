@@ -33,6 +33,9 @@ Download the latest release for your platform from [GitHub Releases](https://git
 
 ## Development
 
+To control playback on another computer connected to a TV, see the
+[SSH remote playback prototype](docs/remote-playback.md).
+
 ```bash
 pnpm install
 pnpm dev:tauri
