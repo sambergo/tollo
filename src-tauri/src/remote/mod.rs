@@ -276,12 +276,7 @@ pub async fn set_remote_config(
         return Err("Choose a port between 1 and 65535.".into());
     }
     let mut runtime = state.0.lock().await;
-    let mut next = runtime.config.clone();
-    next.enabled = enabled;
-    next.port = port;
-    if !enabled {
-        next.token = config::new_token();
-    }
+    let next = runtime.config.with_service_settings(enabled, port);
     config::save(&runtime.path, &next)?;
     runtime.stop_server().await;
     runtime.config = next;

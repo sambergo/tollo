@@ -77,7 +77,9 @@ an immediate update.
 - **Revoke access** generates a new key. Previously authorised browsers must
   reconnect with the new private link/key. Current playback continues.
 - Disabling **Allow browser remote access** closes the listener, stops its player,
-  invalidates old access, and restores the normal external-player behaviour.
+  and restores the normal external-player behaviour. It keeps the access key;
+  existing private links, QR codes, and remembered browsers work again when
+  access is re-enabled. Only **Revoke access** rotates the key.
 - Remote settings and keys are local to this computer and **excluded from portable
   backups**. Importing a library does not enable network access or replace keys.
 

@@ -26,8 +26,9 @@ local network. Browse playlists, search channels, edit favourites, and control
 playback on the TV computer without installing Tollo on the controlling device.
 
 Remote access is off by default. Once enabled, it starts with Tollo and remembers
-connected browsers. Keep Tollo open in the TV desktop session. Access keys and
-remote settings stay on the host and are excluded from portable backups. HTTP
+connected browsers. Turning it off and on keeps the same access key; use
+**Revoke access** to change it. Keep Tollo open in the TV desktop session. Access
+keys and remote settings stay on the host and are excluded from portable backups. HTTP
 connections are unencrypted; use a trusted LAN and keep the private link private.
 
 See the [Browser Remote guide](docs/browser-remote.md) for setup, shared desktop

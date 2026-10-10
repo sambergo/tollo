@@ -20,6 +20,16 @@ impl Default for Config {
     }
 }
 
+impl Config {
+    pub fn with_service_settings(&self, enabled: bool, port: u16) -> Self {
+        Self {
+            enabled,
+            port,
+            ..self.clone()
+        }
+    }
+}
+
 pub fn new_token() -> String {
     format!(
         "{}{}",
@@ -34,7 +44,7 @@ pub fn load(path: &Path) -> Result<Config, String> {
     }
     let config: Config = serde_json::from_slice(&std::fs::read(path).map_err(|e| e.to_string())?)
         .map_err(|_| {
-        "Browser Remote configuration is invalid. Disable and enable it to reset access."
+        "Browser Remote configuration is invalid. Save Browser Remote settings to replace it."
             .to_string()
     })?;
     validate(&config)?;
@@ -95,13 +105,33 @@ mod tests {
                 0o600
             );
         }
-        config.token = new_token();
-        save(&path, &config).unwrap();
-        assert_ne!(load(&path).unwrap().token, loaded.token);
-        config.enabled = false;
-        config.token = new_token();
-        save(&path, &config).unwrap();
-        assert!(!load(&path).unwrap().enabled);
-        assert_ne!(load(&path).unwrap().token, loaded.token);
+    }
+
+    #[test]
+    fn toggles_and_port_changes_preserve_key_until_explicit_rotation() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("browser-remote.json");
+        let initial = Config::default().with_service_settings(true, 8790);
+        save(&path, &initial).unwrap();
+
+        let disabled = load(&path).unwrap().with_service_settings(false, 9000);
+        save(&path, &disabled).unwrap();
+        let loaded = load(&path).unwrap();
+        assert!(!loaded.enabled);
+        assert_eq!(loaded.port, 9000);
+        assert_eq!(loaded.token, initial.token);
+
+        let enabled = loaded.with_service_settings(true, 9000);
+        save(&path, &enabled).unwrap();
+        assert!(load(&path).unwrap().enabled);
+        assert_eq!(load(&path).unwrap().token, initial.token);
+
+        let mut revoked = load(&path).unwrap();
+        revoked.token = new_token();
+        save(&path, &revoked).unwrap();
+        assert_ne!(load(&path).unwrap().token, initial.token);
+        let disabled = revoked.with_service_settings(false, 9000);
+        save(&path, &disabled).unwrap();
+        assert_eq!(load(&path).unwrap().token, revoked.token);
     }
 }

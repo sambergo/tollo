@@ -203,9 +203,11 @@ export function BrowserRemoteSettings() {
                   Revoke access
                 </button>
                 <p className="form-help">
-                  Revoking disconnects previously authorised browsers. Disabling
-                  also stops the TV player. These settings and access keys stay
-                  on this computer and are excluded from backups.
+                  Revoking changes the access key and disconnects previously
+                  authorised browsers. Disabling stops the TV player but keeps
+                  the key, so existing links and QR codes work when enabled
+                  again. These settings and access keys stay on this computer
+                  and are excluded from backups.
                 </p>
               </>
             )}
