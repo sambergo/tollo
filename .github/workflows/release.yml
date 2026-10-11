@@ -77,3 +77,26 @@ jobs:
           releaseBody: 'See the assets to download and install this version.'
           releaseDraft: true
           prerelease: false
+
+  publish:
+    name: Publish release
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Publish completed release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          notes_file=".github/release-notes/${RELEASE_TAG}.md"
+          if [ -f "$notes_file" ]; then
+            gh release edit "$RELEASE_TAG" --notes-file "$notes_file" --draft=false --latest
+          else
+            gh release edit "$RELEASE_TAG" --draft=false --latest
+          fi
