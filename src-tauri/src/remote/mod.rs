@@ -415,6 +415,15 @@ fn router(service: Service) -> Router {
                 )
             }),
         )
+        .route(
+            "/favicon.ico",
+            get(|| async {
+                (
+                    [(header::CONTENT_TYPE, "image/x-icon")],
+                    include_bytes!("../../icons/icon.ico").as_slice(),
+                )
+            }),
+        )
         .nest("/api", api)
         .layer(middleware::from_fn(security_headers))
         .with_state(service)
