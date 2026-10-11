@@ -19,7 +19,8 @@
 }
 
 .app-logo-icon {
-  height: 98px;
+  display: block;
+  height: auto;
   width: 100%;
   max-width: 224px;
   object-fit: contain;

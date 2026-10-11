@@ -24,7 +24,7 @@
   let key = fragmentKey || storage.get();
   let connected = false;
   let library = { lists: [], channels: [], favorites: [], history: [] };
-  let view = "channels";
+  let view = "favorites";
   let offset = 0;
   let listId = "";
   let playback = {

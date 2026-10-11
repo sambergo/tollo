@@ -25,7 +25,11 @@ export default function NavigationSidebar() {
     <div className="nav-sidebar">
       <div className="app-header">
         <div className="app-logo">
-          <img className="app-logo-icon" src="/logo.png" alt="Tollo logo" />
+          <img
+            className="app-logo-icon"
+            src="/sidebar-logo.png"
+            alt="Tollo owl in a television"
+          />
         </div>
         <nav className="nav-menu">
           <button

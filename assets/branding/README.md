@@ -4,12 +4,16 @@ The sleepy owl and original punk owl are available alongside two brighter punk
 palettes. All PNG masters have transparent backgrounds and were prepared using the
 built-in image generation tool from the selected concept images.
 
-| Option | Palette | Master |
-| --- | --- | --- |
-| `sleepy` | Plum and cream sleepy owl | `sleepy-owl.png` |
-| `punk` | Original charcoal and yellow punk owl | `punk-owl.png` |
-| `punk-ice` | Ice blue and orange punk owl | `punk-ice-owl.png` |
-| `punk-copper` | Copper and cream punk owl | `punk-copper-owl.png` |
+| Option | Palette | Icon master | Sidebar master |
+| --- | --- | --- | --- |
+| `sleepy` | Plum and cream sleepy owl | `sleepy-owl.png` | `sleepy-tv.png` |
+| `punk` | Original charcoal and yellow punk owl | `punk-owl.png` | `punk-tv.png` |
+| `punk-ice` | Ice blue and orange punk owl | `punk-ice-owl.png` | `punk-ice-tv.png` |
+| `punk-copper` | Copper and cream punk owl | `punk-copper-owl.png` | `punk-copper-tv.png` |
+
+The sidebar uses a separate transparent image: the selected owl inside a wood-panel
+television with "tollo" lettering above it. The native app icon and browser favicon
+use the standalone owl.
 
 Palette-edit prompts: retain the original punk owl's shape, expression, pose,
 markings and shading style; brighten the outer feather silhouette for the dark
@@ -33,9 +37,10 @@ pnpm build:tauri
 ```
 
 The selection regenerates desktop PNG, ICO and ICNS assets in `src-tauri/icons`
-and updates `public/logo.png` (sidebar and browser favicon). Commit these outputs
-with any default change: release builds use the checked-in selection.
-Run `pnpm icon:select sleepy` to restore the default.
+and updates `public/logo.png` (browser favicon) and `public/sidebar-logo.png`
+(the matching TV image above navigation). Commit these outputs with any selection
+change: release builds use the checked-in selection. The current selection is
+`punk-copper`; run `pnpm icon:select sleepy` to switch to the sleepy owl and its TV.
 
 ## Testing in development
 

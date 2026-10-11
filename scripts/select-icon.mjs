@@ -16,6 +16,11 @@ const root = fileURLToPath(new URL("../", import.meta.url));
 const require = createRequire(import.meta.url);
 const temporary = await mkdtemp(join(tmpdir(), "tollo-icons-"));
 try {
+  // Stage the matching sidebar artwork before updating the selected assets.
+  await copyFile(
+    join(root, "assets", "branding", `${variant}-tv.png`),
+    join(temporary, "sidebar-logo.png"),
+  );
   const result = spawnSync(
     process.execPath,
     [
@@ -48,8 +53,12 @@ try {
     join(temporary, "128x128@2x.png"),
     join(root, "public", "logo.png"),
   );
+  await copyFile(
+    join(temporary, "sidebar-logo.png"),
+    join(root, "public", "sidebar-logo.png"),
+  );
   console.log(
-    `Selected ${variant} owl. Restart pnpm dev:tauri to refresh the native window icon.`,
+    `Selected ${variant} owl and matching TV sidebar image. Restart pnpm dev:tauri to refresh the native window icon.`,
   );
   console.log(
     "Menu and Wayland dock icons come from your desktop launcher; rebuild and reinstall for installed app icons.",
