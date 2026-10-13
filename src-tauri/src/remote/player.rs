@@ -14,6 +14,7 @@ pub struct Playback {
     pub muted: bool,
     pub volume: f64,
     pub error: Option<String>,
+    pub running: bool,
 }
 
 impl Default for Playback {
@@ -25,6 +26,7 @@ impl Default for Playback {
             muted: false,
             volume: 100.0,
             error: None,
+            running: false,
         }
     }
 }
@@ -111,6 +113,7 @@ impl Player {
                         .map_err(|e| e.to_string())?;
                     self.monitor = Some(tokio::spawn(observe(stream, self.snapshot.clone())));
                 }
+                self.snapshot.lock().unwrap().running = true;
                 return Ok(());
             }
             if self
@@ -233,6 +236,10 @@ impl Player {
                     return Ok(());
                 }
                 json!(["stop"])
+            }
+            "close" => {
+                self.close().await;
+                return Ok(());
             }
             "pause" => json!(["cycle", "pause"]),
             "mute" => json!(["cycle", "mute"]),
@@ -383,6 +390,7 @@ async fn observe(mut stream: tokio::net::UnixStream, snapshot: Snapshot) {
         }
     }
     let mut status = snapshot.lock().unwrap();
+    status.running = false;
     if status.channel.is_some() {
         status.state = "failed".into();
         status.error = Some("The TV player closed. Select a channel to restart it.".into());
@@ -548,7 +556,10 @@ mod tests {
             .unwrap()
             .unwrap());
         assert!(player.snapshot.lock().unwrap().channel.is_none());
+        assert!(player.snapshot.lock().unwrap().running);
         stalled.abort();
-        player.close().await;
+        player.control("close", None).await.unwrap();
+        assert!(player.child.is_none());
+        assert!(!player.snapshot.lock().unwrap().running);
     }
 }
