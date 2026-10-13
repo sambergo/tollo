@@ -33,6 +33,7 @@
     paused: false,
     muted: false,
     volume: 100,
+    running: false,
   };
   let libraryBusy = false;
   let statusBusy = false;
@@ -216,7 +217,10 @@
       element("pause").classList.toggle("is-paused", status.paused);
       element("mute-label").textContent = status.muted ? "Unmute" : "Mute";
       element("pause").disabled = !["playing", "paused"].includes(status.state);
-      element("stop").disabled = !status.channel;
+      const closing = !status.channel && status.running;
+      element("stop-label").textContent = closing ? "Close player" : "Stop";
+      element("stop").classList.toggle("is-closing", closing);
+      element("stop").disabled = !status.channel && !status.running;
       element("mute").disabled = !status.channel;
       element("volume").disabled = !status.channel;
       if (document.activeElement !== element("volume")) {
@@ -333,7 +337,8 @@
     void loadLibrary(true);
   };
   element("pause").onclick = () => act({ action: "pause" });
-  element("stop").onclick = () => act({ action: "stop" });
+  element("stop").onclick = () =>
+    act({ action: playback.channel ? "stop" : "close" });
   element("mute").onclick = () => act({ action: "mute" });
   element("volume").oninput = () => {
     element("volume-value").textContent = `${element("volume").value}%`;

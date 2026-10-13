@@ -21,4 +21,5 @@ export interface RemotePlayback {
   muted: boolean;
   volume: number;
   error: string | null;
+  running: boolean;
 }
