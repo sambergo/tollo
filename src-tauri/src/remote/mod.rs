@@ -381,6 +381,7 @@ fn router(service: Service) -> Router {
         .route("/library", get(library))
         .route("/status", get(status))
         .route("/control", post(control))
+        .route("/play-url", post(play_url))
         .route("/favorite", post(favorite))
         .route_layer(middleware::from_fn_with_state(
             service.access.clone(),
@@ -652,6 +653,76 @@ async fn control(State(service): State<Service>, Json(command): Json<Control>) -
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
+struct PlayUrl {
+    url: String,
+    name: Option<String>,
+}
+
+const STREAM_SCHEMES: [&str; 10] = [
+    "http", "https", "rtmp", "rtmps", "rtsp", "rtsps", "rtp", "udp", "srt", "mms",
+];
+
+/// Builds a playable channel from a pasted address. Only network stream
+/// schemes are accepted so the remote cannot open files on the TV computer.
+fn pasted_channel(url: &str, name: Option<&str>) -> Result<Channel, String> {
+    let url = url.trim();
+    let invalid = || "Enter a stream address such as https://example.com/live.m3u8.".to_owned();
+    if url.is_empty()
+        || url.len() > 8192
+        || url.chars().any(|c| c.is_whitespace() || c.is_control())
+    {
+        return Err(invalid());
+    }
+    let (scheme, rest) = url.split_once("://").ok_or_else(invalid)?;
+    if !STREAM_SCHEMES.contains(&scheme.to_ascii_lowercase().as_str()) {
+        return Err(format!(
+            "Unsupported address type \"{scheme}\". Use {}.",
+            STREAM_SCHEMES.join(", ")
+        ));
+    }
+    let authority = rest.split(['/', '?', '#']).next().unwrap_or("");
+    let host = authority.rsplit('@').next().unwrap_or("");
+    if host.is_empty() {
+        return Err(invalid());
+    }
+    let name = name
+        .map(str::trim)
+        .filter(|name| !name.is_empty())
+        .map(|name| name.chars().take(200).collect())
+        .unwrap_or_else(|| host.to_owned());
+    Ok(Channel {
+        name,
+        url: url.to_owned(),
+        logo: String::new(),
+        group_title: String::new(),
+        tvg_id: String::new(),
+        resolution: String::new(),
+        extra_info: String::new(),
+    })
+}
+
+async fn play_url(State(service): State<Service>, Json(command): Json<PlayUrl>) -> Response {
+    let channel = match pasted_channel(&command.url, command.name.as_deref()) {
+        Ok(channel) => channel,
+        Err(error) => return failure(StatusCode::BAD_REQUEST, &error),
+    };
+    let _guard = match crate::operation_gate::read_async().await {
+        Ok(guard) => guard,
+        Err(_) => {
+            return failure(
+                StatusCode::SERVICE_UNAVAILABLE,
+                "The library is temporarily unavailable.",
+            )
+        }
+    };
+    match play_selected(&service, channel).await {
+        Ok(()) => Json(json!({"ok":true})).into_response(),
+        Err(error) => failure(StatusCode::BAD_GATEWAY, &error),
+    }
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
 struct Favorite {
     channel_id: String,
     list_id: Option<i32>,
@@ -736,6 +807,32 @@ mod tests {
             json!({"action":"play","url":"https://attacker.test"})
         )
         .is_err());
+    }
+
+    #[test]
+    fn pasted_urls_accept_network_streams_only() {
+        let channel =
+            pasted_channel(" https://user:pw@example.test:8080/live.m3u8 ", None).unwrap();
+        assert_eq!(channel.url, "https://user:pw@example.test:8080/live.m3u8");
+        assert_eq!(channel.name, "example.test:8080");
+        assert_eq!(
+            pasted_channel("rtmp://example.test/live", Some("  Match  "))
+                .unwrap()
+                .name,
+            "Match"
+        );
+        for rejected in [
+            "",
+            "file:///etc/passwd",
+            "/home/user/video.mkv",
+            "lavfi://sine",
+            "https://",
+            "https://example.test/a b",
+            "--script=evil.lua",
+        ] {
+            assert!(pasted_channel(rejected, None).is_err(), "{rejected}");
+        }
+        assert!(serde_json::from_value::<PlayUrl>(json!({"url":"https://a.test","x":1})).is_err());
     }
 
     #[test]

@@ -51,6 +51,7 @@
     element("login").hidden = false;
     element("disconnect").hidden = true;
     element("connection").textContent = "Not connected";
+    if (element("url-dialog").open) element("url-dialog").close();
   }
   async function api(path, body) {
     const controller = new AbortController();
@@ -335,6 +336,44 @@
   element("previous").onclick = () => {
     offset = Math.max(0, offset - 150);
     void loadLibrary(true);
+  };
+  function urlError(message) {
+    element("url-error").textContent = message || "";
+    element("url-error").hidden = !message;
+  }
+  element("open-url").onclick = () => {
+    urlError("");
+    element("url-dialog").showModal();
+    element("stream-url").focus();
+  };
+  element("cancel-url").onclick = () => element("url-dialog").close();
+  element("url-dialog").onclick = (event) => {
+    // Clicking the backdrop lands on the dialog element itself.
+    if (event.target === element("url-dialog")) element("url-dialog").close();
+  };
+  element("url-form").onsubmit = async (event) => {
+    event.preventDefault();
+    const submit = element("submit-url");
+    submit.disabled = true;
+    submit.textContent = "Starting…";
+    urlError("");
+    error("");
+    element("playback-state").textContent = "Loading…";
+    try {
+      await api("play-url", {
+        url: element("stream-url").value.trim(),
+        name: element("stream-name").value.trim() || null,
+      });
+      element("url-form").reset();
+      element("url-dialog").close();
+      await loadLibrary();
+    } catch (failure) {
+      urlError(failure.message);
+    } finally {
+      submit.disabled = false;
+      submit.textContent = "Play on TV";
+      await refreshStatus();
+    }
   };
   element("pause").onclick = () => act({ action: "pause" });
   element("stop").onclick = () =>

@@ -87,13 +87,21 @@
         <section class="library" aria-label="Channel library">
           <div class="library-heading">
             <h2>Your library</h2>
-            <button id="refresh" class="quiet">
-              <svg class="icon" aria-hidden="true" viewBox="0 0 24 24">
-                <path
-                  d="M20 7v5h-5M4 17v-5h5M6 7a7 7 0 0 1 12-2l2 3M4 16l2 3a7 7 0 0 0 12-2"
-                /></svg
-              >Refresh
-            </button>
+            <div class="library-actions">
+              <button id="open-url" class="quiet" aria-haspopup="dialog">
+                <svg class="icon" aria-hidden="true" viewBox="0 0 24 24">
+                  <path
+                    d="M10 14a4 4 0 0 0 6 0l3-3a4 4 0 0 0-6-6l-1 1M14 10a4 4 0 0 0-6 0l-3 3a4 4 0 0 0 6 6l1-1"
+                  /></svg
+                >Play URL</button
+              ><button id="refresh" class="quiet">
+                <svg class="icon" aria-hidden="true" viewBox="0 0 24 24">
+                  <path
+                    d="M20 7v5h-5M4 17v-5h5M6 7a7 7 0 0 1 12-2l2 3M4 16l2 3a7 7 0 0 0 12-2"
+                  /></svg
+                >Refresh
+              </button>
+            </div>
           </div>
           <div class="filters">
             <div>
@@ -161,6 +169,42 @@
             ><button id="more" class="more" hidden>Next page</button>
           </div>
         </section>
+        <dialog id="url-dialog" aria-labelledby="url-title">
+          <form id="url-form">
+            <div class="eyebrow">PLAY ON THE TV COMPUTER</div>
+            <h2 id="url-title">Play a stream URL</h2>
+            <div>
+              <label for="stream-url">Stream URL</label
+              ><input
+                id="stream-url"
+                type="url"
+                inputmode="url"
+                autocomplete="off"
+                autocapitalize="off"
+                spellcheck="false"
+                required
+                placeholder="https://example.com/live.m3u8"
+              />
+            </div>
+            <div>
+              <label for="stream-name">Name (optional)</label
+              ><input
+                id="stream-name"
+                type="text"
+                autocomplete="off"
+                maxlength="200"
+                placeholder="Shown in Now playing and Recent"
+              />
+            </div>
+            <p id="url-error" class="error" role="alert" hidden></p>
+            <div class="dialog-actions">
+              <button id="cancel-url" type="button">Cancel</button
+              ><button id="submit-url" class="primary" type="submit">
+                Play on TV
+              </button>
+            </div>
+          </form>
+        </dialog>
         <footer>
           Playback continues when you close this page. Library changes are
           shared with Tollo on the TV computer.
